@@ -4,7 +4,6 @@ export const PRIORITY_CONFIG = {
   highValueDelayHours: 72,
   delayHours: 24,
   reopenResolvedOnNewEvent: true,
-  tokenTtlHours: 48,
 };
 
 export const CURRENT_ORG = "org_shwe_market";

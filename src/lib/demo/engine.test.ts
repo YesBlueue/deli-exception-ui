@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkToken, ingestEvent, submitCorrection, transition } from "./engine";
+import { ingestEvent, transition } from "./engine";
 import { canTransition } from "./lifecycle";
 import { evaluatePriority } from "./priority";
 import { seed } from "./seed";
@@ -58,25 +58,5 @@ describe("lifecycle", () => {
   it("transition requires a reason", () => {
     const db = seed(now.getTime());
     expect(transition(db, db.exceptions[0]!.id, "IN_PROGRESS", " ", "me").ok).toBe(false);
-  });
-});
-
-describe("address correction", () => {
-  const addr = { recipient: "K Z H", phone: "09 1234567", street: "No 1 Road", township: "Bahan", city: "Yangon" };
-  it("valid token accepts once, then is used", () => {
-    const db = seed(now.getTime());
-    expect(submitCorrection(db, "demo-k7Qp2vXw9LmR4tZa", addr, now).ok).toBe(true);
-    expect(checkToken(db, "demo-k7Qp2vXw9LmR4tZa", now)).toEqual({ ok: false, reason: "USED" });
-  });
-  it("rejects when parcel becomes delivered before submit", () => {
-    const db = seed(now.getTime());
-    expect(checkToken(db, "demo-k7Qp2vXw9LmR4tZa", now).ok).toBe(true);
-    ingestEvent(db, "irw", { tracking_number: "IRW-55810293", status: "HANDED_OVER", occurred_at: 1 }, now);
-    expect(submitCorrection(db, "demo-k7Qp2vXw9LmR4tZa", addr, now)).toEqual({ ok: false, reason: "DELIVERED" });
-  });
-  it("expired and revoked tokens are refused", () => {
-    const db = seed(now.getTime());
-    expect(checkToken(db, "demo-expired-3HnB8sVq", now)).toEqual({ ok: false, reason: "EXPIRED" });
-    expect(checkToken(db, "demo-revoked-Wc5yJ2fK", now)).toEqual({ ok: false, reason: "REVOKED" });
   });
 });

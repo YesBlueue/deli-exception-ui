@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Check, Copy, Info, Link2, MapPin, Send, X } from "lucide-react";
+import { ArrowLeft, Info, Send } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/ops/AppShell";
@@ -21,7 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { CARRIERS, EVENT_LABEL } from "@/lib/demo/carriers";
 import { CURRENT_USER } from "@/lib/demo/config";
-import { carrierRespond, createAddressLink, transition, uid } from "@/lib/demo/engine";
+import { transition, uid } from "@/lib/demo/engine";
 import { STATUS_LABEL, TRANSITIONS } from "@/lib/demo/lifecycle";
 import { draftMessage, suggestedAction } from "@/lib/demo/priority";
 import { updatePlatformData as mutate, usePlatformData as useDB, ensureCustomerLink } from "@/lib/services/platform";
@@ -90,8 +90,6 @@ function Detail() {
   if (!s) return <AppShell><p>Shipment not found.</p></AppShell>;
   const events = db.events.filter((e) => e.shipmentId === s.id).sort((a, b) => b.ingestedAt.localeCompare(a.ingestedAt));
   const message = draft ?? draftMessage(x.type, s.customerName, s.orderId);
-  const activeToken = db.tokens.find((t) => t.shipmentId === s.id && !t.revoked && !t.usedAt && new Date(t.expiresAt) > new Date());
-  const corrections = db.corrections.filter((c) => c.shipmentId === s.id);
   const timeline = [
     ...db.logs.filter((l) => l.exceptionId === x.id).map((l) => ({
       at: l.at,
@@ -101,9 +99,6 @@ function Detail() {
     })),
     ...db.actions.filter((a) => a.exceptionId === x.id).map((a) => ({ at: a.at, actor: a.actor, text: a.summary, sim: a.simulated })),
   ].sort((a, b) => b.at.localeCompare(a.at));
-  const delivered = s.status === "DELIVERED";
-  const linkUrl = activeToken && typeof window !== "undefined" ? `${window.location.origin}/correct-address/${db.demoRawTokens[activeToken.id]}` : "";
-
   const send = () => {
     mutate((d) => {
       d.actions.push({ id: uid("act"), exceptionId: x.id, actor: CURRENT_USER, type: "MESSAGE_SENT", summary: `Approved customer message to ${s.customerName} (simulated — not actually delivered).`, payload: message, approval: "APPROVED", simulated: true, at: new Date().toISOString() });
@@ -123,27 +118,6 @@ function Detail() {
     setTo("");
     setReason("");
     setReasonErr("");
-  };
-
-  const makeLink = () => {
-    const r = mutate((d) => {
-      const res = createAddressLink(d, s.id);
-      if (res.ok) d.actions.push({ id: uid("act"), exceptionId: x.id, actor: CURRENT_USER, type: "ADDRESS_LINK_CREATED", summary: "Created demo address correction link (expires in 48h; previous links revoked).", approval: "NOT_REQUIRED", simulated: true, at: new Date().toISOString() });
-      return res;
-    });
-    if (!r.ok) toast.error(r.error);
-    else toast.success("Demo address link created");
-  };
-
-  const revoke = () => {
-    if (!activeToken) return;
-    mutate((d) => {
-      const token = d.tokens.find((t) => t.id === activeToken.id);
-      if (!token) return;
-      token.revoked = true;
-      d.actions.push({ id: uid("act"), exceptionId: x.id, actor: CURRENT_USER, type: "ADDRESS_LINK_REVOKED", summary: "Revoked address correction link.", approval: "NOT_REQUIRED", simulated: false, at: new Date().toISOString() });
-    });
-    toast("Link revoked");
   };
 
   return (
@@ -170,8 +144,8 @@ function Detail() {
         </header>
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-y py-3">
-          <div><span className="text-sm font-medium">Customer delivery &amp; support</span><p className="text-xs text-muted-foreground">Order-specific tracking, address requests and post-delivery support</p></div>
-          <div className="flex flex-wrap gap-2"><Button asChild size="sm" variant="ghost"><Link to="/requests">Review customer requests</Link></Button>{customerAccess ? <Button asChild size="sm" variant="outline"><Link to="/customer/$access" params={{ access: customerAccess }} target="_blank">Open customer portal</Link></Button> : <Button size="sm" variant="outline" onClick={() => setCustomerAccess(mutate((d) => ensureCustomerLink(d, s.id)))}>Prepare customer preview</Button>}</div>
+          <div><span className="text-sm font-medium">Customer support</span><p className="text-xs text-muted-foreground">Order-specific post-delivery complaints and support</p></div>
+          <div className="flex flex-wrap gap-2"><Button asChild size="sm" variant="ghost"><Link to="/requests">Review customer complaints</Link></Button>{customerAccess ? <Button asChild size="sm" variant="outline"><Link to="/customer/$access" params={{ access: customerAccess }} target="_blank">Open customer portal</Link></Button> : <Button size="sm" variant="outline" onClick={() => setCustomerAccess(mutate((d) => ensureCustomerLink(d, s.id)))}>Prepare customer preview</Button>}</div>
         </div>
 
         <div className="grid gap-4 lg:grid-cols-3">
@@ -211,56 +185,6 @@ function Detail() {
                 </div>
               </Card>
             )}
-
-            <Card title="Address correction" aside={<span className="text-xs text-muted-foreground">Customer self-service</span>}>
-              {delivered ? (
-                <p className="text-sm text-muted-foreground">Parcel is delivered — online address changes are closed.</p>
-              ) : activeToken ? (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 rounded-md border bg-muted/50 p-2">
-                    <Link2 className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-                    <code className="min-w-0 flex-1 truncate font-mono text-xs">{linkUrl}</code>
-                    <Button size="sm" variant="ghost" onClick={() => { navigator.clipboard.writeText(linkUrl); toast.success("Link copied"); }} aria-label="Copy link"><Copy className="h-4 w-4" /></Button>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    Expires {fmtTime(activeToken.expiresAt)} · single use
-                    <Button size="sm" variant="outline" asChild><a href={linkUrl} target="_blank" rel="noreferrer">Open as customer</a></Button>
-                    <Button size="sm" variant="ghost" onClick={revoke}>Revoke</Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-sm text-muted-foreground">No active link. Create one to let the customer fix their address before delivery.</p>
-                  <Button variant="outline" onClick={makeLink}><MapPin className="h-4 w-4" aria-hidden /> Create demo address link</Button>
-                </div>
-              )}
-
-              {corrections.length > 0 && (
-                <ul className="mt-4 space-y-3 border-t pt-4">
-                  {corrections.map((c) => (
-                    <li key={c.id} className="space-y-2 text-sm">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-medium">Submitted {ago(c.submittedAt)}</span>
-                        <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${c.carrierStatus === "ACCEPTED" ? "border-success/30 bg-success-soft text-success" : c.carrierStatus === "REJECTED" ? "border-critical/30 bg-critical-soft text-critical" : "border-medium/30 bg-medium-soft text-medium"}`}>
-                          Carrier: {c.carrierStatus === "PENDING" ? "pending confirmation" : c.carrierStatus.toLowerCase()}
-                        </span>
-                      </div>
-                      <div className="grid gap-2 sm:grid-cols-2">
-                        <div className="rounded border p-2 text-xs"><div className="mb-1 font-medium text-muted-foreground">Previous</div>{c.previous.street}, {c.previous.township}, {c.previous.city}</div>
-                        <div className="rounded border border-primary/40 p-2 text-xs"><div className="mb-1 font-medium text-primary">Requested</div>{c.next.recipient} · {c.next.phone}<br />{c.next.street}, {c.next.township}, {c.next.city}{c.next.instructions && <><br /><em>{c.next.instructions}</em></>}</div>
-                      </div>
-                      {c.carrierStatus === "PENDING" && (
-                        <div className="flex flex-wrap items-center gap-2">
-                          <SimBadge />
-                          <Button size="sm" variant="outline" onClick={() => { mutate((d) => carrierRespond(d, c.id, true)); toast.success("Carrier accepted (simulated)"); }}><Check className="h-3.5 w-3.5" aria-hidden />Carrier accepts</Button>
-                          <Button size="sm" variant="outline" onClick={() => { mutate((d) => carrierRespond(d, c.id, false)); toast.error("Carrier rejected the change (simulated)"); }}><X className="h-3.5 w-3.5" aria-hidden />Carrier rejects</Button>
-                        </div>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Card>
 
             <Card title="Activity & audit trail">
               {timeline.length === 0 ? (

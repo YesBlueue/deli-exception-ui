@@ -127,7 +127,7 @@ export function suggestedAction(type: ExceptionType): string {
     case "DAMAGED":
       return "Request damage photos and contact customer";
     case "INVALID_ADDRESS":
-      return "Send address correction link";
+      return "Contact the customer to confirm the delivery address";
     case "FAILED_DELIVERY":
       return "Confirm availability and reschedule";
     case "DELAYED":
@@ -139,7 +139,7 @@ export function draftMessage(type: ExceptionType, name: string, orderId: string)
   const first = name.split(" ")[0];
   switch (type) {
     case "INVALID_ADDRESS":
-      return `Hi ${first}, the courier couldn't verify the delivery address for order ${orderId}. Please confirm your address using the secure link we'll send, so we can try to get your parcel to you.`;
+      return `Hi ${first}, the courier couldn't verify the delivery address for order ${orderId}. Please reply to this message or call our support team to confirm your address, so we can get your parcel to you.`;
     case "FAILED_DELIVERY":
       return `Hi ${first}, the courier tried to deliver order ${orderId} but couldn't reach you. Please let us know a good time and phone number for the next attempt.`;
     case "DELAYED":

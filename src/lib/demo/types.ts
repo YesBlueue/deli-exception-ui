@@ -96,7 +96,7 @@ export interface ExceptionAction {
   id: string;
   exceptionId: string;
   actor: string;
-  type: "MESSAGE_SENT" | "NOTE" | "ADDRESS_LINK_CREATED" | "ADDRESS_LINK_REVOKED" | "CARRIER_REQUEST";
+  type: "MESSAGE_SENT" | "NOTE" | "CARRIER_REQUEST";
   summary: string;
   payload?: string;
   approval: "APPROVED" | "NOT_REQUIRED";
@@ -115,26 +115,6 @@ export interface WorkflowLog {
   at: string;
 }
 
-export interface AddressToken {
-  id: string;
-  tokenHash: string;
-  shipmentId: string;
-  expiresAt: string;
-  revoked: boolean;
-  usedAt: string | null;
-  createdAt: string;
-}
-
-export interface AddressCorrection {
-  id: string;
-  shipmentId: string;
-  previous: Address;
-  next: Address;
-  submittedAt: string;
-  carrierStatus: "PENDING" | "ACCEPTED" | "REJECTED";
-  carrierRespondedAt: string | null;
-}
-
 export interface DB {
   version: number;
   shipments: Shipment[];
@@ -142,10 +122,6 @@ export interface DB {
   exceptions: DeliveryException[];
   actions: ExceptionAction[];
   logs: WorkflowLog[];
-  tokens: AddressToken[];
-  corrections: AddressCorrection[];
-  /** Raw tokens for the demo panel only. A real system never stores these. */
-  demoRawTokens: Record<string, string>;
   customerLinks: CustomerLink[];
   complaints: Complaint[];
   requestActivity: RequestActivity[];
