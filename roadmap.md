@@ -11,4 +11,6 @@
 - [x] Show the report timestamp as 12-hour AM/PM with no timezone suffix.
 - [x] Add customer account forms and managed phone/password integration before standalone order reporting, with owner-only saved profiles.
 - [ ] Activate phone authentication and SMS verification in hosted Phone settings (requires user setup).
+- [x] Remove the failing account-settings preflight and verify account request handling (real registration now returns the disabled-phone-provider response).
+- [x] Show Log In first with Sign Up below; test session-bearing signup/login and sessionless phone-verification outcomes leading to reporting. Live signed-in verification remains blocked below.
 - [ ] Verify account creation, saved profiles, sign-in, sign-out and signed-in complaint flow after phone activation; form validation and signed-out gating already verified.

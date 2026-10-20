@@ -26,7 +26,7 @@ export const Route = createFileRoute("/customer/complaint")({
   head: () => ({
     meta: [
       { title: "Report an Order Problem — Shwe Market Support" },
-      { name: "description", content: "Sign in or create a customer account to report an order problem to Shwe Market Support." },
+      { name: "description", content: "Log in or create a customer account to report an order problem to Shwe Market Support." },
       { name: "robots", content: "noindex" },
       { property: "og:title", content: "Report an Order Problem — Shwe Market Support" },
       { property: "og:description", content: "Submit a complaint about your order in a few steps." },
@@ -72,7 +72,7 @@ function CustomerComplaintApp() {
         </div>
       </header>
       <main className="mx-auto w-full max-w-lg flex-1 px-4 py-8 sm:py-12">
-        {loading ? <Loader2 className="mx-auto animate-spin text-muted-foreground" aria-label="Loading account" /> : !user ? <CustomerAccountForm /> : <div key={user.id}>
+        {loading ? <Loader2 className="mx-auto animate-spin text-muted-foreground" aria-label="Loading account" /> : !user ? <CustomerAccountForm onAuthenticated={reset} /> : <div key={user.id}>
         {step === "order" && (
           <OrderStep
             onFound={(id) => {
