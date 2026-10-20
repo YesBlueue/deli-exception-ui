@@ -1,4 +1,5 @@
 import { COMPLAINT_REFERENCE_YEAR } from "./config";
+import { updateComplaint } from "./customer";
 import type { Complaint, ComplaintCategory, DB } from "./types";
 export type { ComplaintCategory } from "./types";
 export const COMPLAINT_APP_CATEGORIES: Record<ComplaintCategory, string> = { DAMAGED: "Damaged package", MISSING_ITEM: "Missing item", WRONG_ITEM: "Wrong item received", PACKAGE_MISSING: "Package missing", ORDER_DELAY: "Order delay", OTHER: "Other" };
@@ -53,4 +54,10 @@ export function saveComplaint(db: DB, shipmentId: string, customerId: string | u
 export function formatSubmissionTime(iso: string): string {
   const at = new Date(iso);
   return `${new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" }).format(at)}, ${new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit", hourCycle: "h12" }).format(at)}`;
+}/** Sends a staff-approved message to the customer by reference; reuses the shared response/unread rules. */
+export function applySupportResponse(db: DB, reference: string, response: string, status: Complaint["status"], actor: string, now = new Date()) {
+  if (!response.trim()) return { ok: false as const, error: "Write a message before sending it to the customer." };
+  const c = db.complaints.find((x) => x.reference === reference);
+  if (!c) return { ok: false as const, error: "Complaint not found." };
+  return updateComplaint(db, c.id, status, response, "", actor, now);
 }

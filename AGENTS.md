@@ -23,3 +23,4 @@
 - All complaint entry points share validation, owner projections and one persisted reference counter; same-origin Web Locks serialize browser submissions to avoid cross-tab duplicate references.
 - Public complaint responses and private staff notes use independent mutations so private investigation content never leaks through history projections.
 - SLA deadlines use original opening plus current priority configuration and exclude resolved/ignored cases; one pure helper keeps overview and countdowns consistent.
+- Staff AI reply drafts run server-side in src/lib/ai (*.server.ts + createServerFn); AI only fills the draft and staff must press Send, so nothing AI-written reaches customers unreviewed.
