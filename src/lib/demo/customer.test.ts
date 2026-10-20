@@ -4,7 +4,7 @@ import { seed } from "./seed";
 const now = new Date("2026-10-20T12:00:00Z");
 const transit = "preview-K7qp2vXw9LmR4tZa";
 const delivered = "preview-V6nb3rYs8DcM5qWx";
-const complaint = { category: "DAMAGED" as const, description: "The bottle was broken when it arrived.", photos: [] };
+const complaint = { category: "OTHER" as const, description: "The bottle was broken when it arrived.", photos: [] };
 describe("customer portal rules", () => {
   it("does not accept guessable order IDs as access", () => expect(getCustomerOrder(seed(now.getTime()), "ORD-24055", now)).toBeNull());
   it("rejects expired access", () => { const db = seed(now.getTime()); for (const l of db.customerLinks) l.expiresAt = now.toISOString(); expect(getCustomerOrder(db, transit, now)).toBeNull(); });

@@ -85,12 +85,12 @@ export const CARRIERS: Record<CarrierId, CarrierAdapter> = {
     id: "mgl",
     name: "Mingala Courier",
     sample: (t, tn, ts) => {
-      const d = new Date();
+      const d = new Date(Date.now() + 390 * 60000);
       const p = (n: number) => String(n).padStart(2, "0");
       return {
         consignment: { no: tn },
         event: { code: Number(MGL[t]), ref: `M${rid()}` },
-        ...(ts ? { when: `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}` } : {}),
+        ...(ts ? { when: `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}` } : {}),
       };
     },
     normalize: (r) => {
@@ -98,7 +98,7 @@ export const CARRIERS: Record<CarrierId, CarrierAdapter> = {
       return {
         type: invert(MGL)[String(ev?.code)] ?? fail(ev?.code),
         carrierEventId: ev?.ref ?? null,
-        eventTime: r["when"] ? new Date(String(r["when"]).replace(" ", "T")).toISOString() : null,
+        eventTime: r["when"] ? new Date(`${String(r["when"]).replace(" ", "T")}+06:30`).toISOString() : null,
         trackingId: String((r["consignment"] as { no: string })?.no),
       };
     },

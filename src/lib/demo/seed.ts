@@ -2,7 +2,7 @@ import { CURRENT_ORG } from "./config";
 import { ingestEvent, reevaluate, transition } from "./engine";
 import type { CarrierId, DB, NormalizedEventType, Shipment } from "./types";
 
-export const DB_VERSION = 5;
+export const DB_VERSION = 6;
 
 const GSX: Partial<Record<NormalizedEventType, string>> = { SHIPMENT_CREATED: "CRT", IN_TRANSIT: "TRN", ARRIVED_AT_HUB: "HUB", DELAYED: "DLY", LOST: "LST", DELIVERED: "DLV" };
 const IRW: Partial<Record<NormalizedEventType, string>> = { SHIPMENT_CREATED: "LABEL_PRINTED", IN_TRANSIT: "ON_THE_WAY", ARRIVED_AT_HUB: "SORTING_CENTER_IN", DELAYED: "DELAYED_IN_NETWORK", INVALID_ADDRESS: "ADDRESS_UNVERIFIABLE", DAMAGED: "PARCEL_DAMAGED" };
@@ -11,18 +11,19 @@ const MGL: Partial<Record<NormalizedEventType, string>> = { SHIPMENT_CREATED: "1
 function raw(c: CarrierId, tn: string, t: NormalizedEventType, at: Date | null, n: number) {
   if (c === "gsx") return { awb: tn, evt: GSX[t], evt_id: `GSX-SEED-${tn}-${n}`, ...(at ? { ts: at.toISOString() } : {}) };
   if (c === "irw") return { tracking_number: tn, status: IRW[t], ...(at ? { occurred_at: Math.floor(at.getTime() / 1000) } : {}) };
+  const localAt = at ? new Date(at.getTime() + 390 * 60000) : null;
   const p = (x: number) => String(x).padStart(2, "0");
   return {
     consignment: { no: tn },
     event: { code: Number(MGL[t]), ref: `MSEED${tn}${n}` },
-    ...(at ? { when: `${at.getFullYear()}-${p(at.getMonth() + 1)}-${p(at.getDate())} ${p(at.getHours())}:${p(at.getMinutes())}` } : {}),
+    ...(localAt ? { when: `${localAt.getUTCFullYear()}-${p(localAt.getUTCMonth() + 1)}-${p(localAt.getUTCDate())} ${p(localAt.getUTCHours())}:${p(localAt.getUTCMinutes())}` } : {}),
   };
 }
 
 export function seed(nowMs = Date.now()): DB {
   const now = new Date(nowMs);
   const ago = (h: number) => new Date(nowMs - h * 36e5);
-  const db: DB = { version: DB_VERSION, shipments: [], events: [], exceptions: [], actions: [], logs: [], customerLinks: [], complaints: [], requestActivity: [] };
+  const db: DB = { version: DB_VERSION, shipments: [], events: [], exceptions: [], actions: [], logs: [], customerLinks: [], complaints: [], requestActivity: [], referenceCounter: 124 };
 
   const mk = (id: string, orderId: string, name: string, phone: string, carrierId: CarrierId, trackingId: string, valueMMK: number | null, street: string, township: string, city: string, createdH: number): Shipment => ({
     id, orgId: CURRENT_ORG, orderId, customerName: name, customerPhone: phone, carrierId, trackingId, valueMMK, status: "CREATED",
@@ -43,7 +44,8 @@ export function seed(nowMs = Date.now()): DB {
 
   let n = 0;
   const ev = (sid: string, t: NormalizedEventType, h: number | null) => {
-    const s = db.shipments.find((x) => x.id === sid)!;
+    const s = db.shipments.find((x) => x.id === sid);
+    if (!s) throw Error("Missing seed shipment.");
     ingestEvent(db, s.carrierId, raw(s.carrierId, s.trackingId, t, h === null ? null : ago(h), n++), h === null ? now : ago(h));
   };
 
@@ -58,7 +60,7 @@ export function seed(nowMs = Date.now()): DB {
   ev("shp_09", "SHIPMENT_CREATED", 108); ev("shp_09", "DAMAGED", 9);
 
   // Re-evaluate everything against "now" so delay durations are current.
-  const exc = (sid: string) => db.exceptions.find((x) => x.shipmentId === sid)!;
+  const exc = (sid: string) => { const x = db.exceptions.find((x) => x.shipmentId === sid); if (!x) throw Error("Missing seed exception."); return x; };
   for (const x of db.exceptions) reevaluate(db, x.id, now);
 
   const sys = "Thida Aung (CS rep)";
@@ -75,7 +77,7 @@ export function seed(nowMs = Date.now()): DB {
     { access: "preview-V6nb3rYs8DcM5qWx", shipmentId: "shp_06", expiresAt: new Date(nowMs + 168 * 36e5).toISOString(), revoked: false, estimatedDelivery: null },
     { access: "preview-H9mx4pLa7TzQ2wBc", shipmentId: "shp_07", expiresAt: new Date(nowMs + 168 * 36e5).toISOString(), revoked: false, estimatedDelivery: new Date(nowMs + 24 * 36e5).toISOString() },
   ];
-  db.complaints.push({ id: "cmp_demo_01", reference: "CMP-1001", shipmentId: "shp_06", category: "MISSING", description: "The bottle arrived, but the extra replacement lid was missing from the parcel.", photos: [], status: "INVESTIGATING", customerResponse: "We are checking the packing record with our dispatch team and will update you shortly.", submittedAt: ago(24).toISOString(), updatedAt: ago(18).toISOString() });
+  db.complaints.push({ id: "cmp_demo_01", reference: "CMP-2026-00123", shipmentId: "shp_06", category: "MISSING_ITEM", description: "The bottle arrived, but the extra replacement lid was missing from the parcel.", photos: [], status: "INVESTIGATING", customerResponse: "We are checking the packing record with our dispatch team and will update you shortly.", submittedAt: ago(24).toISOString(), updatedAt: ago(18).toISOString(), responseVersion: 1, seenVersion: 0 });
   db.requestActivity.push({ id: "ra_demo_01", requestId: "cmp_demo_01", actor: "Thida Aung", text: "Complaint moved to investigating. Customer update recorded.", internalNote: "Check warehouse packing sheet. Do not share staff contact details.", at: ago(18).toISOString() });
 
   return db;

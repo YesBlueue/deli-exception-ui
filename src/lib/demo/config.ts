@@ -8,3 +8,5 @@ export const PRIORITY_CONFIG = {
 
 export const CURRENT_ORG = "org_shwe_market";
 export const CURRENT_USER = "Thida Aung (CS rep)";
+export const COMPLAINT_REFERENCE_YEAR = 2026;
+export const SLA_HOURS = { CRITICAL: 2, HIGH: 8, MEDIUM: 24, LOW: 48 } as const;

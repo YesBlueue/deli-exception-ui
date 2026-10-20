@@ -1,7 +1,8 @@
 import { randomToken, uid } from "./engine";
 import type { ComplaintCategory, ComplaintStatus, DB } from "./types";
+import { COMPLAINT_APP_CATEGORIES, saveComplaint, validateComplaint, type ComplaintPhotoMeta } from "./complaint-app";
 
-export const COMPLAINT_CATEGORIES: Record<ComplaintCategory, string> = { DAMAGED: "Damaged package or product", MISSING: "Missing items", WRONG: "Wrong item", OTHER: "Other delivery issue" };
+export const COMPLAINT_CATEGORIES = COMPLAINT_APP_CATEGORIES;
 export const COMPLAINT_STATUSES: Record<ComplaintStatus, string> = { SUBMITTED: "Submitted", INVESTIGATING: "Investigating", RESOLVED: "Resolved", REJECTED: "Rejected" };
 function resolveAccess(db: DB, access: string, now = new Date()) {
   const link = db.customerLinks.find((l) => l.access === access);
@@ -28,25 +29,36 @@ export function ensureCustomerLink(db: DB, shipmentId: string, now = new Date())
   db.customerLinks.push({ access, shipmentId, revoked: false, expiresAt: new Date(now.getTime() + 168 * 36e5).toISOString(), estimatedDelivery: null });
   return access;
 }
-export function submitComplaint(db: DB, access: string, input: { category: ComplaintCategory; description: string; photos: { name: string; dataUrl: string }[] }, now = new Date()) {
+export function submitComplaint(db: DB, access: string, input: { category: ComplaintCategory; description: string; photos: ComplaintPhotoMeta[] }, now = new Date()) {
   const r = resolveAccess(db, access, now);
   if (!r) return { ok: false as const, error: "This order link is no longer available." };
   if (r.shipment.status !== "DELIVERED") return { ok: false as const, error: "Complaints are available only after delivery." };
-  if (!(input.category in COMPLAINT_CATEGORIES) || input.description.trim().length < 10 || input.description.length > 2000) return { ok: false as const, error: "Choose a category and describe the issue in 10–2,000 characters." };
-  if (input.photos.length > 3) return { ok: false as const, error: "Add up to three photos." };
-  const id = uid("cmp");
-  const reference = `CMP-${1001 + db.complaints.length}`;
-  db.complaints.push({ ...input, description: input.description.trim(), id, reference, shipmentId: r.shipment.id, status: "SUBMITTED", customerResponse: "", submittedAt: now.toISOString(), updatedAt: now.toISOString() });
-  db.requestActivity.push({ id: uid("ra"), requestId: id, actor: "Customer", text: "Complaint submitted.", internalNote: "", at: now.toISOString() });
+  const error = validateComplaint(input); if (error) return { ok: false as const, error };
+  const { reference } = saveComplaint(db, r.shipment.id, r.shipment.customerId, input, now);
   return { ok: true as const, reference };
 }
 export function updateComplaint(db: DB, id: string, status: ComplaintStatus, customerResponse: string, internalNote: string, actor: string, now = new Date()) {
   const complaint = db.complaints.find((c) => c.id === id);
   if (!complaint || !(status in COMPLAINT_STATUSES)) return { ok: false as const, error: "Complaint not found or invalid status." };
   if ((status === "RESOLVED" || status === "REJECTED") && !customerResponse.trim()) return { ok: false as const, error: "Please add a customer-visible response before closing the complaint." };
+  if (complaint.customerResponse !== customerResponse.trim() || ((status === "RESOLVED" || status === "REJECTED") && status !== complaint.status)) complaint.responseVersion++;
   complaint.status = status;
   complaint.customerResponse = customerResponse.trim();
   complaint.updatedAt = now.toISOString();
   db.requestActivity.push({ id: uid("ra"), requestId: id, actor, text: `Complaint status: ${COMPLAINT_STATUSES[status]}. Customer response updated.`, internalNote: internalNote.trim(), at: now.toISOString() });
+  return { ok: true as const };
+}
+/** Owned history uses the same explicit privacy boundary as access-link queries. */
+export function getCustomerHistory(db: DB, customerId: string) {
+  if (!customerId) return [];
+  return db.complaints.filter((c) => c.customerId === customerId && db.shipments.some((s) => s.id === c.shipmentId && s.customerId === customerId)).map(({ id, reference, shipmentId, category, description, photos, status, customerResponse, submittedAt, updatedAt, responseVersion, seenVersion }) => ({ id, reference, orderId: db.shipments.find((s) => s.id === shipmentId)?.orderId ?? "", category, description, photos: structuredClone(photos), status, customerResponse, submittedAt, updatedAt, unread: responseVersion > seenVersion })).sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
+}
+export function markComplaintSeen(db: DB, customerId: string, id: string) {
+  const c = db.complaints.find((c) => c.id === id && c.customerId === customerId);
+  if (c) c.seenVersion = c.responseVersion;
+}
+export function addInternalComplaintNote(db: DB, id: string, note: string, actor: string, now = new Date()) {
+  if (!note.trim() || !db.complaints.some((c) => c.id === id)) return { ok: false as const, error: "Add a note to an existing complaint." };
+  db.requestActivity.push({ id: uid("ra"), requestId: id, actor, text: "Internal staff note added.", internalNote: note.trim(), at: now.toISOString() });
   return { ok: true as const };
 }
