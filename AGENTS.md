@@ -16,3 +16,4 @@
 - Keep complaint workflow and shipment status independent; validate delivery gates again inside submit services, not only by disabling UI controls.
 - Customer accounts use managed phone/password Auth and owner-only profiles created by a signup trigger; the standalone public complaint page offers inline authentication before its simulated reporting action, while operations and access-link demos remain unchanged.
 - The root CustomerAuthProvider owns the single auth-state subscriber and revalidates initial identity through getUser; passwords never enter application storage and real complaint persistence remains outside the prototype.
+- Stale dynamic-module failures recover through a guarded document reload, not router invalidation, because removed hashed assets require a fresh document; repeated failures fall back to manual retry.

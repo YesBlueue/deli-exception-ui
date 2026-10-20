@@ -14,6 +14,8 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { CustomerAuthProvider } from "@/components/customer/CustomerAuthProvider";
+import { isModuleLoadError, reloadForModuleError } from "@/lib/module-recovery";
+import { Button } from "@/components/ui/button";
 
 function NotFoundComponent() {
   return (
@@ -36,6 +38,7 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
+    if (reloadForModuleError(error)) return;
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
 
@@ -45,15 +48,16 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
         <h1 className="text-xl font-semibold tracking-tight text-foreground">This page didn't load</h1>
         <p className="mt-2 text-sm text-muted-foreground">Something went wrong. You can try again or head back.</p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
-          <button
+          <Button
             onClick={() => {
+              if (isModuleLoadError(error)) { window.location.reload(); return; }
               router.invalidate();
               reset();
             }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
           >
             Try again
-          </button>
+          </Button>
           <a href="/" className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-accent">
             Go home
           </a>
@@ -103,6 +107,21 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useEffect(() => {
+    const handlePreload = (event: Event) => {
+      const failure = event as Event & { payload?: unknown };
+      if (reloadForModuleError(failure.payload)) event.preventDefault();
+    };
+    const handleRejection = (event: PromiseRejectionEvent) => {
+      if (reloadForModuleError(event.reason)) event.preventDefault();
+    };
+    window.addEventListener("vite:preloadError", handlePreload);
+    window.addEventListener("unhandledrejection", handleRejection);
+    return () => {
+      window.removeEventListener("vite:preloadError", handlePreload);
+      window.removeEventListener("unhandledrejection", handleRejection);
+    };
+  }, []);
   return (
     <QueryClientProvider client={queryClient}>
       <CustomerAuthProvider>
