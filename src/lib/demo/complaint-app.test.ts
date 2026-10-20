@@ -47,7 +47,7 @@ describe("customer complaint app rules", () => {
     vi.useFakeTimers();
     try {
       vi.setSystemTime(new Date("2026-10-20T07:12:34.000Z"));
-      const pending = submitComplaintAsync({ orderId: "ORD-24081", category: "DAMAGED", description: "", photos: [] });
+      const pending = submitComplaintAsync({ orderId: "ORD-24081", category: "PACKAGE_MISSING", description: "", photos: [] });
       await vi.runAllTimersAsync();
       const result = await pending;
       expect(result.ok).toBe(true);
