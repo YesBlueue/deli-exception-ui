@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as CorrectAddressTokenRouteImport } from './routes/correct-address.$token'
+import { Route as CustomerAccessRouteImport } from './routes/customer.$access'
 import { Route as DemoEventsRouteImport } from './routes/demo.events'
 import { Route as ExceptionsIdRouteImport } from './routes/exceptions.$id'
 
@@ -36,6 +37,11 @@ const CorrectAddressTokenRoute = CorrectAddressTokenRouteImport.update({
   path: '/correct-address/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CustomerAccessRoute = CustomerAccessRouteImport.update({
+  id: '/customer/$access',
+  path: '/customer/$access',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DemoEventsRoute = DemoEventsRouteImport.update({
   id: '/demo/events',
   path: '/demo/events',
@@ -52,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/correct-address/$token': typeof CorrectAddressTokenRoute
+  '/customer/$access': typeof CustomerAccessRoute
   '/demo/events': typeof DemoEventsRoute
   '/exceptions/$id': typeof ExceptionsIdRoute
 }
@@ -60,6 +67,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/correct-address/$token': typeof CorrectAddressTokenRoute
+  '/customer/$access': typeof CustomerAccessRoute
   '/demo/events': typeof DemoEventsRoute
   '/exceptions/$id': typeof ExceptionsIdRoute
 }
@@ -69,6 +77,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/correct-address/$token': typeof CorrectAddressTokenRoute
+  '/customer/$access': typeof CustomerAccessRoute
   '/demo/events': typeof DemoEventsRoute
   '/exceptions/$id': typeof ExceptionsIdRoute
 }
@@ -79,6 +88,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/login'
     | '/correct-address/$token'
+    | '/customer/$access'
     | '/demo/events'
     | '/exceptions/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -87,6 +97,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/login'
     | '/correct-address/$token'
+    | '/customer/$access'
     | '/demo/events'
     | '/exceptions/$id'
   id:
@@ -95,6 +106,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/login'
     | '/correct-address/$token'
+    | '/customer/$access'
     | '/demo/events'
     | '/exceptions/$id'
   fileRoutesById: FileRoutesById
@@ -104,6 +116,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
   CorrectAddressTokenRoute: typeof CorrectAddressTokenRoute
+  CustomerAccessRoute: typeof CustomerAccessRoute
   DemoEventsRoute: typeof DemoEventsRoute
   ExceptionsIdRoute: typeof ExceptionsIdRoute
 }
@@ -138,6 +151,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CorrectAddressTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/customer/$access': {
+      id: '/customer/$access'
+      path: '/customer/$access'
+      fullPath: '/customer/$access'
+      preLoaderRoute: typeof CustomerAccessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/demo/events': {
       id: '/demo/events'
       path: '/demo/events'
@@ -160,6 +180,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
   CorrectAddressTokenRoute: CorrectAddressTokenRoute,
+  CustomerAccessRoute: CustomerAccessRoute,
   DemoEventsRoute: DemoEventsRoute,
   ExceptionsIdRoute: ExceptionsIdRoute,
 }

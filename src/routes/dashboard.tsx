@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CARRIERS } from "@/lib/demo/carriers";
 import { STATUS_LABEL } from "@/lib/demo/lifecycle";
 import { suggestedAction } from "@/lib/demo/priority";
-import { useDB } from "@/lib/demo/store";
+import { usePlatformData as useDB } from "@/lib/services/platform";
 import type { Priority, WorkflowStatus } from "@/lib/demo/types";
 
 export const Route = createFileRoute("/dashboard")({
@@ -20,6 +20,8 @@ export const Route = createFileRoute("/dashboard")({
       { name: "description", content: "Actionable delivery exceptions across carriers, sorted by urgency." },
       { property: "og:title", content: "Exception inbox — Delivery Exception Ops" },
       { property: "og:description", content: "Actionable delivery exceptions across carriers, sorted by urgency." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Dashboard,
