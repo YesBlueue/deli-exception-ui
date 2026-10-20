@@ -17,7 +17,7 @@ import type { Complaint, ComplaintStatus, Shipment } from "@/lib/demo/types";
 const TONES = ["Empathetic", "Professional", "Direct"] as const;
 const OUTCOMES = ["Approved", "Rejected", "Need info", "Investigating"] as const;
 /** AI and templates only fill the draft; nothing reaches the customer until staff press Send. */
-export function ReplyComposer({ complaint, shipment }: { complaint: Complaint; shipment?: Shipment }) {
+export function ReplyComposer({ complaint, shipment }: { complaint: Complaint; shipment?: Shipment | undefined }) {
   const [status, setStatus] = useState<ComplaintStatus>(complaint.status);
   const [draft, setDraft] = useState(complaint.customerResponse);
   const [notes, setNotes] = useState("");
