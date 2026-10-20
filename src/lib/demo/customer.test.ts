@@ -1,0 +1,20 @@
+import { describe, expect, it } from "vitest";
+import { getCustomerOrder, requestAddress, submitComplaint, updateComplaint } from "./customer";
+import { carrierRespond } from "./engine";
+import { seed } from "./seed";
+const now = new Date("2026-10-20T12:00:00Z");
+const address = { recipient: "Kyaw Zin", phone: "09 775120334", street: "No 22 New Street", township: "Bahan", city: "Yangon" };
+const transit = "preview-K7qp2vXw9LmR4tZa";
+const delivered = "preview-V6nb3rYs8DcM5qWx";
+const complaint = { category: "DAMAGED" as const, description: "The bottle was broken when it arrived.", photos: [] };
+describe("customer portal rules", () => {
+  it("does not accept guessable order IDs as access", () => expect(getCustomerOrder(seed(now.getTime()), "ORD-24055", now)).toBeNull());
+  it("rejects expired access", () => { const db = seed(now.getTime()); for (const l of db.customerLinks) l.expiresAt = now.toISOString(); expect(getCustomerOrder(db, transit, now)).toBeNull(); });
+  it("rejects revoked access", () => { const db = seed(now.getTime()); for (const l of db.customerLinks) l.revoked = true; expect(getCustomerOrder(db, transit, now)).toBeNull(); });
+  it("prevents address changes after delivery", () => expect(requestAddress(seed(now.getTime()), delivered, address, now).ok).toBe(false));
+  it("rechecks delivery when an address form submits", () => { const db = seed(now.getTime()); const s = db.shipments.find((s) => s.id === "shp_02"); if (!s) throw Error("fixture"); s.status = "DELIVERED"; expect(requestAddress(db, transit, address, now).ok).toBe(false); });
+  it("receipt is pending and does not change the delivery address", () => { const db = seed(now.getTime()); const r = requestAddress(db, transit, address, now); expect(r.ok).toBe(true); expect(db.corrections.at(-1)?.carrierStatus).toBe("PENDING"); expect(db.shipments.find((s) => s.id === "shp_02")?.address.street).not.toBe(address.street); if (!r.ok) throw Error("fixture"); carrierRespond(db, r.id, true, now); expect(db.shipments.find((s) => s.id === "shp_02")?.address.street).toBe(address.street); });
+  it("prevents complaints before delivery", () => expect(submitComplaint(seed(now.getTime()), transit, complaint, now).ok).toBe(false));
+  it("keeps complaint and tracking statuses separate", () => { const db = seed(now.getTime()); expect(submitComplaint(db, delivered, complaint, now).ok).toBe(true); const c = db.complaints.at(-1); if (!c) throw Error("fixture"); updateComplaint(db, c.id, "RESOLVED", "Replacement arranged.", "private", "Staff", now); expect(c.status).toBe("RESOLVED"); expect(db.shipments.find((s) => s.id === "shp_06")?.status).toBe("DELIVERED"); });
+  it("never projects internal staff notes to customers", () => { const db = seed(now.getTime()); updateComplaint(db, "cmp_demo_01", "INVESTIGATING", "We are checking.", "PRIVATE_STAFF_NOTE", "Staff", now); const order = getCustomerOrder(db, delivered, now); expect(order?.complaints[0]?.customerResponse).toBe("We are checking."); expect(JSON.stringify(order)).not.toContain("PRIVATE_STAFF_NOTE"); });
+});
