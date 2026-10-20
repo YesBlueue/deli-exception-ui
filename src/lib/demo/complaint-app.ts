@@ -20,7 +20,7 @@ export const PHOTO_REQUIRED_CATEGORIES: readonly ComplaintCategory[] = ["DAMAGED
 
 export function photoRequired(category: ComplaintCategory): boolean {
   return PHOTO_REQUIRED_CATEGORIES.includes(category);
-};
+}
 
 export const COMPLAINT_APP_CONFIG = {
   maxPhotos: 3,
