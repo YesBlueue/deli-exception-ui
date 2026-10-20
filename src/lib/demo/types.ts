@@ -49,6 +49,7 @@ export interface Shipment {
   orderId: string;
   customerName: string;
   customerPhone: string;
+  customerId?: string;
   carrierId: CarrierId;
   trackingId: string;
   /** Order value in MMK; null when unknown */
@@ -125,6 +126,7 @@ export interface DB {
   customerLinks: CustomerLink[];
   complaints: Complaint[];
   requestActivity: RequestActivity[];
+  referenceCounter: number;
 }
 
 export interface CustomerLink {
@@ -134,19 +136,22 @@ export interface CustomerLink {
   revoked: boolean;
   estimatedDelivery: string | null;
 }
-export type ComplaintCategory = "DAMAGED" | "MISSING" | "WRONG" | "OTHER";
+export type ComplaintCategory = "DAMAGED" | "MISSING_ITEM" | "WRONG_ITEM" | "PACKAGE_MISSING" | "ORDER_DELAY" | "OTHER";
 export type ComplaintStatus = "SUBMITTED" | "INVESTIGATING" | "RESOLVED" | "REJECTED";
 export interface Complaint {
   id: string;
   reference: string;
   shipmentId: string;
   category: ComplaintCategory;
+  customerId?: string;
   description: string;
-  photos: { name: string; dataUrl: string }[];
+  photos: { name: string; dataUrl: string; size: number; type: string }[];
   status: ComplaintStatus;
   customerResponse: string;
   submittedAt: string;
   updatedAt: string;
+  responseVersion: number;
+  seenVersion: number;
 }
 export interface RequestActivity {
   id: string;

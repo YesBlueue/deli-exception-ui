@@ -1,140 +1,56 @@
-/**
- * Standalone customer complaint app — mock data and simulated actions.
- * Self-contained on purpose: the seller demo DB is not touched, and this
- * module can be swapped for API calls to the shared backend later.
- */
-
-export type ComplaintCategory = "DAMAGED" | "MISSING_ITEM" | "WRONG_ITEM" | "PACKAGE_MISSING" | "ORDER_DELAY" | "OTHER";
-
-export const COMPLAINT_APP_CATEGORIES: Record<ComplaintCategory, string> = {
-  DAMAGED: "Damaged package",
-  MISSING_ITEM: "Missing item",
-  WRONG_ITEM: "Wrong item received",
-  PACKAGE_MISSING: "Package missing",
-  ORDER_DELAY: "Order delay",
-  OTHER: "Other",
-};
-
-/** Complaint types that must include at least one photo. */
+import { COMPLAINT_REFERENCE_YEAR } from "./config";
+import type { Complaint, ComplaintCategory, DB } from "./types";
+export type { ComplaintCategory } from "./types";
+export const COMPLAINT_APP_CATEGORIES: Record<ComplaintCategory, string> = { DAMAGED: "Damaged package", MISSING_ITEM: "Missing item", WRONG_ITEM: "Wrong item received", PACKAGE_MISSING: "Package missing", ORDER_DELAY: "Order delay", OTHER: "Other" };
 export const PHOTO_REQUIRED_CATEGORIES: readonly ComplaintCategory[] = ["DAMAGED", "MISSING_ITEM", "WRONG_ITEM"];
-
-export function photoRequired(category: ComplaintCategory): boolean {
-  return PHOTO_REQUIRED_CATEGORIES.includes(category);
-}
-
-export const COMPLAINT_APP_CONFIG = {
-  maxPhotos: 3,
-  maxPhotoBytes: 2 * 1024 * 1024,
-  photoTypes: ["image/jpeg", "image/png", "image/webp"],
-  lookupDelayMs: 600,
-  submitDelayMs: 900,
-} as const;
-
-export interface MockOrder {
-  orderId: string;
-  /** Delivered orders can receive complaints; others cannot. */
-  eligible: boolean;
-  ineligibleReason?: string;
-}
-
-/** Fictional orders for the demo lookup. Unknown IDs are rejected. */
-export const MOCK_ORDERS: MockOrder[] = [
-  { orderId: "ORD-24081", eligible: true },
-  { orderId: "ORD-24077", eligible: true },
-  { orderId: "ORD-24063", eligible: true },
-  { orderId: "ORD-24090", eligible: false, ineligibleReason: "This order is still on its way. Complaints can be submitted once it has been delivered." },
-  { orderId: "ORD-24055", eligible: false, ineligibleReason: "A complaint is already open for this order. Our support team is reviewing it." },
-];
-
-export interface ComplaintPhotoMeta {
-  name: string;
-  size: number;
-  type: string;
-}
-
-export interface ComplaintRecord {
-  reference: string;
-  orderId: string;
-  category: ComplaintCategory;
-  description: string;
-  photos: ComplaintPhotoMeta[];
-  submittedAt: string;
-  status: "NEW";
-}
-
-export type LookupResult =
-  | { ok: true; orderId: string }
-  | { ok: false; reason: "EMPTY" | "UNKNOWN" | "INELIGIBLE"; message: string };
-
-export function normalizeOrderId(raw: string): string {
-  return raw.trim().toUpperCase();
-}
-
-export function lookupOrder(rawOrderId: string): LookupResult {
-  const orderId = normalizeOrderId(rawOrderId);
+export const photoRequired = (category: ComplaintCategory) => PHOTO_REQUIRED_CATEGORIES.includes(category);
+export const COMPLAINT_APP_CONFIG = { maxPhotos: 3, maxPhotoBytes: 2 * 1024 * 1024, photoTypes: ["image/jpeg", "image/png", "image/webp"], lookupDelayMs: 600, submitDelayMs: 900 } as const;
+export interface ComplaintPhotoMeta { name: string; size: number; type: string; dataUrl: string }
+export interface ComplaintRecord { id: string; reference: string; orderId: string; category: ComplaintCategory; description: string; photos: ComplaintPhotoMeta[]; submittedAt: string; status: Complaint["status"]; customerResponse: string; updatedAt: string; unread: boolean }
+export const normalizeOrderId = (raw: string) => raw.trim().toUpperCase();
+export type LookupResult = { ok: true; orderId: string } | { ok: false; reason: "EMPTY" | "UNKNOWN" | "INELIGIBLE"; message: string };
+export function lookupOrder(db: DB, customerId: string, raw: string): LookupResult {
+  const orderId = normalizeOrderId(raw);
   if (!orderId) return { ok: false, reason: "EMPTY", message: "Please enter your order ID." };
-  const order = MOCK_ORDERS.find((o) => o.orderId === orderId);
-  if (!order) return { ok: false, reason: "UNKNOWN", message: "We couldn't find this order ID. Please check the number on your order confirmation and try again." };
-  if (!order.eligible) return { ok: false, reason: "INELIGIBLE", message: order.ineligibleReason ?? "This order is not eligible for a complaint right now." };
+  const order = db.shipments.find((s) => s.orderId === orderId && s.customerId === customerId);
+  if (!customerId || !order) return { ok: false, reason: "UNKNOWN", message: "We couldn't find an order linked to your account. Check your order confirmation and try again." };
+  if (order.status !== "DELIVERED") return { ok: false, reason: "INELIGIBLE", message: "Complaints can only be submitted after delivery." };
   return { ok: true, orderId };
 }
-
 export function validateComplaint(input: { category: string; description: string; photos: ComplaintPhotoMeta[] }): string | null {
-  if (!(input.category in COMPLAINT_APP_CATEGORIES)) return "Please choose a complaint category.";
-  if (PHOTO_REQUIRED_CATEGORIES.includes(input.category as ComplaintCategory) && input.photos.length === 0)
-    return "Please attach at least one photo for a damaged package, missing item or wrong item report.";
-  if (input.photos.length > COMPLAINT_APP_CONFIG.maxPhotos) return `You can attach up to ${COMPLAINT_APP_CONFIG.maxPhotos} photos.`;
+  if (!Object.hasOwn(COMPLAINT_APP_CATEGORIES, input.category)) return "Please choose a complaint category.";
+  if (photoRequired(input.category as ComplaintCategory) && !input.photos.length) return "Please attach at least one photo for a damaged package, missing item or wrong item report.";
+  if (input.photos.length > 3) return "You can attach up to 3 photos.";
+  for (const photo of input.photos) {
+    if (!COMPLAINT_APP_CONFIG.photoTypes.some((type) => type === photo.type)) return "Photos must be JPEG, PNG or WebP images.";
+    if (photo.size <= 0 || photo.size > COMPLAINT_APP_CONFIG.maxPhotoBytes) return "Each photo must be 2 MB or smaller.";
+    const match = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/]+={0,2})$/.exec(photo.dataUrl);
+    if (!match || match[1] !== photo.type) return "Attach a valid image, not just a filename.";
+    const encoded = match[2];
+    if (!encoded || encoded.length % 4 !== 0) return "Attach a valid image.";
+    const actualSize = encoded.length * 3 / 4 - (encoded.endsWith("==") ? 2 : encoded.endsWith("=") ? 1 : 0);
+    if (actualSize !== photo.size || actualSize > COMPLAINT_APP_CONFIG.maxPhotoBytes) return "The image data does not match its size.";
+    const signature = photo.type === "image/png" ? encoded.startsWith("iVBORw0KGgo") : photo.type === "image/jpeg" ? encoded.startsWith("/9j/") : encoded.startsWith("UklGR");
+    if (!signature) return "The file contents must be JPEG, PNG or WebP.";
+  }
   return null;
 }
-
-/** Simulated complaint store for the demo session. */
-const complaints: ComplaintRecord[] = [];
-let referenceCounter = 124;
-
-export function listComplaints(): readonly ComplaintRecord[] {
-  return complaints;
+export function createComplaint(db: DB, customerId: string, input: { orderId: string; category: ComplaintCategory; description: string; photos: ComplaintPhotoMeta[] }, now = new Date()): Complaint {
+  const result = lookupOrder(db, customerId, input.orderId);
+  if (!result.ok) throw Error(result.message);
+  const error = validateComplaint(input); if (error) throw Error(error);
+  const shipment = db.shipments.find((s) => s.orderId === result.orderId && s.customerId === customerId);
+  if (!shipment) throw Error("Order not found.");
+  return saveComplaint(db, shipment.id, customerId, input, now);
 }
-
-export function createComplaint(
-  input: { orderId: string; category: ComplaintCategory; description: string; photos: ComplaintPhotoMeta[] },
-  now = new Date(),
-): ComplaintRecord {
-  const reference = `CMP-2026-${String(referenceCounter++).padStart(5, "0")}`;
-  const record: ComplaintRecord = {
-    reference,
-    orderId: normalizeOrderId(input.orderId),
-    category: input.category,
-    description: input.description.trim(),
-    photos: input.photos,
-    submittedAt: now.toISOString(),
-    status: "NEW",
-  };
-  complaints.push(record);
+export function saveComplaint(db: DB, shipmentId: string, customerId: string | undefined, input: { category: ComplaintCategory; description: string; photos: ComplaintPhotoMeta[] }, now: Date): Complaint {
+  const reference = `CMP-${COMPLAINT_REFERENCE_YEAR}-${String(db.referenceCounter++).padStart(5, "0")}`;
+  const record: Complaint = { ...input, id: reference, reference, shipmentId, ...(customerId ? { customerId } : {}), description: input.description.trim(), photos: structuredClone(input.photos), status: "SUBMITTED", customerResponse: "", submittedAt: now.toISOString(), updatedAt: now.toISOString(), responseVersion: 0, seenVersion: 0 };
+  db.complaints.push(record);
+  db.requestActivity.push({ id: `${reference}-submitted`, requestId: record.id, actor: "Customer", text: "Complaint submitted.", internalNote: "", at: now.toISOString() });
   return record;
 }
-
-const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
-
-/** Simulated server lookup — replace with an API call later. */
-export async function lookupOrderAsync(rawOrderId: string): Promise<LookupResult> {
-  await wait(COMPLAINT_APP_CONFIG.lookupDelayMs);
-  return lookupOrder(rawOrderId);
-}
-
-/** Simulated server submission — replace with an API call later. */
-export async function submitComplaintAsync(input: { orderId: string; category: ComplaintCategory; description: string; photos: ComplaintPhotoMeta[] }): Promise<{ ok: true; record: ComplaintRecord } | { ok: false; error: string }> {
-  const submittedAt = new Date();
-  await wait(COMPLAINT_APP_CONFIG.submitDelayMs);
-  const error = validateComplaint(input);
-  if (error) return { ok: false, error };
-  return { ok: true, record: createComplaint(input, submittedAt) };
-}
-
-const submissionDateFmt = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" });
-const submissionClockFmt = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit", hourCycle: "h12" });
-
-/** "20 Oct 2026, 1:49:43 PM" — 12-hour clock, no timezone suffix. */
 export function formatSubmissionTime(iso: string): string {
   const at = new Date(iso);
-  return `${submissionDateFmt.format(at)}, ${submissionClockFmt.format(at)}`;
+  return `${new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" }).format(at)}, ${new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit", hourCycle: "h12" }).format(at)}`;
 }
