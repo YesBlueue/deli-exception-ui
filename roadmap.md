@@ -10,7 +10,11 @@
 - [x] Replace manual incident date/time with an automatic submission timestamp and verify the confirmation.
 - [x] Show the report timestamp as 12-hour AM/PM with no timezone suffix.
 - [x] Add customer account forms and managed phone/password integration before standalone order reporting, with owner-only saved profiles.
-- [ ] Activate phone authentication and SMS verification in hosted Phone settings (requires user setup).
+- [x] Retire disabled phone login in favor of requested email/password cloud accounts.
 - [x] Remove the failing account-settings preflight and verify account request handling (real registration now returns the disabled-phone-provider response).
 - [x] Show Log In first with Sign Up below; test session-bearing signup/login and sessionless phone-verification outcomes leading to reporting. Live signed-in verification remains blocked below.
-- [ ] Verify account creation, saved profiles, sign-in, sign-out and signed-in complaint flow after phone activation; form validation and signed-out gating already verified.
+- [ ] Add isolated salted-hash demo accounts, persistent sessions and explicit cloud-error fallback.
+- [ ] Unify persistent complaint records, ownership gates, photos, references, history and unread support updates.
+- [ ] Complete staff complaint filters, evidence and separate public/private composers.
+- [ ] Harden SSR-safe persistence, confirmed reset, operations rules and migration documentation.
+- [ ] Run tests and verify customer/staff flows, reload persistence and 390px layout; report cloud signup limitations.
