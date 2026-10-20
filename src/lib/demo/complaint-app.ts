@@ -82,7 +82,9 @@ export function validateComplaint(input: { category: string; description: string
   if (!/^\d{2}:\d{2}$/.test(input.incidentTime)) {
     return "Please enter the approximate time the issue happened.";
   }
-  if (new Date(`${input.incidentDate}T23:59:59`).getTime() > Date.now()) {
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  if (input.incidentDate > todayStr) {
     return "The date can't be in the future. Please check the date and try again.";
   }
   if (input.photos.length > COMPLAINT_APP_CONFIG.maxPhotos) return `You can attach up to ${COMPLAINT_APP_CONFIG.maxPhotos} photos.`;
