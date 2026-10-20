@@ -25,7 +25,7 @@ export function ReplyComposer({ complaint, shipment }: { complaint: Complaint; s
   const [outcome, setOutcome] = useState<(typeof OUTCOMES)[number]>("Approved");
   const [busy, setBusy] = useState(false);
   const generate = useServerFn(generateReplyDraft);
-  const carrier = shipment ? CARRIERS[shipment.carrierId].name : "our carrier";
+  const carrier = shipment ? (CARRIERS[shipment.carrierId]?.name ?? "our carrier") : "our carrier";
   const vars = { customerName: shipment?.customerName.split(" ")[0] ?? "there", orderId: shipment?.orderId ?? "", reference: complaint.reference, reason: notes, carrier };
   async function runAi() {
     setBusy(true);
