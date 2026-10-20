@@ -2,7 +2,7 @@ import { CURRENT_ORG } from "./config";
 import { hashToken, ingestEvent, reevaluate, transition } from "./engine";
 import type { CarrierId, DB, NormalizedEventType, Shipment } from "./types";
 
-export const DB_VERSION = 3;
+export const DB_VERSION = 4;
 
 const GSX: Partial<Record<NormalizedEventType, string>> = { SHIPMENT_CREATED: "CRT", IN_TRANSIT: "TRN", ARRIVED_AT_HUB: "HUB", DELAYED: "DLY", LOST: "LST", DELIVERED: "DLV" };
 const IRW: Partial<Record<NormalizedEventType, string>> = { SHIPMENT_CREATED: "LABEL_PRINTED", IN_TRANSIT: "ON_THE_WAY", ARRIVED_AT_HUB: "SORTING_CENTER_IN", DELAYED: "DELAYED_IN_NETWORK", INVALID_ADDRESS: "ADDRESS_UNVERIFIABLE", DAMAGED: "PARCEL_DAMAGED" };
@@ -22,7 +22,7 @@ function raw(c: CarrierId, tn: string, t: NormalizedEventType, at: Date | null, 
 export function seed(nowMs = Date.now()): DB {
   const now = new Date(nowMs);
   const ago = (h: number) => new Date(nowMs - h * 36e5);
-  const db: DB = { version: DB_VERSION, shipments: [], events: [], exceptions: [], actions: [], logs: [], tokens: [], corrections: [], demoRawTokens: {} };
+  const db: DB = { version: DB_VERSION, shipments: [], events: [], exceptions: [], actions: [], logs: [], tokens: [], corrections: [], demoRawTokens: {}, customerLinks: [], complaints: [], requestActivity: [] };
 
   const mk = (id: string, orderId: string, name: string, phone: string, carrierId: CarrierId, trackingId: string, valueMMK: number | null, street: string, township: string, city: string, createdH: number): Shipment => ({
     id, orgId: CURRENT_ORG, orderId, customerName: name, customerPhone: phone, carrierId, trackingId, valueMMK, status: "CREATED",
@@ -79,6 +79,16 @@ export function seed(nowMs = Date.now()): DB {
   tok("tok_expired", "demo-expired-3HnB8sVq", "shp_03", -1);
   tok("tok_revoked", "demo-revoked-Wc5yJ2fK", "shp_08", 40, true);
   tok("tok_delivered", "demo-delivered-Pm6dT1rX", "shp_06", 40);
+
+  db.customerLinks = [
+    { access: "preview-K7qp2vXw9LmR4tZa", shipmentId: "shp_02", expiresAt: new Date(nowMs + 168 * 36e5).toISOString(), revoked: false, estimatedDelivery: null },
+    { access: "preview-V6nb3rYs8DcM5qWx", shipmentId: "shp_06", expiresAt: new Date(nowMs + 168 * 36e5).toISOString(), revoked: false, estimatedDelivery: null },
+    { access: "preview-H9mx4pLa7TzQ2wBc", shipmentId: "shp_07", expiresAt: new Date(nowMs + 168 * 36e5).toISOString(), revoked: false, estimatedDelivery: new Date(nowMs + 24 * 36e5).toISOString() },
+  ];
+  db.complaints.push({ id: "cmp_demo_01", reference: "CMP-1001", shipmentId: "shp_06", category: "MISSING", description: "The bottle arrived, but the extra replacement lid was missing from the parcel.", photos: [], status: "INVESTIGATING", customerResponse: "We are checking the packing record with our dispatch team and will update you shortly.", submittedAt: ago(24).toISOString(), updatedAt: ago(18).toISOString() });
+  db.requestActivity.push({ id: "ra_demo_01", requestId: "cmp_demo_01", actor: "Thida Aung", text: "Complaint moved to investigating. Customer update recorded.", internalNote: "Check warehouse packing sheet. Do not share staff contact details.", at: ago(18).toISOString() });
+  const addressShipment = db.shipments.find((s) => s.id === "shp_03");
+  if (addressShipment) db.corrections.push({ id: "cor_demo_01", shipmentId: addressShipment.id, previous: { ...addressShipment.address }, next: { ...addressShipment.address, street: "No. 18, 78th Street, Ground floor", instructions: "Please call on arrival." }, submittedAt: ago(1).toISOString(), carrierStatus: "PENDING", carrierRespondedAt: null });
 
   return db;
 }

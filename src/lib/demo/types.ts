@@ -146,4 +146,37 @@ export interface DB {
   corrections: AddressCorrection[];
   /** Raw tokens for the demo panel only. A real system never stores these. */
   demoRawTokens: Record<string, string>;
+  customerLinks: CustomerLink[];
+  complaints: Complaint[];
+  requestActivity: RequestActivity[];
+}
+
+export interface CustomerLink {
+  access: string;
+  shipmentId: string;
+  expiresAt: string;
+  revoked: boolean;
+  estimatedDelivery: string | null;
+}
+export type ComplaintCategory = "DAMAGED" | "MISSING" | "WRONG" | "OTHER";
+export type ComplaintStatus = "SUBMITTED" | "INVESTIGATING" | "RESOLVED" | "REJECTED";
+export interface Complaint {
+  id: string;
+  reference: string;
+  shipmentId: string;
+  category: ComplaintCategory;
+  description: string;
+  photos: { name: string; dataUrl: string }[];
+  status: ComplaintStatus;
+  customerResponse: string;
+  submittedAt: string;
+  updatedAt: string;
+}
+export interface RequestActivity {
+  id: string;
+  requestId: string;
+  actor: string;
+  text: string;
+  internalNote: string;
+  at: string;
 }

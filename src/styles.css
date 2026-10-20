@@ -115,9 +115,16 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
+    letter-spacing: 0;
   }
   :focus-visible {
     outline: 2px solid var(--color-ring);
     outline-offset: 2px;
   }
+}
+
+.tracking-tight, .tracking-wide { letter-spacing: 0; }
+button, a, input, textarea { -webkit-tap-highlight-color: transparent; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }

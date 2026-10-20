@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { CARRIERS, EVENT_LABEL } from "@/lib/demo/carriers";
 import { ingestEvent, type IngestResult } from "@/lib/demo/engine";
-import { mutate, useDB } from "@/lib/demo/store";
+import { updatePlatformData as mutate, usePlatformData as useDB } from "@/lib/services/platform";
 import type { CarrierId, NormalizedEventType } from "@/lib/demo/types";
 
 export const Route = createFileRoute("/demo/events")({
@@ -22,6 +22,8 @@ export const Route = createFileRoute("/demo/events")({
       { name: "description", content: "Send fictional carrier events to test normalisation, dedupe and prioritisation." },
       { property: "og:title", content: "Carrier event simulator — Delivery Exception Ops" },
       { property: "og:description", content: "Send fictional carrier events to test normalisation, dedupe and prioritisation." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Simulator,

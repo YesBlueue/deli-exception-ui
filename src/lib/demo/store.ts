@@ -25,7 +25,16 @@ const getSnapshot = () => (state ??= load());
 const getServer = () => null;
 const subscribe = (l: () => void) => {
   listeners.add(l);
-  return () => listeners.delete(l);
+  const onStorage = (event: StorageEvent) => {
+    if (event.key !== KEY) return;
+    state = null;
+    l();
+  };
+  window.addEventListener("storage", onStorage);
+  return () => {
+    listeners.delete(l);
+    window.removeEventListener("storage", onStorage);
+  };
 };
 
 /** Returns null during SSR / first paint, so pages render a skeleton. */
@@ -36,8 +45,8 @@ export function useDB(): DB | null {
 export function mutate<T>(fn: (db: DB) => T): T {
   const next = structuredClone(getSnapshot());
   const r = fn(next);
-  state = next;
   localStorage.setItem(KEY, JSON.stringify(next));
+  state = next;
   listeners.forEach((l) => l());
   return r;
 }

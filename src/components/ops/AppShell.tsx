@@ -1,13 +1,17 @@
 import { Link } from "@tanstack/react-router";
-import { FlaskConical, Inbox, LogOut, PackageSearch, RotateCcw } from "lucide-react";
+import { FlaskConical, Inbox, LayoutDashboard, MessageSquare, PackageSearch, RotateCcw, Smartphone } from "lucide-react";
 import type { ReactNode } from "react";
 import { toast } from "sonner";
 import { CURRENT_USER } from "@/lib/demo/config";
-import { resetDemo } from "@/lib/demo/store";
+import { resetDemo } from "@/lib/services/platform";
+import { Button } from "@/components/ui/button";
 
 const NAV = [
+  { to: "/overview", label: "Overview", Icon: LayoutDashboard },
   { to: "/dashboard", label: "Exception inbox", Icon: Inbox },
+  { to: "/requests", label: "Customer requests", Icon: MessageSquare },
   { to: "/demo/events", label: "Event simulator", Icon: FlaskConical },
+  { to: "/customer-demos", label: "Customer previews", Icon: Smartphone },
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -35,7 +39,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           ))}
         </nav>
         <div className="space-y-2 border-t border-sidebar-border p-3 text-xs">
-          <button
+          <Button variant="ghost"
             onClick={() => {
               resetDemo();
               toast.success("Demo data reset");
@@ -43,20 +47,17 @@ export function AppShell({ children }: { children: ReactNode }) {
             className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           >
             <RotateCcw className="h-3.5 w-3.5" aria-hidden /> Reset demo data
-          </button>
-          <div className="px-3 text-sidebar-muted">Signed in (demo) as</div>
+          </Button>
+          <div className="px-3 text-sidebar-muted">Simulated staff role</div>
           <div className="px-3 font-medium text-sidebar-accent-foreground">{CURRENT_USER}</div>
-          <Link to="/login" className="flex items-center gap-2 rounded-md px-3 py-2 text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
-            <LogOut className="h-3.5 w-3.5" aria-hidden /> Exit demo
-          </Link>
         </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center gap-1 overflow-x-auto bg-sidebar px-3 py-2 md:hidden">
+        <header className="flex items-center gap-1 overflow-x-auto bg-sidebar px-3 py-2 md:hidden" aria-label="Mobile navigation">
           <PackageSearch className="mr-2 h-5 w-5 shrink-0 text-sidebar-primary" aria-hidden />
-          {NAV.map(({ to, label }) => (
+          {NAV.map(({ to, label, Icon }) => (
             <Link key={to} to={to} className="whitespace-nowrap rounded-md px-3 py-1.5 text-sm text-sidebar-foreground" activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}>
-              {label}
+              <span className="flex items-center gap-2"><Icon className="size-4" />{label}</span>
             </Link>
           ))}
         </header>

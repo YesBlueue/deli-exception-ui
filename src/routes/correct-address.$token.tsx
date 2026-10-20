@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { CARRIERS } from "@/lib/demo/carriers";
 import { checkToken, submitCorrection } from "@/lib/demo/engine";
-import { mutate, useDB } from "@/lib/demo/store";
+import { updatePlatformData as mutate, usePlatformData as useDB } from "@/lib/services/platform";
 import type { Address } from "@/lib/demo/types";
 
 export const Route = createFileRoute("/correct-address/$token")({
@@ -19,6 +19,8 @@ export const Route = createFileRoute("/correct-address/$token")({
       { property: "og:title", content: "Update your delivery address" },
       { property: "og:description", content: "Submit a delivery address correction for your parcel." },
       { name: "robots", content: "noindex" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: CorrectAddress,
@@ -103,7 +105,9 @@ function CorrectAddress() {
     );
   }
 
-  const s = db.shipments.find((x) => x.id === (check as { shipmentId: string }).shipmentId)!;
+   if (!check.ok) return null;
+   const s = db.shipments.find((x) => x.id === check.shipmentId);
+   if (!s) return <Shell><p>This shipment is no longer available.</p></Shell>;
   const v = values ?? { ...s.address, instructions: "" };
   const set = (k: Field, val: string) => {
     setValues({ ...v, [k]: val });
