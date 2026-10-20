@@ -18,4 +18,5 @@
 - [x] Complete staff complaint filters, evidence and separate public/private composers.
 - [x] Harden SSR-safe persistence, confirmed reset, operations rules and migration documentation.
 - [x] Run 74 tests and verify simulated customer/staff flows, saved image evidence, reload persistence, unread clearing, reset and 390px layout.
+- [x] Add admin reply composer: templates, AI drafts (staff-reviewed), send to customer with unread alerts.
 - [ ] Verify live Cloud signup/login end to end — blocked: no existing account/session; reserved test email rejected. A real customer must confirm their email before live verification.
