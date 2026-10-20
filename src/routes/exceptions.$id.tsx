@@ -24,7 +24,7 @@ import { CURRENT_USER } from "@/lib/demo/config";
 import { carrierRespond, createAddressLink, transition, uid } from "@/lib/demo/engine";
 import { STATUS_LABEL, TRANSITIONS } from "@/lib/demo/lifecycle";
 import { draftMessage, suggestedAction } from "@/lib/demo/priority";
-import { mutate, useDB } from "@/lib/demo/store";
+import { updatePlatformData as mutate, usePlatformData as useDB, ensureCustomerLink } from "@/lib/services/platform";
 import type { WorkflowStatus } from "@/lib/demo/types";
 
 export const Route = createFileRoute("/exceptions/$id")({
@@ -34,6 +34,8 @@ export const Route = createFileRoute("/exceptions/$id")({
       { name: "description", content: "Investigate and resolve a delivery exception." },
       { property: "og:title", content: "Exception detail — Delivery Exception Ops" },
       { property: "og:description", content: "Investigate and resolve a delivery exception." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Detail,
@@ -60,6 +62,7 @@ function Detail() {
   const [reason, setReason] = useState("");
   const [reasonErr, setReasonErr] = useState("");
   const [rawOpen, setRawOpen] = useState<string | null>(null);
+  const [customerAccess, setCustomerAccess] = useState<string | null>(null);
 
   if (!db)
     return (
@@ -83,7 +86,8 @@ function Detail() {
       </AppShell>
     );
 
-  const s = db.shipments.find((sh) => sh.id === x.shipmentId)!;
+  const s = db.shipments.find((sh) => sh.id === x.shipmentId);
+  if (!s) return <AppShell><p>Shipment not found.</p></AppShell>;
   const events = db.events.filter((e) => e.shipmentId === s.id).sort((a, b) => b.ingestedAt.localeCompare(a.ingestedAt));
   const message = draft ?? draftMessage(x.type, s.customerName, s.orderId);
   const activeToken = db.tokens.find((t) => t.shipmentId === s.id && !t.revoked && !t.usedAt && new Date(t.expiresAt) > new Date());
@@ -92,7 +96,7 @@ function Detail() {
     ...db.logs.filter((l) => l.exceptionId === x.id).map((l) => ({
       at: l.at,
       actor: l.actor,
-      text: l.kind === "TRANSITION" ? `${l.from ? STATUS_LABEL[l.from] : "—"} → ${STATUS_LABEL[l.to!]}: ${l.reason}` : l.reason,
+      text: l.kind === "TRANSITION" ? `${l.from ? STATUS_LABEL[l.from] : "—"} → ${l.to ? STATUS_LABEL[l.to] : "—"}: ${l.reason}` : l.reason,
       sim: l.actor.includes("simulated"),
     })),
     ...db.actions.filter((a) => a.exceptionId === x.id).map((a) => ({ at: a.at, actor: a.actor, text: a.summary, sim: a.simulated })),
@@ -103,8 +107,8 @@ function Detail() {
   const send = () => {
     mutate((d) => {
       d.actions.push({ id: uid("act"), exceptionId: x.id, actor: CURRENT_USER, type: "MESSAGE_SENT", summary: `Approved customer message to ${s.customerName} (simulated — not actually delivered).`, payload: message, approval: "APPROVED", simulated: true, at: new Date().toISOString() });
-      const ex = d.exceptions.find((e) => e.id === x.id)!;
-      if (TRANSITIONS[ex.workflowStatus].includes("AWAITING_CUSTOMER")) transition(d, x.id, "AWAITING_CUSTOMER", "Customer message approved and sent (simulated).", CURRENT_USER);
+      const ex = d.exceptions.find((e) => e.id === x.id);
+      if (ex && TRANSITIONS[ex.workflowStatus].includes("AWAITING_CUSTOMER")) transition(d, x.id, "AWAITING_CUSTOMER", "Customer message approved and sent (simulated).", CURRENT_USER);
     });
     setConfirm(false);
     toast.success("Message approved", { description: "Simulated send — no SMS or email was delivered." });
@@ -124,16 +128,19 @@ function Detail() {
   const makeLink = () => {
     const r = mutate((d) => {
       const res = createAddressLink(d, s.id);
-      if (res.ok) d.actions.push({ id: uid("act"), exceptionId: x.id, actor: CURRENT_USER, type: "ADDRESS_LINK_CREATED", summary: "Created secure address correction link (expires in 48h; previous links revoked).", approval: "NOT_REQUIRED", simulated: false, at: new Date().toISOString() });
+      if (res.ok) d.actions.push({ id: uid("act"), exceptionId: x.id, actor: CURRENT_USER, type: "ADDRESS_LINK_CREATED", summary: "Created demo address correction link (expires in 48h; previous links revoked).", approval: "NOT_REQUIRED", simulated: true, at: new Date().toISOString() });
       return res;
     });
     if (!r.ok) toast.error(r.error);
-    else toast.success("Secure link created");
+    else toast.success("Demo address link created");
   };
 
   const revoke = () => {
+    if (!activeToken) return;
     mutate((d) => {
-      d.tokens.find((t) => t.id === activeToken!.id)!.revoked = true;
+      const token = d.tokens.find((t) => t.id === activeToken.id);
+      if (!token) return;
+      token.revoked = true;
       d.actions.push({ id: uid("act"), exceptionId: x.id, actor: CURRENT_USER, type: "ADDRESS_LINK_REVOKED", summary: "Revoked address correction link.", approval: "NOT_REQUIRED", simulated: false, at: new Date().toISOString() });
     });
     toast("Link revoked");
@@ -161,6 +168,11 @@ function Detail() {
             <div className="text-muted-foreground">{CARRIERS[s.carrierId].name}</div>
           </div>
         </header>
+
+        <div className="flex flex-wrap items-center justify-between gap-3 border-y py-3">
+          <div><span className="text-sm font-medium">Customer delivery &amp; support</span><p className="text-xs text-muted-foreground">Order-specific tracking, address requests and post-delivery support</p></div>
+          <div className="flex flex-wrap gap-2"><Button asChild size="sm" variant="ghost"><Link to="/requests">Review customer requests</Link></Button>{customerAccess ? <Button asChild size="sm" variant="outline"><Link to="/customer/$access" params={{ access: customerAccess }} target="_blank">Open customer portal</Link></Button> : <Button size="sm" variant="outline" onClick={() => setCustomerAccess(mutate((d) => ensureCustomerLink(d, s.id)))}>Prepare customer preview</Button>}</div>
+        </div>
 
         <div className="grid gap-4 lg:grid-cols-3">
           <div className="space-y-4 lg:col-span-2">
@@ -219,7 +231,7 @@ function Detail() {
               ) : (
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-sm text-muted-foreground">No active link. Create one to let the customer fix their address before delivery.</p>
-                  <Button variant="outline" onClick={makeLink}><MapPin className="h-4 w-4" aria-hidden /> Create secure link</Button>
+                  <Button variant="outline" onClick={makeLink}><MapPin className="h-4 w-4" aria-hidden /> Create demo address link</Button>
                 </div>
               )}
 
@@ -310,9 +322,9 @@ function Detail() {
                       <span className="font-medium">{EVENT_LABEL[e.type]}</span>
                       <span className="text-xs text-muted-foreground">{e.eventTime ? fmtTime(e.eventTime) : <span className="text-medium">no carrier time</span>}</span>
                     </div>
-                    <button className="text-xs text-primary underline-offset-2 hover:underline" onClick={() => setRawOpen(rawOpen === e.id ? null : e.id)}>
+                    <Button variant="link" size="sm" className="h-auto px-0 text-xs" onClick={() => setRawOpen(rawOpen === e.id ? null : e.id)}>
                       {rawOpen === e.id ? "Hide" : "Show"} raw payload
-                    </button>
+                    </Button>
                     {rawOpen === e.id && <pre className="mt-1 overflow-x-auto rounded bg-muted p-2 font-mono text-[11px]">{JSON.stringify(e.raw, null, 2)}</pre>}
                   </li>
                 ))}
