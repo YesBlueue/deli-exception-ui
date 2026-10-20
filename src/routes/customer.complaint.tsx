@@ -33,6 +33,11 @@ export const Route = createFileRoute("/customer/complaint")({
 type Step = "order" | "form" | "done";
 interface Photo { name: string; size: number; type: string; dataUrl: string }
 
+const todayLocal = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
 function CustomerComplaintApp() {
   const [step, setStep] = useState<Step>("order");
   const [orderId, setOrderId] = useState("");
@@ -138,6 +143,8 @@ function OrderStep({ onFound }: { onFound: (orderId: string) => void }) {
 function ComplaintStep({ orderId, onBack, onSubmitted }: { orderId: string; onBack: () => void; onSubmitted: () => void }) {
   const [category, setCategory] = useState<ComplaintCategory | "">("");
   const [description, setDescription] = useState("");
+  const [incidentDate, setIncidentDate] = useState(todayLocal());
+  const [incidentTime, setIncidentTime] = useState("");
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -196,6 +203,8 @@ function ComplaintStep({ orderId, onBack, onSubmitted }: { orderId: string; onBa
       orderId,
       category,
       description,
+      incidentDate,
+      incidentTime,
       photos: photos.map(({ name, size, type }) => ({ name, size, type })),
     });
     setSubmitting(false);

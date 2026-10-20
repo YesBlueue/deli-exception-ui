@@ -15,8 +15,6 @@ export const COMPLAINT_APP_CATEGORIES: Record<ComplaintCategory, string> = {
 };
 
 export const COMPLAINT_APP_CONFIG = {
-  descriptionMin: 20,
-  descriptionMax: 1000,
   maxPhotos: 3,
   maxPhotoBytes: 2 * 1024 * 1024,
   photoTypes: ["image/jpeg", "image/png", "image/webp"],
@@ -49,6 +47,9 @@ export interface ComplaintPhotoMeta {
 export interface ComplaintRecord {
   reference: string;
   orderId: string;
+  /** Date (YYYY-MM-DD) and approximate time (HH:MM) the issue happened, as entered by the customer. */
+  incidentDate: string;
+  incidentTime: string;
   category: ComplaintCategory;
   description: string;
   photos: ComplaintPhotoMeta[];
@@ -73,11 +74,17 @@ export function lookupOrder(rawOrderId: string): LookupResult {
   return { ok: true, orderId };
 }
 
-export function validateComplaint(input: { category: string; description: string; photos: ComplaintPhotoMeta[] }): string | null {
+export function validateComplaint(input: { category: string; description: string; photos: ComplaintPhotoMeta[]; incidentDate: string; incidentTime: string }): string | null {
   if (!(input.category in COMPLAINT_APP_CATEGORIES)) return "Please choose a complaint category.";
-  const description = input.description.trim();
-  if (description.length < COMPLAINT_APP_CONFIG.descriptionMin) return `Please describe what happened in at least ${COMPLAINT_APP_CONFIG.descriptionMin} characters.`;
-  if (description.length > COMPLAINT_APP_CONFIG.descriptionMax) return `Please keep the description under ${COMPLAINT_APP_CONFIG.descriptionMax} characters.`;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.incidentDate) || Number.isNaN(new Date(`${input.incidentDate}T00:00:00`).getTime())) {
+    return "Please enter the date the issue happened.";
+  }
+  if (!/^\d{2}:\d{2}$/.test(input.incidentTime)) {
+    return "Please enter the approximate time the issue happened.";
+  }
+  if (new Date(`${input.incidentDate}T23:59:59`).getTime() > Date.now()) {
+    return "The date can't be in the future. Please check the date and try again.";
+  }
   if (input.photos.length > COMPLAINT_APP_CONFIG.maxPhotos) return `You can attach up to ${COMPLAINT_APP_CONFIG.maxPhotos} photos.`;
   return null;
 }
@@ -90,11 +97,16 @@ export function listComplaints(): readonly ComplaintRecord[] {
   return complaints;
 }
 
-export function createComplaint(input: { orderId: string; category: ComplaintCategory; description: string; photos: ComplaintPhotoMeta[] }, now = new Date()): ComplaintRecord {
+export function createComplaint(
+  input: { orderId: string; category: ComplaintCategory; description: string; photos: ComplaintPhotoMeta[]; incidentDate: string; incidentTime: string },
+  now = new Date(),
+): ComplaintRecord {
   const reference = `CMP-2026-${String(referenceCounter++).padStart(5, "0")}`;
   const record: ComplaintRecord = {
     reference,
     orderId: normalizeOrderId(input.orderId),
+    incidentDate: input.incidentDate,
+    incidentTime: input.incidentTime,
     category: input.category,
     description: input.description.trim(),
     photos: input.photos,
@@ -114,7 +126,7 @@ export async function lookupOrderAsync(rawOrderId: string): Promise<LookupResult
 }
 
 /** Simulated server submission — replace with an API call later. */
-export async function submitComplaintAsync(input: { orderId: string; category: ComplaintCategory; description: string; photos: ComplaintPhotoMeta[] }): Promise<{ ok: true; record: ComplaintRecord } | { ok: false; error: string }> {
+export async function submitComplaintAsync(input: { orderId: string; category: ComplaintCategory; description: string; photos: ComplaintPhotoMeta[]; incidentDate: string; incidentTime: string }): Promise<{ ok: true; record: ComplaintRecord } | { ok: false; error: string }> {
   await wait(COMPLAINT_APP_CONFIG.submitDelayMs);
   const error = validateComplaint(input);
   if (error) return { ok: false, error };
