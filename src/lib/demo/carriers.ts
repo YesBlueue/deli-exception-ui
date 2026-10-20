@@ -60,10 +60,10 @@ export const CARRIERS: Record<CarrierId, CarrierAdapter> = {
     name: "Golden Swift Express",
     sample: (t, tn, ts) => ({ awb: tn, evt: GSX[t], evt_id: `GSX-${rid()}`, ...(ts ? { ts: new Date().toISOString() } : {}) }),
     normalize: (r) => ({
-      type: invert(GSX)[String(r.evt)] ?? fail(r.evt),
-      carrierEventId: (r.evt_id as string) ?? null,
-      eventTime: r.ts ? new Date(String(r.ts)).toISOString() : null,
-      trackingId: String(r.awb),
+      type: invert(GSX)[String(r["evt"])] ?? fail(r["evt"]),
+      carrierEventId: (r["evt_id"] as string) ?? null,
+      eventTime: r["ts"] ? new Date(String(r["ts"])).toISOString() : null,
+      trackingId: String(r["awb"]),
     }),
   },
   irw: {
@@ -75,10 +75,10 @@ export const CARRIERS: Record<CarrierId, CarrierAdapter> = {
       ...(ts ? { occurred_at: Math.floor(Date.now() / 1000) } : {}),
     }),
     normalize: (r) => ({
-      type: invert(IRW)[String(r.status)] ?? fail(r.status),
+      type: invert(IRW)[String(r["status"])] ?? fail(r["status"]),
       carrierEventId: null, // this carrier sends no event IDs → fallback dedupe key
-      eventTime: r.occurred_at ? new Date(Number(r.occurred_at) * 1000).toISOString() : null,
-      trackingId: String(r.tracking_number),
+      eventTime: r["occurred_at"] ? new Date(Number(r["occurred_at"]) * 1000).toISOString() : null,
+      trackingId: String(r["tracking_number"]),
     }),
   },
   mgl: {
@@ -94,12 +94,12 @@ export const CARRIERS: Record<CarrierId, CarrierAdapter> = {
       };
     },
     normalize: (r) => {
-      const ev = r.event as { code: number; ref?: string };
+      const ev = r["event"] as { code: number; ref?: string };
       return {
         type: invert(MGL)[String(ev?.code)] ?? fail(ev?.code),
         carrierEventId: ev?.ref ?? null,
-        eventTime: r.when ? new Date(String(r.when).replace(" ", "T")).toISOString() : null,
-        trackingId: String((r.consignment as { no: string })?.no),
+        eventTime: r["when"] ? new Date(String(r["when"]).replace(" ", "T")).toISOString() : null,
+        trackingId: String((r["consignment"] as { no: string })?.no),
       };
     },
   },
