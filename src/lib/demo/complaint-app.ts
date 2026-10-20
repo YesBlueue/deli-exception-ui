@@ -4,15 +4,23 @@
  * module can be swapped for API calls to the shared backend later.
  */
 
-export type ComplaintCategory = "DAMAGED" | "MISSING_ITEM" | "WRONG_ITEM" | "PACKAGE_MISSING" | "OTHER";
+export type ComplaintCategory = "DAMAGED" | "MISSING_ITEM" | "WRONG_ITEM" | "PACKAGE_MISSING" | "ORDER_DELAY" | "OTHER";
 
 export const COMPLAINT_APP_CATEGORIES: Record<ComplaintCategory, string> = {
   DAMAGED: "Damaged package",
   MISSING_ITEM: "Missing item",
   WRONG_ITEM: "Wrong item received",
   PACKAGE_MISSING: "Package missing",
+  ORDER_DELAY: "Order delay",
   OTHER: "Other",
 };
+
+/** Complaint types that must include at least one photo. */
+export const PHOTO_REQUIRED_CATEGORIES: readonly ComplaintCategory[] = ["DAMAGED", "MISSING_ITEM", "WRONG_ITEM"];
+
+export function photoRequired(category: ComplaintCategory): boolean {
+  return PHOTO_REQUIRED_CATEGORIES.includes(category);
+}
 
 export const COMPLAINT_APP_CONFIG = {
   maxPhotos: 3,
@@ -73,6 +81,8 @@ export function lookupOrder(rawOrderId: string): LookupResult {
 
 export function validateComplaint(input: { category: string; description: string; photos: ComplaintPhotoMeta[] }): string | null {
   if (!(input.category in COMPLAINT_APP_CATEGORIES)) return "Please choose a complaint category.";
+  if (PHOTO_REQUIRED_CATEGORIES.includes(input.category as ComplaintCategory) && input.photos.length === 0)
+    return "Please attach at least one photo for a damaged package, missing item or wrong item report.";
   if (input.photos.length > COMPLAINT_APP_CONFIG.maxPhotos) return `You can attach up to ${COMPLAINT_APP_CONFIG.maxPhotos} photos.`;
   return null;
 }

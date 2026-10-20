@@ -11,7 +11,9 @@ import {
   COMPLAINT_APP_CONFIG,
   formatSubmissionTime,
   lookupOrderAsync,
+  photoRequired,
   submitComplaintAsync,
+  validateComplaint,
   type ComplaintCategory,
   type ComplaintRecord,
 } from "@/lib/demo/complaint-app";
@@ -192,6 +194,11 @@ function ComplaintStep({ orderId, onBack, onSubmitted }: { orderId: string; onBa
       setError("Please choose a complaint category.");
       return;
     }
+    const invalid = validateComplaint({ category, description, photos: photos.map(({ name, size, type }) => ({ name, size, type })) });
+    if (invalid) {
+      setError(invalid);
+      return;
+    }
     setSubmitting(true);
     const result = await submitComplaintAsync({
       orderId,
@@ -253,7 +260,12 @@ function ComplaintStep({ orderId, onBack, onSubmitted }: { orderId: string; onBa
 
       <div className="space-y-2">
         <Label>
-          Photo evidence <span className="font-normal text-muted-foreground">(optional)</span>
+          Photo evidence{" "}
+          {category && photoRequired(category) ? (
+            <span className="font-normal text-destructive">(required)</span>
+          ) : (
+            <span className="font-normal text-muted-foreground">(optional)</span>
+          )}
         </Label>
         <div
           onDragOver={(e) => {
@@ -289,7 +301,7 @@ function ComplaintStep({ orderId, onBack, onSubmitted }: { orderId: string; onBa
           </div>
           <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
             <Camera className="size-3.5" />
-            JPEG, PNG or WebP, up to 2 MB each. On desktop you can drag photos here. Photos stay on your device in this demo.
+            JPEG, PNG or WebP, up to 2 MB each. On desktop you can drag photos here. Photos stay on your device in this demo. A photo is required for damaged package, missing item and wrong item reports.
           </p>
         </div>
         <input
