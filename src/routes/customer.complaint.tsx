@@ -1,10 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+
 import { CustomerAccountForm } from "@/components/customer/CustomerAccountForm";
 import { useCustomerAuth } from "@/components/customer/CustomerAuthProvider";
 import { ArrowLeft, Camera, CheckCircle2, ImagePlus, Loader2, PackageSearch, ShieldCheck, X } from "lucide-react";
-import { useRef, useState, type DragEvent } from "react";
+import { useEffect, useRef, useState, type DragEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,7 +20,9 @@ import {
   validateComplaint,
   type ComplaintCategory,
   type ComplaintRecord,
-} from "@/lib/demo/complaint-app";
+} from "@/lib/services/platform";
+import { usePlatformData, getCustomerHistory, markComplaintSeen, updatePlatformData, ensureDemoOrders } from "@/lib/services/platform";
+import { COMPLAINT_STATUSES } from "@/lib/demo/customer";
 
 export const Route = createFileRoute("/customer/complaint")({
   head: () => ({
@@ -41,7 +43,14 @@ type Step = "order" | "form" | "done";
 interface Photo { name: string; size: number; type: string; dataUrl: string }
 
 function CustomerComplaintApp() {
-  const { user, loading } = useCustomerAuth();
+  const { user, loading, mode, logOut } = useCustomerAuth();
+  const db = usePlatformData();
+  const [record, setRecord] = useState<ComplaintRecord | null>(null);
+  const [viewed, setViewed] = useState<string | null>(null);
+  const [setupError, setSetupError] = useState("");
+  useEffect(() => { if (!user) return; try { ensureDemoOrders(user); setSetupError(""); } catch { setSetupError("Demo orders could not be saved. Allow browser storage and try again."); } }, [user?.id, db?.version]);
+  const history = user && db ? getCustomerHistory(db, user.id) : [];
+  const unread = history.filter((c) => c.unread).length;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [step, setStep] = useState<Step>("order");
@@ -55,9 +64,8 @@ function CustomerComplaintApp() {
   const signOut = async () => {
     await queryClient.cancelQueries();
     queryClient.clear();
-    const { error } = await supabase.auth.signOut();
-    if (error) return;
-    lastSubmission = null;
+    try { await logOut(); } catch { setSetupError("Could not sign out. Please try again."); return; }
+    setRecord(null);
     reset();
     await navigate({ to: "/customer/complaint", replace: true });
   };
@@ -71,10 +79,13 @@ function CustomerComplaintApp() {
           {user && <Button variant="ghost" size="sm" className="ml-auto" onClick={() => void signOut()}>Sign out</Button>}
         </div>
       </header>
+      <div className="border-b border-demo/20 bg-demo-soft px-4 py-2 text-center text-xs text-demo">Local Demo Mode — fictional complaint records{mode === "demo" && <p className="mt-1 font-semibold">Demo sign-in (simulated) — not production security</p>}</div>
       <main className="mx-auto w-full max-w-lg flex-1 px-4 py-8 sm:py-12">
+        {setupError && <p role="alert" className="mb-4 text-sm text-destructive">{setupError}</p>}
         {loading ? <Loader2 className="mx-auto animate-spin text-muted-foreground" aria-label="Loading account" /> : !user ? <CustomerAccountForm onAuthenticated={reset} /> : <div key={user.id}>
+        {unread > 0 && <div role="status" className="mb-6 border-l-4 border-primary bg-accent p-4"><p className="text-sm font-semibold">You have {unread} new update(s) from support</p><Button variant="link" className="px-0" onClick={() => document.getElementById("complaint-history")?.scrollIntoView({ behavior: "smooth" })}>View updates</Button></div>}
         {step === "order" && (
-          <OrderStep
+          <OrderStep customerId={user.id}
             onFound={(id) => {
               setOrderId(id);
               setStep("form");
@@ -82,23 +93,24 @@ function CustomerComplaintApp() {
           />
         )}
         {step === "form" && (
-          <ComplaintStep
+          <ComplaintStep customerId={user.id}
             orderId={orderId}
             onBack={() => setStep("order")}
-            onSubmitted={() => setStep("done")}
+            onSubmitted={(saved) => { setRecord(saved); setStep("done"); }}
           />
         )}
-        {step === "done" && <ConfirmationStep onReset={reset} />}
+        {step === "done" && <ConfirmationStep record={record} onReset={reset} />}
+        <section id="complaint-history" className="mt-10 border-t pt-6"><h2 className="text-lg font-semibold">Your complaints</h2>{history.length === 0 ? <p className="mt-3 text-sm text-muted-foreground">No complaints submitted yet.</p> : <div className="mt-3 divide-y">{history.map((c) => <article key={c.id} className="py-4"><div className="flex flex-wrap items-center gap-2"><span className="font-mono text-sm font-semibold">{c.reference}</span><span className="rounded border bg-muted px-2 py-1 text-xs">{COMPLAINT_STATUSES[c.status]}</span>{c.unread && <span className="rounded bg-primary px-2 py-1 text-xs font-semibold text-primary-foreground">New</span>}</div><p className="mt-2 text-sm">{c.orderId} · {COMPLAINT_APP_CATEGORIES[c.category]}</p><p className="mt-1 text-xs text-muted-foreground">{formatSubmissionTime(c.submittedAt)}</p><Button variant="link" className="px-0" onClick={() => { setViewed(viewed === c.id ? null : c.id); updatePlatformData((data) => markComplaintSeen(data, user.id, c.id)); }}>View complaint</Button>{viewed === c.id && <div className="space-y-3 border-l-2 border-primary pl-3"><p className="whitespace-pre-wrap break-words text-sm">{c.description}</p><p className="whitespace-pre-wrap break-words text-sm font-medium">{c.customerResponse || "Awaiting a support response."}</p><div className="flex flex-wrap gap-2">{c.photos.map((p, i) => <img key={i} src={p.dataUrl} alt={p.name} className="size-20 rounded border object-cover" />)}</div></div>}</article>)}</div>}</section>
         </div>}
       </main>
       <footer className="border-t py-4 text-center text-xs text-muted-foreground">
-        Order lookup and complaint submissions are simulated. Account access requires phone sign-in to be enabled.
+        Order lookup and complaint submissions are simulated. Cloud and demo accounts are separate.
       </footer>
     </div>
   );
 }
 
-function OrderStep({ onFound }: { onFound: (orderId: string) => void }) {
+function OrderStep({ customerId, onFound }: { customerId: string; onFound: (orderId: string) => void }) {
   const [value, setValue] = useState("");
   const [error, setError] = useState("");
   const [checking, setChecking] = useState(false);
@@ -106,7 +118,7 @@ function OrderStep({ onFound }: { onFound: (orderId: string) => void }) {
   const submit = async () => {
     setError("");
     setChecking(true);
-    const result = await lookupOrderAsync(value);
+    const result = await lookupOrderAsync(customerId, value);
     setChecking(false);
     if (result.ok) onFound(result.orderId);
     else setError(result.message);
@@ -158,7 +170,7 @@ function OrderStep({ onFound }: { onFound: (orderId: string) => void }) {
   );
 }
 
-function ComplaintStep({ orderId, onBack, onSubmitted }: { orderId: string; onBack: () => void; onSubmitted: () => void }) {
+function ComplaintStep({ customerId, orderId, onBack, onSubmitted }: { customerId: string; orderId: string; onBack: () => void; onSubmitted: (record: ComplaintRecord) => void }) {
   const [category, setCategory] = useState<ComplaintCategory | "">("");
   const [description, setDescription] = useState("");
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -214,22 +226,21 @@ function ComplaintStep({ orderId, onBack, onSubmitted }: { orderId: string; onBa
       setError("Please choose a complaint category.");
       return;
     }
-    const invalid = validateComplaint({ category, description, photos: photos.map(({ name, size, type }) => ({ name, size, type })) });
+    const invalid = validateComplaint({ category, description, photos });
     if (invalid) {
       setError(invalid);
       return;
     }
     setSubmitting(true);
-    const result = await submitComplaintAsync({
+    const result = await submitComplaintAsync(customerId, {
       orderId,
       category,
       description,
-      photos: photos.map(({ name, size, type }) => ({ name, size, type })),
+      photos,
     });
     setSubmitting(false);
     if (result.ok) {
-      lastSubmission = result.record;
-      onSubmitted();
+      onSubmitted({ ...result.record, orderId, unread: false });
     } else {
       setError(result.error);
     }
@@ -358,12 +369,7 @@ function ComplaintStep({ orderId, onBack, onSubmitted }: { orderId: string; onBa
   );
 }
 
-/** Last simulated submission, shown on the confirmation screen. */
-let lastSubmission: ComplaintRecord | null = null;
-
-
-function ConfirmationStep({ onReset }: { onReset: () => void }) {
-  const record = lastSubmission;
+function ConfirmationStep({ record, onReset }: { record: ComplaintRecord | null; onReset: () => void }) {
   if (!record) return null;
   return (
     <div className="space-y-6 text-center">
