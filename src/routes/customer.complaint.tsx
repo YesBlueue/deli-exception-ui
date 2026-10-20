@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   COMPLAINT_APP_CATEGORIES,
   COMPLAINT_APP_CONFIG,
+  formatSubmissionTime,
   lookupOrderAsync,
   submitComplaintAsync,
   type ComplaintCategory,
@@ -328,12 +329,6 @@ function ComplaintStep({ orderId, onBack, onSubmitted }: { orderId: string; onBa
 /** Last simulated submission, shown on the confirmation screen. */
 let lastSubmission: ComplaintRecord | null = null;
 
-const formatSubmission = (record: ComplaintRecord) =>
-  new Intl.DateTimeFormat("en-GB", {
-    day: "numeric", month: "short", year: "numeric",
-    hour: "2-digit", minute: "2-digit", second: "2-digit",
-    hourCycle: "h23", timeZoneName: "short",
-  }).format(new Date(record.submittedAt));
 
 function ConfirmationStep({ onReset }: { onReset: () => void }) {
   const record = lastSubmission;
@@ -360,7 +355,7 @@ function ConfirmationStep({ onReset }: { onReset: () => void }) {
         </div>
         <div className="flex items-start justify-between gap-4">
           <dt className="shrink-0 text-muted-foreground">Report submitted</dt>
-          <dd className="text-right">{formatSubmission(record)}</dd>
+          <dd className="text-right">{formatSubmissionTime(record.submittedAt)}</dd>
         </div>
         <div className="flex items-start justify-between gap-4">
           <dt className="shrink-0 text-muted-foreground">Description</dt>

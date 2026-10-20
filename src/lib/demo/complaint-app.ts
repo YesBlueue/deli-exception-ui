@@ -119,3 +119,12 @@ export async function submitComplaintAsync(input: { orderId: string; category: C
   if (error) return { ok: false, error };
   return { ok: true, record: createComplaint(input, submittedAt) };
 }
+
+const submissionDateFmt = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" });
+const submissionClockFmt = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit", hourCycle: "h12" });
+
+/** "20 Oct 2026, 1:49:43 PM" — 12-hour clock, no timezone suffix. */
+export function formatSubmissionTime(iso: string): string {
+  const at = new Date(iso);
+  return `${submissionDateFmt.format(at)}, ${submissionClockFmt.format(at)}`;
+}

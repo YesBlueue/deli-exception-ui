@@ -8,3 +8,4 @@
 - [x] Add standalone no-login customer complaint app at /customer/complaint.
 - [x] Remove customer address change requests and package tracking; customer experience is complaints-only.
 - [x] Replace manual incident date/time with an automatic submission timestamp and verify the confirmation.
+- [x] Show the report timestamp as 12-hour AM/PM with no timezone suffix.
