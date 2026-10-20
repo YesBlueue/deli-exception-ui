@@ -33,6 +33,7 @@ export type WorkflowStatus =
   | "IN_PROGRESS"
   | "RESOLVED"
   | "REOPENED";
+// Additional terminal state preserves the richer existing workflow.
 
 export interface Address {
   recipient: string;
