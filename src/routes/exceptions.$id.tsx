@@ -145,7 +145,7 @@ function Detail() {
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-y py-3">
           <div><span className="text-sm font-medium">Customer support</span><p className="text-xs text-muted-foreground">Order-specific post-delivery complaints and support</p></div>
-          <div className="flex flex-wrap gap-2"><Button asChild size="sm" variant="ghost"><Link to="/requests">Review customer requests</Link></Button>{customerAccess ? <Button asChild size="sm" variant="outline"><Link to="/customer/$access" params={{ access: customerAccess }} target="_blank">Open customer portal</Link></Button> : <Button size="sm" variant="outline" onClick={() => setCustomerAccess(mutate((d) => ensureCustomerLink(d, s.id)))}>Prepare customer preview</Button>}</div>
+          <div className="flex flex-wrap gap-2"><Button asChild size="sm" variant="ghost"><Link to="/requests">Review customer complaints</Link></Button>{customerAccess ? <Button asChild size="sm" variant="outline"><Link to="/customer/$access" params={{ access: customerAccess }} target="_blank">Open customer portal</Link></Button> : <Button size="sm" variant="outline" onClick={() => setCustomerAccess(mutate((d) => ensureCustomerLink(d, s.id)))}>Prepare customer preview</Button>}</div>
         </div>
 
         <div className="grid gap-4 lg:grid-cols-3">

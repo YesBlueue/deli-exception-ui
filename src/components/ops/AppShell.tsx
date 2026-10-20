@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 const NAV = [
   { to: "/overview", label: "Overview", Icon: LayoutDashboard },
   { to: "/dashboard", label: "Exception inbox", Icon: Inbox },
-  { to: "/requests", label: "Customer requests", Icon: MessageSquare },
+  { to: "/requests", label: "Customer complaints", Icon: MessageSquare },
   { to: "/demo/events", label: "Event simulator", Icon: FlaskConical },
   { to: "/customer-demos", label: "Customer previews", Icon: Smartphone },
 ] as const;

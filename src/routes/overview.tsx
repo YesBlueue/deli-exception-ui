@@ -4,7 +4,7 @@ import { AppShell } from "@/components/ops/AppShell";
 import { Button } from "@/components/ui/button";
 import { PriorityBadge, StatusBadge, TYPE_LABEL } from "@/components/ops/badges";
 import { usePlatformData } from "@/lib/services/platform";
-export const Route = createFileRoute("/overview")({ head: () => ({ meta: [{ title: "Operations overview — Exception Ops" }, { name: "description", content: "Review urgent delivery exceptions and customer requests in one operations overview." }, { property: "og:title", content: "Operations overview — Exception Ops" }, { property: "og:description", content: "Delivery exception priorities and customer care workload." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }), component: Overview });
+export const Route = createFileRoute("/overview")({ head: () => ({ meta: [{ title: "Operations overview — Exception Ops" }, { name: "description", content: "Review urgent delivery exceptions and customer complaints in one operations overview." }, { property: "og:title", content: "Operations overview — Exception Ops" }, { property: "og:description", content: "Delivery exception priorities and customer care workload." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }), component: Overview });
 function Overview() {
   const db = usePlatformData();
   const open = db?.exceptions.filter((x) => x.workflowStatus !== "RESOLVED") ?? [];
