@@ -73,6 +73,8 @@ export function lookupOrder(rawOrderId: string): LookupResult {
 
 export function validateComplaint(input: { category: string; description: string; photos: ComplaintPhotoMeta[] }): string | null {
   if (!(input.category in COMPLAINT_APP_CATEGORIES)) return "Please choose a complaint category.";
+  if (PHOTO_REQUIRED_CATEGORIES.includes(input.category as ComplaintCategory) && input.photos.length === 0)
+    return "Please attach at least one photo for a damaged package, missing item or wrong item report.";
   if (input.photos.length > COMPLAINT_APP_CONFIG.maxPhotos) return `You can attach up to ${COMPLAINT_APP_CONFIG.maxPhotos} photos.`;
   return null;
 }
