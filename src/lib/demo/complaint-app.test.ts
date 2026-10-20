@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createComplaint, listComplaints, lookupOrder, validateComplaint, submitComplaintAsync } from "./complaint-app";
+import { createComplaint, formatSubmissionTime, listComplaints, lookupOrder, validateComplaint, submitComplaintAsync } from "./complaint-app";
 
 describe("customer complaint app rules", () => {
   it("rejects an empty order ID", () => {
@@ -51,5 +51,10 @@ describe("customer complaint app rules", () => {
     expect(a.reference).toMatch(/^CMP-2026-\d{5}$/);
     expect(Number(b.reference.slice(-5))).toBe(Number(a.reference.slice(-5)) + 1);
     expect(listComplaints().length).toBe(before + 2);
+  });
+  it("shows the submission time in 12-hour AM/PM with no timezone suffix", () => {
+    const text = formatSubmissionTime("2026-10-20T07:12:34.000Z");
+    expect(text).toMatch(/^\d{1,2} [A-Z][a-z]{2} \d{4}, \d{1,2}:\d{2}:\d{2} (AM|PM)$/);
+    expect(text).not.toMatch(/GMT|UTC|[ap]\.m\.|am|pm/);
   });
 });
