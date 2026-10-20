@@ -7,7 +7,6 @@ import { CURRENT_ORG, PRIORITY_CONFIG } from "./config";
 import { canTransition } from "./lifecycle";
 import { evaluatePriority, exceptionTypeFor, isActionable } from "./priority";
 import type {
-  Address,
   CarrierId,
   DB,
   NormalizedEventType,
@@ -16,20 +15,6 @@ import type {
 } from "./types";
 
 export const uid = (p: string) => `${p}_${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36).slice(-4)}`;
-
-/** Small sync hash (cyrb53). Demo only — production would use SHA-256 server-side. */
-export function hashToken(str: string) {
-  let h1 = 0xdeadbeef,
-    h2 = 0x41c6ce57;
-  for (let i = 0; i < str.length; i++) {
-    const ch = str.charCodeAt(i);
-    h1 = Math.imul(h1 ^ ch, 2654435761);
-    h2 = Math.imul(h2 ^ ch, 1597334677);
-  }
-  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
-  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
-  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16);
-}
 
 export function randomToken() {
   const b = new Uint8Array(24);
@@ -165,72 +150,5 @@ export function transition(db: DB, exceptionId: string, to: WorkflowStatus, reas
   log(db, x.id, actor, x.workflowStatus, to, reason.trim(), now);
   x.workflowStatus = to;
   x.resolvedAt = to === "RESOLVED" ? now.toISOString() : null;
-  return { ok: true as const };
-}
-
-export function createAddressLink(db: DB, shipmentId: string, now = new Date()) {
-  const s = db.shipments.find((x) => x.id === shipmentId);
-  if (!s) return { ok: false as const, error: "Shipment not found." };
-  if (s.status === "DELIVERED") return { ok: false as const, error: "Shipment is delivered; address changes are closed." };
-  // revoke previous active links for this shipment
-  db.tokens.filter((t) => t.shipmentId === shipmentId && !t.revoked && !t.usedAt).forEach((t) => (t.revoked = true));
-  const raw = randomToken();
-  const tok = {
-    id: uid("tok"),
-    tokenHash: hashToken(raw),
-    shipmentId,
-    expiresAt: new Date(now.getTime() + PRIORITY_CONFIG.tokenTtlHours * 36e5).toISOString(),
-    revoked: false,
-    usedAt: null,
-    createdAt: now.toISOString(),
-  };
-  db.tokens.push(tok);
-  db.demoRawTokens[tok.id] = raw;
-  return { ok: true as const, token: raw, tokenId: tok.id };
-}
-
-export type TokenCheck =
-  | { ok: true; shipmentId: string; tokenId: string }
-  | { ok: false; reason: "INVALID" | "EXPIRED" | "REVOKED" | "USED" | "DELIVERED" };
-
-export function checkToken(db: DB, raw: string, now = new Date()): TokenCheck {
-  const t = db.tokens.find((x) => x.tokenHash === hashToken(raw));
-  if (!t) return { ok: false, reason: "INVALID" };
-  if (t.revoked) return { ok: false, reason: "REVOKED" };
-  if (t.usedAt) return { ok: false, reason: "USED" };
-  if (new Date(t.expiresAt) <= now) return { ok: false, reason: "EXPIRED" };
-  const s = db.shipments.find((x) => x.id === t.shipmentId);
-  if (!s) return { ok: false, reason: "INVALID" };
-  if (s.status === "DELIVERED") return { ok: false, reason: "DELIVERED" };
-  return { ok: true, shipmentId: s.id, tokenId: t.id };
-}
-
-export function submitCorrection(db: DB, raw: string, next: Address, now = new Date()) {
-  // Re-validate on submit: the parcel may have been delivered meanwhile.
-  const c = checkToken(db, raw, now);
-  if (!c.ok) return c;
-  const s = db.shipments.find((x) => x.id === c.shipmentId)!;
-  const t = db.tokens.find((x) => x.id === c.tokenId)!;
-  t.usedAt = now.toISOString();
-  const id = uid("cor");
-  db.corrections.push({ id, shipmentId: s.id, previous: { ...s.address }, next, submittedAt: now.toISOString(), carrierStatus: "PENDING", carrierRespondedAt: null });
-  const x = db.exceptions.find((e) => e.shipmentId === s.id);
-  db.logs.push({ id: uid("log"), exceptionId: x?.id ?? null, actor: "customer", kind: "AUTOMATION", reason: "Customer submitted an address correction (received, not yet confirmed by carrier).", at: now.toISOString() });
-  if (x && canTransition(x.workflowStatus, "AWAITING_CARRIER")) {
-    log(db, x.id, "system", x.workflowStatus, "AWAITING_CARRIER", "Address correction received; waiting on carrier.", now);
-    x.workflowStatus = "AWAITING_CARRIER";
-  }
-  return { ok: true as const, correctionId: id };
-}
-
-export function carrierRespond(db: DB, correctionId: string, accept: boolean, now = new Date()) {
-  const c = db.corrections.find((x) => x.id === correctionId);
-  if (!c || c.carrierStatus !== "PENDING") return { ok: false as const, error: "Correction is not pending." };
-  c.carrierStatus = accept ? "ACCEPTED" : "REJECTED";
-  c.carrierRespondedAt = now.toISOString();
-  const s = db.shipments.find((x) => x.id === c.shipmentId)!;
-  if (accept) s.address = { ...c.next };
-  const x = db.exceptions.find((e) => e.shipmentId === s.id);
-  db.logs.push({ id: uid("log"), exceptionId: x?.id ?? null, actor: `${CARRIERS[s.carrierId].name} (simulated)`, kind: "AUTOMATION", reason: accept ? "Carrier accepted the address correction." : "Carrier rejected the address correction.", at: now.toISOString() });
   return { ok: true as const };
 }
