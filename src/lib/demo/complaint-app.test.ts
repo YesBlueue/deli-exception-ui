@@ -25,17 +25,23 @@ describe("customer complaint app rules", () => {
     expect(r.ok).toBe(true);
     if (r.ok) expect(r.orderId).toBe("ORD-24081");
   });
-  it("enforces description length limits", () => {
-    expect(validateComplaint({ category: "DAMAGED", description: "too short", photos: [] })).toBeTruthy();
-    expect(validateComplaint({ category: "DAMAGED", description: "x".repeat(1001), photos: [] })).toBeTruthy();
-    expect(validateComplaint({ category: "DAMAGED", description: "The parcel arrived crushed and open.", photos: [] })).toBeNull();
+  it("does not limit the description length", () => {
+    expect(validateComplaint({ category: "DAMAGED", description: "", photos: [], incidentDate: "2026-10-01", incidentTime: "09:30" })).toBeNull();
+    expect(validateComplaint({ category: "DAMAGED", description: "x".repeat(5000), photos: [], incidentDate: "2026-10-01", incidentTime: "09:30" })).toBeNull();
   });
-  it("creates complaints with status NEW and sequential references", () => {
+  it("requires the incident date and time and rejects future dates", () => {
+    expect(validateComplaint({ category: "DAMAGED", description: "ok", photos: [], incidentDate: "", incidentTime: "09:30" })).toBeTruthy();
+    expect(validateComplaint({ category: "DAMAGED", description: "ok", photos: [], incidentDate: "2026-10-01", incidentTime: "" })).toBeTruthy();
+    expect(validateComplaint({ category: "DAMAGED", description: "ok", photos: [], incidentDate: "2099-01-01", incidentTime: "09:30" })).toBeTruthy();
+  });
+  it("creates complaints with the incident date/time, status NEW and sequential references", () => {
     const before = listComplaints().length;
-    const a = createComplaint({ orderId: "ord-24081", category: "MISSING_ITEM", description: "One item was missing from the box.", photos: [] });
-    const b = createComplaint({ orderId: "ORD-24077", category: "OTHER", description: "The courier left it in the rain.", photos: [{ name: "wet.jpg", size: 1200, type: "image/jpeg" }] });
+    const a = createComplaint({ orderId: "ord-24081", category: "MISSING_ITEM", description: "One item was missing from the box.", photos: [], incidentDate: "2026-10-18", incidentTime: "14:05" });
+    const b = createComplaint({ orderId: "ORD-24077", category: "OTHER", description: "The courier left it in the rain.", photos: [{ name: "wet.jpg", size: 1200, type: "image/jpeg" }], incidentDate: "2026-10-19", incidentTime: "08:40" });
     expect(a.status).toBe("NEW");
     expect(a.orderId).toBe("ORD-24081");
+    expect(a.incidentDate).toBe("2026-10-18");
+    expect(a.incidentTime).toBe("14:05");
     expect(a.reference).toMatch(/^CMP-2026-\d{5}$/);
     expect(Number(b.reference.slice(-5))).toBe(Number(a.reference.slice(-5)) + 1);
     expect(listComplaints().length).toBe(before + 2);
