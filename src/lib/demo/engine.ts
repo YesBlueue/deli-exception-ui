@@ -77,7 +77,8 @@ export function ingestEvent(db: DB, carrierId: CarrierId, raw: Record<string, un
     return { ok: true, outcome: "HISTORY_ONLY", message: "Routine scan added to shipment history only." };
   }
 
-  const type = exceptionTypeFor(n.type)!;
+  const type = exceptionTypeFor(n.type);
+  if (!type) return { ok: false, error: "Unsupported actionable event." };
   if (!existing) {
     const id = uid("exc");
     db.exceptions.push({
@@ -112,8 +113,10 @@ export function ingestEvent(db: DB, carrierId: CarrierId, raw: Record<string, un
 }
 
 export function reevaluate(db: DB, exceptionId: string, now = new Date()) {
-  const x = db.exceptions.find((e) => e.id === exceptionId)!;
-  const s = db.shipments.find((sh) => sh.id === x.shipmentId)!;
+  const x = db.exceptions.find((e) => e.id === exceptionId);
+  if (!x) return;
+  const s = db.shipments.find((sh) => sh.id === x.shipmentId);
+  if (!s) return;
   const evs = db.events.filter((e) => e.shipmentId === s.id);
   const r = evaluatePriority(s, evs, now);
   const changed = r.priority !== x.priority;
@@ -135,7 +138,7 @@ function summarize(type: string, carrier: CarrierId) {
     FAILED_DELIVERY: `${c} attempted delivery but the recipient was unavailable.`,
     LOST: `${c} reports the parcel as missing.`,
     DAMAGED: `${c} reports the parcel was damaged in transit.`,
-  }[type]!;
+  }[type] ?? "Carrier exception reported.";
 }
 
 function log(db: DB, exceptionId: string, actor: string, from: WorkflowStatus, to: WorkflowStatus, reason: string, now: Date) {
@@ -150,5 +153,11 @@ export function transition(db: DB, exceptionId: string, to: WorkflowStatus, reas
   log(db, x.id, actor, x.workflowStatus, to, reason.trim(), now);
   x.workflowStatus = to;
   x.resolvedAt = to === "RESOLVED" ? now.toISOString() : null;
+  return { ok: true as const };
+}
+
+export function addExceptionAction(db: DB, exceptionId: string, type: "NOTE" | "CARRIER_REQUEST", text: string, actor: string, now = new Date()) {
+  if (!text.trim() || !db.exceptions.some((e) => e.id === exceptionId)) return { ok: false as const, error: "Add text to an existing exception." };
+  db.actions.push({ id: uid("act"), exceptionId, actor, type, summary: type === "NOTE" ? `Internal note: ${text.trim()}` : `Carrier inquiry (simulated): ${text.trim()}`, payload: text.trim(), approval: "NOT_REQUIRED", simulated: true, at: now.toISOString() });
   return { ok: true as const };
 }

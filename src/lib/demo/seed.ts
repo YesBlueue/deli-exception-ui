@@ -44,7 +44,8 @@ export function seed(nowMs = Date.now()): DB {
 
   let n = 0;
   const ev = (sid: string, t: NormalizedEventType, h: number | null) => {
-    const s = db.shipments.find((x) => x.id === sid)!;
+    const s = db.shipments.find((x) => x.id === sid);
+    if (!s) throw Error("Missing seed shipment.");
     ingestEvent(db, s.carrierId, raw(s.carrierId, s.trackingId, t, h === null ? null : ago(h), n++), h === null ? now : ago(h));
   };
 
@@ -59,7 +60,7 @@ export function seed(nowMs = Date.now()): DB {
   ev("shp_09", "SHIPMENT_CREATED", 108); ev("shp_09", "DAMAGED", 9);
 
   // Re-evaluate everything against "now" so delay durations are current.
-  const exc = (sid: string) => db.exceptions.find((x) => x.shipmentId === sid)!;
+  const exc = (sid: string) => { const x = db.exceptions.find((x) => x.shipmentId === sid); if (!x) throw Error("Missing seed exception."); return x; };
   for (const x of db.exceptions) reevaluate(db, x.id, now);
 
   const sys = "Thida Aung (CS rep)";

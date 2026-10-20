@@ -48,7 +48,7 @@ function CustomerComplaintApp() {
   const [record, setRecord] = useState<ComplaintRecord | null>(null);
   const [viewed, setViewed] = useState<string | null>(null);
   const [setupError, setSetupError] = useState("");
-  useEffect(() => { if (!user) return; try { ensureDemoOrders(user); setSetupError(""); } catch { setSetupError("Demo orders could not be saved. Allow browser storage and try again."); } }, [user?.id, db?.version]);
+  useEffect(() => { if (!user) return; try { ensureDemoOrders(user); setSetupError(""); } catch { setSetupError("Demo orders could not be saved. Allow browser storage and try again."); } }, [user?.id, db?.version, db?.shipments.length]);
   const history = user && db ? getCustomerHistory(db, user.id) : [];
   const unread = history.filter((c) => c.unread).length;
   const navigate = useNavigate();
@@ -118,10 +118,9 @@ function OrderStep({ customerId, onFound }: { customerId: string; onFound: (orde
   const submit = async () => {
     setError("");
     setChecking(true);
-    const result = await lookupOrderAsync(customerId, value);
-    setChecking(false);
-    if (result.ok) onFound(result.orderId);
-    else setError(result.message);
+    try { const result = await lookupOrderAsync(customerId, value); if (result.ok) onFound(result.orderId); else setError(result.message); }
+    catch { setError("Unable to read demo orders. Please try again."); }
+    finally { setChecking(false); }
   };
 
   return (
@@ -397,7 +396,7 @@ function ConfirmationStep({ record, onReset }: { record: ComplaintRecord | null;
         </div>
         <div className="flex items-start justify-between gap-4">
           <dt className="shrink-0 text-muted-foreground">Description</dt>
-          <dd className="line-clamp-3 text-right">{record.description}</dd>
+          <dd className="min-w-0 whitespace-pre-wrap break-words text-right">{record.description}</dd>
         </div>
         <div className="flex items-center justify-between gap-4">
           <dt className="text-muted-foreground">Photo evidence</dt>
