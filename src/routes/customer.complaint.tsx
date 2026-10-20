@@ -1,4 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { CustomerAccountForm } from "@/components/customer/CustomerAccountForm";
+import { useCustomerAuth } from "@/components/customer/CustomerAuthProvider";
 import { ArrowLeft, Camera, CheckCircle2, ImagePlus, Loader2, PackageSearch, ShieldCheck, X } from "lucide-react";
 import { useRef, useState, type DragEvent } from "react";
 import { Button } from "@/components/ui/button";
@@ -22,7 +26,7 @@ export const Route = createFileRoute("/customer/complaint")({
   head: () => ({
     meta: [
       { title: "Report an Order Problem — Shwe Market Support" },
-      { name: "description", content: "Submit a complaint about your order. No account or login needed." },
+      { name: "description", content: "Sign in or create a customer account to report an order problem to Shwe Market Support." },
       { name: "robots", content: "noindex" },
       { property: "og:title", content: "Report an Order Problem — Shwe Market Support" },
       { property: "og:description", content: "Submit a complaint about your order in a few steps." },
@@ -37,6 +41,9 @@ type Step = "order" | "form" | "done";
 interface Photo { name: string; size: number; type: string; dataUrl: string }
 
 function CustomerComplaintApp() {
+  const { user, loading } = useCustomerAuth();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [step, setStep] = useState<Step>("order");
   const [orderId, setOrderId] = useState("");
 
@@ -45,15 +52,27 @@ function CustomerComplaintApp() {
     setOrderId("");
   };
 
+  const signOut = async () => {
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    const { error } = await supabase.auth.signOut();
+    if (error) return;
+    lastSubmission = null;
+    reset();
+    await navigate({ to: "/customer/complaint", replace: true });
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="border-b bg-card">
         <div className="mx-auto flex max-w-lg items-center gap-2 px-4 py-4">
           <PackageSearch className="size-5 text-primary" />
           <span className="text-sm font-semibold tracking-tight">Shwe Market Support</span>
+          {user && <Button variant="ghost" size="sm" className="ml-auto" onClick={() => void signOut()}>Sign out</Button>}
         </div>
       </header>
       <main className="mx-auto w-full max-w-lg flex-1 px-4 py-8 sm:py-12">
+        {loading ? <Loader2 className="mx-auto animate-spin text-muted-foreground" aria-label="Loading account" /> : !user ? <CustomerAccountForm /> : <div key={user.id}>
         {step === "order" && (
           <OrderStep
             onFound={(id) => {
@@ -70,9 +89,10 @@ function CustomerComplaintApp() {
           />
         )}
         {step === "done" && <ConfirmationStep onReset={reset} />}
+        </div>}
       </main>
       <footer className="border-t py-4 text-center text-xs text-muted-foreground">
-        Demo prototype — submissions are simulated and stored only in this browser session.
+        Customer accounts are live. Order lookup and complaint submissions are still simulated.
       </footer>
     </div>
   );
@@ -103,7 +123,7 @@ function OrderStep({ onFound }: { onFound: (orderId: string) => void }) {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Report an Order Problem</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Something wrong with your delivery? Tell us here and our support team will look into it. No account or login needed.
+          Something wrong with your delivery? Tell us here and our support team will look into it.
         </p>
       </div>
       <div className="space-y-1.5">
