@@ -33,6 +33,9 @@ describe("customer complaint app rules", () => {
     expect(validateComplaint({ category: "DAMAGED", description: "ok", photos: [], incidentDate: "", incidentTime: "09:30" })).toBeTruthy();
     expect(validateComplaint({ category: "DAMAGED", description: "ok", photos: [], incidentDate: "2026-10-01", incidentTime: "" })).toBeTruthy();
     expect(validateComplaint({ category: "DAMAGED", description: "ok", photos: [], incidentDate: "2099-01-01", incidentTime: "09:30" })).toBeTruthy();
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+    expect(validateComplaint({ category: "DAMAGED", description: "ok", photos: [], incidentDate: todayStr, incidentTime: "09:30" })).toBeNull();
   });
   it("creates complaints with the incident date/time, status NEW and sequential references", () => {
     const before = listComplaints().length;
