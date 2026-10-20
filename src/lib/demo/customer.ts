@@ -62,3 +62,10 @@ export function addInternalComplaintNote(db: DB, id: string, note: string, actor
   db.requestActivity.push({ id: uid("ra"), requestId: id, actor, text: "Internal staff note added.", internalNote: note.trim(), at: now.toISOString() });
   return { ok: true as const };
 }
+/** Sends a staff-approved message to the customer by reference; reuses the shared response/unread rules. */
+export function applySupportResponse(db: DB, reference: string, response: string, status: ComplaintStatus, actor: string, now = new Date()) {
+  if (!response.trim()) return { ok: false as const, error: "Write a message before sending it to the customer." };
+  const c = db.complaints.find((x) => x.reference === reference);
+  if (!c) return { ok: false as const, error: "Complaint not found." };
+  return updateComplaint(db, c.id, status, response, "", actor, now);
+}

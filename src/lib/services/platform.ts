@@ -4,8 +4,8 @@ import { createComplaint, lookupOrder, COMPLAINT_APP_CONFIG, type ComplaintCateg
 import type { CustomerIdentity } from "@/lib/demo/customer-auth";
 import { submitComplaint as submitAccessComplaint } from "@/lib/demo/customer";
 export { useDB as usePlatformData, mutate as updatePlatformData, resetDemo } from "./demo-store";
-export { getCustomerOrder, getCustomerHistory, markComplaintSeen, ensureCustomerLink, submitComplaint, updateComplaint, addInternalComplaintNote } from "@/lib/demo/customer";
-export { applySupportResponse, COMPLAINT_APP_CATEGORIES, COMPLAINT_APP_CONFIG, formatSubmissionTime, photoRequired, validateComplaint } from "@/lib/demo/complaint-app";
+export { applySupportResponse, getCustomerOrder, getCustomerHistory, markComplaintSeen, ensureCustomerLink, submitComplaint, updateComplaint, addInternalComplaintNote } from "@/lib/demo/customer";
+export { COMPLAINT_APP_CATEGORIES, COMPLAINT_APP_CONFIG, formatSubmissionTime, photoRequired, validateComplaint } from "@/lib/demo/complaint-app";
 export type { ComplaintCategory, ComplaintRecord } from "@/lib/demo/complaint-app";
 export { addExceptionAction } from "@/lib/demo/engine";
 const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
