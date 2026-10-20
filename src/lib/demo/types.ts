@@ -40,7 +40,7 @@ export interface Address {
   street: string;
   township: string;
   city: string;
-  instructions?: string;
+  instructions?: string | undefined;
 }
 
 export interface Shipment {

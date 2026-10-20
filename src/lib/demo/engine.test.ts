@@ -57,7 +57,7 @@ describe("lifecycle", () => {
   });
   it("transition requires a reason", () => {
     const db = seed(now.getTime());
-    expect(transition(db, db.exceptions[0].id, "IN_PROGRESS", " ", "me").ok).toBe(false);
+    expect(transition(db, db.exceptions[0]!.id, "IN_PROGRESS", " ", "me").ok).toBe(false);
   });
 });
 
