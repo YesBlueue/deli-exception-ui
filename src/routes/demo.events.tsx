@@ -63,15 +63,6 @@ function Simulator() {
     if (!r.ok) toast.error("Simulator rejected the event");
   };
 
-  const linkTokens = db
-    ? ([
-        ["tok_valid", "Valid — Kyaw Zin Htet (invalid address)"],
-        ["tok_delivered", "Delivered shipment — Zaw Lin Oo"],
-        ["tok_expired", "Expired link"],
-        ["tok_revoked", "Revoked link"],
-      ] as [string, string][]).filter(([id]) => db.demoRawTokens[id])
-    : [];
-
   return (
     <AppShell>
       <div className="mx-auto max-w-5xl space-y-6">
@@ -138,18 +129,6 @@ function Simulator() {
                 )}
               </section>
 
-              <section className="rounded-lg border bg-card p-5 shadow-card">
-                <h2 className="text-sm font-semibold">Customer address-link test cases</h2>
-                <ul className="mt-3 space-y-2 text-sm">
-                  {linkTokens.map(([id, label]) => (
-                    <li key={id}>
-                      <a className="text-primary underline-offset-2 hover:underline" href={`/correct-address/${db.demoRawTokens[id]}`} target="_blank" rel="noreferrer">{label}</a>
-                    </li>
-                  ))}
-                  <li><a className="text-primary underline-offset-2 hover:underline" href="/correct-address/not-a-real-token" target="_blank" rel="noreferrer">Invalid link</a></li>
-                </ul>
-                <p className="mt-3 text-xs text-muted-foreground">To test “delivered while editing”: open the valid link, then submit a Delivered event for ORD-24077 (Irrawaddy) here before pressing submit on the form.</p>
-              </section>
             </div>
           </div>
         )}
