@@ -1,8 +1,8 @@
 /** Browser adapters only. Replace these adapters with hosted queries during migration. */
-import { mutate, readPlatformSnapshot } from "@/lib/demo/store";
+import { mutate, readPlatformSnapshot } from "./demo-store";
 import { createComplaint, lookupOrder, COMPLAINT_APP_CONFIG, type ComplaintCategory, type ComplaintPhotoMeta } from "@/lib/demo/complaint-app";
 import type { CustomerIdentity } from "@/lib/demo/customer-auth";
-export { useDB as usePlatformData, mutate as updatePlatformData, resetDemo } from "@/lib/demo/store";
+export { useDB as usePlatformData, mutate as updatePlatformData, resetDemo } from "./demo-store";
 export { getCustomerOrder, getCustomerHistory, markComplaintSeen, ensureCustomerLink, submitComplaint, updateComplaint, addInternalComplaintNote } from "@/lib/demo/customer";
 export { COMPLAINT_APP_CATEGORIES, COMPLAINT_APP_CONFIG, formatSubmissionTime, photoRequired, validateComplaint } from "@/lib/demo/complaint-app";
 export type { ComplaintCategory, ComplaintRecord } from "@/lib/demo/complaint-app";

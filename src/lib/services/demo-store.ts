@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
-import { DB_VERSION, seed } from "./seed";
-import type { DB } from "./types";
+import { DB_VERSION, seed } from "@/lib/demo/seed";
+import type { DB } from "@/lib/demo/types";
 
 const KEY = "deop-demo-db";
 let state: DB | null = null;
