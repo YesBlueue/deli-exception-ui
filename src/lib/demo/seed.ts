@@ -1,5 +1,5 @@
 import { CURRENT_ORG } from "./config";
-import { hashToken, ingestEvent, transition } from "./engine";
+import { hashToken, ingestEvent, reevaluate, transition } from "./engine";
 import type { CarrierId, DB, NormalizedEventType, Shipment } from "./types";
 
 export const DB_VERSION = 3;
@@ -59,8 +59,7 @@ export function seed(nowMs = Date.now()): DB {
 
   // Re-evaluate everything against "now" so delay durations are current.
   const exc = (sid: string) => db.exceptions.find((x) => x.shipmentId === sid)!;
-  for (const x of db.exceptions) x.openedAt = x.openedAt; // keep
-  import_reeval(db, now);
+  for (const x of db.exceptions) reevaluate(db, x.id, now);
 
   const sys = "Thida Aung (CS rep)";
   transition(db, exc("shp_01").id, "ACTION_REQUIRED", "High-value delay needs customer update.", "system", ago(29));
@@ -84,7 +83,3 @@ export function seed(nowMs = Date.now()): DB {
   return db;
 }
 
-import { reevaluate } from "./engine";
-function import_reeval(db: DB, now: Date) {
-  for (const x of db.exceptions) reevaluate(db, x.id, now);
-}
