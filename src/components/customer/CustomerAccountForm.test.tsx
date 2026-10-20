@@ -15,7 +15,7 @@ function credentials(signup = false) {
   }
   fireEvent.change(screen.getByLabelText("Phone number"), { target: { value: "09123456789" } });
   fireEvent.change(screen.getByLabelText("Password", { exact: true }), { target: { value: "Example-pass-123" } });
-  fireEvent.click(screen.getByRole("button", { name: signup ? "Sign Up" : "Log In", exact: true }));
+  fireEvent.click(screen.getByRole("button", { name: signup ? "Sign Up" : "Log In" }));
 }
 
 describe("customer account transitions", () => {

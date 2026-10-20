@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { signInSchema, signUpSchema } from "@/lib/services/customer-auth-validation";
 
-function accountError(error: { message: string; code?: string }, signup: boolean) {
+function accountError(error: { message: string; code?: string | undefined }, signup: boolean) {
   if (error.code === "phone_provider_disabled" || /phone.*(disabled|not enabled|not supported)/i.test(error.message)) {
     return "Phone accounts are not available yet. Please contact support to enable phone registration and login.";
   }
