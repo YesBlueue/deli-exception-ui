@@ -33,11 +33,6 @@ export const Route = createFileRoute("/customer/complaint")({
 type Step = "order" | "form" | "done";
 interface Photo { name: string; size: number; type: string; dataUrl: string }
 
-const todayLocal = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-};
-
 function CustomerComplaintApp() {
   const [step, setStep] = useState<Step>("order");
   const [orderId, setOrderId] = useState("");
@@ -143,8 +138,6 @@ function OrderStep({ onFound }: { onFound: (orderId: string) => void }) {
 function ComplaintStep({ orderId, onBack, onSubmitted }: { orderId: string; onBack: () => void; onSubmitted: () => void }) {
   const [category, setCategory] = useState<ComplaintCategory | "">("");
   const [description, setDescription] = useState("");
-  const [incidentDate, setIncidentDate] = useState(todayLocal());
-  const [incidentTime, setIncidentTime] = useState("");
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -203,8 +196,6 @@ function ComplaintStep({ orderId, onBack, onSubmitted }: { orderId: string; onBa
       orderId,
       category,
       description,
-      incidentDate,
-      incidentTime,
       photos: photos.map(({ name, size, type }) => ({ name, size, type })),
     });
     setSubmitting(false);
@@ -245,24 +236,6 @@ function ComplaintStep({ orderId, onBack, onSubmitted }: { orderId: string; onBa
             ))}
           </SelectContent>
         </Select>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <Label htmlFor="incident-date">Date it happened</Label>
-          <Input
-            id="incident-date"
-            type="date"
-            max={todayLocal()}
-            required
-            value={incidentDate}
-            onChange={(e) => setIncidentDate(e.target.value)}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="incident-time">Approximate time</Label>
-          <Input id="incident-time" type="time" required value={incidentTime} onChange={(e) => setIncidentTime(e.target.value)} />
-        </div>
       </div>
 
       <div className="space-y-1.5">
@@ -355,11 +328,12 @@ function ComplaintStep({ orderId, onBack, onSubmitted }: { orderId: string; onBa
 /** Last simulated submission, shown on the confirmation screen. */
 let lastSubmission: ComplaintRecord | null = null;
 
-const incidentFormatter = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" });
-const formatIncident = (record: ComplaintRecord) => {
-  const d = new Date(`${record.incidentDate}T${record.incidentTime}`);
-  return Number.isNaN(d.getTime()) ? `${record.incidentDate} ${record.incidentTime}` : incidentFormatter.format(d);
-};
+const formatSubmission = (record: ComplaintRecord) =>
+  new Intl.DateTimeFormat("en-GB", {
+    day: "numeric", month: "short", year: "numeric",
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
+    hourCycle: "h23", timeZoneName: "short",
+  }).format(new Date(record.submittedAt));
 
 function ConfirmationStep({ onReset }: { onReset: () => void }) {
   const record = lastSubmission;
@@ -385,8 +359,8 @@ function ConfirmationStep({ onReset }: { onReset: () => void }) {
           <dd>{COMPLAINT_APP_CATEGORIES[record.category]}</dd>
         </div>
         <div className="flex items-start justify-between gap-4">
-          <dt className="shrink-0 text-muted-foreground">When it happened</dt>
-          <dd className="text-right">{formatIncident(record)}</dd>
+          <dt className="shrink-0 text-muted-foreground">Report submitted</dt>
+          <dd className="text-right">{formatSubmission(record)}</dd>
         </div>
         <div className="flex items-start justify-between gap-4">
           <dt className="shrink-0 text-muted-foreground">Description</dt>

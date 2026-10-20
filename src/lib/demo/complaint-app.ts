@@ -47,9 +47,6 @@ export interface ComplaintPhotoMeta {
 export interface ComplaintRecord {
   reference: string;
   orderId: string;
-  /** Date (YYYY-MM-DD) and approximate time (HH:MM) the issue happened, as entered by the customer. */
-  incidentDate: string;
-  incidentTime: string;
   category: ComplaintCategory;
   description: string;
   photos: ComplaintPhotoMeta[];
@@ -74,19 +71,8 @@ export function lookupOrder(rawOrderId: string): LookupResult {
   return { ok: true, orderId };
 }
 
-export function validateComplaint(input: { category: string; description: string; photos: ComplaintPhotoMeta[]; incidentDate: string; incidentTime: string }): string | null {
+export function validateComplaint(input: { category: string; description: string; photos: ComplaintPhotoMeta[] }): string | null {
   if (!(input.category in COMPLAINT_APP_CATEGORIES)) return "Please choose a complaint category.";
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.incidentDate) || Number.isNaN(new Date(`${input.incidentDate}T00:00:00`).getTime())) {
-    return "Please enter the date the issue happened.";
-  }
-  if (!/^\d{2}:\d{2}$/.test(input.incidentTime)) {
-    return "Please enter the approximate time the issue happened.";
-  }
-  const today = new Date();
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-  if (input.incidentDate > todayStr) {
-    return "The date can't be in the future. Please check the date and try again.";
-  }
   if (input.photos.length > COMPLAINT_APP_CONFIG.maxPhotos) return `You can attach up to ${COMPLAINT_APP_CONFIG.maxPhotos} photos.`;
   return null;
 }
@@ -100,15 +86,13 @@ export function listComplaints(): readonly ComplaintRecord[] {
 }
 
 export function createComplaint(
-  input: { orderId: string; category: ComplaintCategory; description: string; photos: ComplaintPhotoMeta[]; incidentDate: string; incidentTime: string },
+  input: { orderId: string; category: ComplaintCategory; description: string; photos: ComplaintPhotoMeta[] },
   now = new Date(),
 ): ComplaintRecord {
   const reference = `CMP-2026-${String(referenceCounter++).padStart(5, "0")}`;
   const record: ComplaintRecord = {
     reference,
     orderId: normalizeOrderId(input.orderId),
-    incidentDate: input.incidentDate,
-    incidentTime: input.incidentTime,
     category: input.category,
     description: input.description.trim(),
     photos: input.photos,
@@ -128,9 +112,10 @@ export async function lookupOrderAsync(rawOrderId: string): Promise<LookupResult
 }
 
 /** Simulated server submission — replace with an API call later. */
-export async function submitComplaintAsync(input: { orderId: string; category: ComplaintCategory; description: string; photos: ComplaintPhotoMeta[]; incidentDate: string; incidentTime: string }): Promise<{ ok: true; record: ComplaintRecord } | { ok: false; error: string }> {
+export async function submitComplaintAsync(input: { orderId: string; category: ComplaintCategory; description: string; photos: ComplaintPhotoMeta[] }): Promise<{ ok: true; record: ComplaintRecord } | { ok: false; error: string }> {
+  const submittedAt = new Date();
   await wait(COMPLAINT_APP_CONFIG.submitDelayMs);
   const error = validateComplaint(input);
   if (error) return { ok: false, error };
-  return { ok: true, record: createComplaint(input) };
+  return { ok: true, record: createComplaint(input, submittedAt) };
 }

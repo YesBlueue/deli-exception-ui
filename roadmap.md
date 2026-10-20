@@ -7,3 +7,4 @@
 - [x] Verify customer-to-staff flows, existing tests and page metadata.
 - [x] Add standalone no-login customer complaint app at /customer/complaint.
 - [x] Remove customer address change requests and package tracking; customer experience is complaints-only.
+- [ ] Replace manual incident date/time with an automatic submission timestamp and verify the confirmation.
