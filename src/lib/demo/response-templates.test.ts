@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { interpolateTemplate, RESPONSE_TEMPLATES } from "./response-templates";
 import { seed } from "./seed";
-import { applySupportResponse, createComplaint } from "./complaint-app";
-import { getCustomerHistory, markComplaintSeen } from "./customer";
+import { createComplaint } from "./complaint-app";
+import { applySupportResponse, getCustomerHistory, markComplaintSeen } from "./customer";
 const vars = { customerName: "Mya", orderId: "ORD-1", reference: "CMP-2026-00124", reason: "the seal was intact.", carrier: "GSX" };
 describe("response templates", () => {
   it("has six templates", () => expect(RESPONSE_TEMPLATES).toHaveLength(6));
