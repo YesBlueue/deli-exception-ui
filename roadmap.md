@@ -13,8 +13,9 @@
 - [x] Retire disabled phone login in favor of requested email/password cloud accounts.
 - [x] Remove the failing account-settings preflight and verify account request handling (real registration now returns the disabled-phone-provider response).
 - [x] Show Log In first with Sign Up below; test session-bearing signup/login and sessionless phone-verification outcomes leading to reporting. Live signed-in verification remains blocked below.
-- [ ] Add isolated salted-hash demo accounts, persistent sessions and explicit cloud-error fallback.
-- [ ] Unify persistent complaint records, ownership gates, photos, references, history and unread support updates.
-- [ ] Complete staff complaint filters, evidence and separate public/private composers.
-- [ ] Harden SSR-safe persistence, confirmed reset, operations rules and migration documentation.
-- [ ] Run tests and verify customer/staff flows, reload persistence and 390px layout; report cloud signup limitations.
+- [x] Add isolated salted-hash demo accounts, persistent sessions and explicit cloud-error fallback.
+- [x] Unify persistent complaint records, ownership gates, photos, references, history and unread support updates.
+- [x] Complete staff complaint filters, evidence and separate public/private composers.
+- [x] Harden SSR-safe persistence, confirmed reset, operations rules and migration documentation.
+- [x] Run 74 tests and verify simulated customer/staff flows, saved image evidence, reload persistence, unread clearing, reset and 390px layout.
+- [ ] Verify live Cloud signup/login end to end — blocked: no existing account/session; reserved test email rejected. A real customer must confirm their email before live verification.
