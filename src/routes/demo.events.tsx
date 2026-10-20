@@ -40,7 +40,10 @@ function Simulator() {
   const ship = shipments.find((s) => s.id === shipmentId);
 
   const generate = () => {
-    if (!ship) return toast.error("Pick a shipment first");
+    if (!ship) {
+      toast.error("Pick a shipment first");
+      return;
+    }
     setPayload(JSON.stringify(CARRIERS[carrier].sample(type, ship.trackingId, withTs), null, 2));
     setResult(null);
   };
@@ -59,12 +62,12 @@ function Simulator() {
   };
 
   const linkTokens = db
-    ? [
+    ? ([
         ["tok_valid", "Valid — Kyaw Zin Htet (invalid address)"],
         ["tok_delivered", "Delivered shipment — Zaw Lin Oo"],
         ["tok_expired", "Expired link"],
         ["tok_revoked", "Revoked link"],
-      ].filter(([id]) => db.demoRawTokens[id])
+      ] as [string, string][]).filter(([id]) => db.demoRawTokens[id])
     : [];
 
   return (
