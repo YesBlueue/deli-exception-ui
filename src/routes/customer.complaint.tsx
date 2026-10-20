@@ -92,7 +92,7 @@ function CustomerComplaintApp() {
         </div>}
       </main>
       <footer className="border-t py-4 text-center text-xs text-muted-foreground">
-        Customer accounts are live. Order lookup and complaint submissions are still simulated.
+        Order lookup and complaint submissions are simulated. Account access requires phone sign-in to be enabled.
       </footer>
     </div>
   );

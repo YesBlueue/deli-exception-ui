@@ -9,5 +9,6 @@
 - [x] Remove customer address change requests and package tracking; customer experience is complaints-only.
 - [x] Replace manual incident date/time with an automatic submission timestamp and verify the confirmation.
 - [x] Show the report timestamp as 12-hour AM/PM with no timezone suffix.
-- [ ] Add real customer sign-up/sign-in before standalone order reporting, with saved name and phone.
-- [ ] Verify account creation, sign-in, sign-out and the existing complaint flow; report any phone-service setup blocker.
+- [x] Add customer account forms and managed phone/password integration before standalone order reporting, with owner-only saved profiles.
+- [ ] Activate phone authentication and SMS verification in hosted Phone settings (requires user setup).
+- [ ] Verify account creation, saved profiles, sign-in, sign-out and signed-in complaint flow after phone activation; form validation and signed-out gating already verified.
