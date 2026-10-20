@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, Info, Send } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { ExceptionComposers } from "@/components/ops/ExceptionComposers";
+import { SlaCountdown } from "@/components/ops/SlaCountdown";
 import { AppShell } from "@/components/ops/AppShell";
 import { PriorityBadge, SimBadge, StatusBadge, TYPE_LABEL, ago, fmtTime } from "@/components/ops/badges";
 import {
@@ -131,7 +133,7 @@ function Detail() {
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
               <PriorityBadge p={x.priority} />
-              <StatusBadge s={x.workflowStatus} />
+              <StatusBadge s={x.workflowStatus} /><SlaCountdown exception={x} />
               <span className="text-xs text-muted-foreground">Opened {ago(x.openedAt)}</span>
             </div>
             <h1 className="text-xl font-semibold">{TYPE_LABEL[x.type]} · <span className="font-mono text-base">{s.orderId}</span></h1>
@@ -186,6 +188,7 @@ function Detail() {
               </Card>
             )}
 
+            <ExceptionComposers id={x.id} />
             <Card title="Activity & audit trail">
               {timeline.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No activity yet.</p>

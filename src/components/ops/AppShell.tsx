@@ -3,7 +3,7 @@ import { FlaskConical, Inbox, LayoutDashboard, MessageSquare, PackageSearch, Rot
 import type { ReactNode } from "react";
 import { toast } from "sonner";
 import { CURRENT_USER } from "@/lib/demo/config";
-import { resetDemo } from "@/lib/services/platform";
+import { ResetDemoButton } from "./ResetDemoButton";
 import { Button } from "@/components/ui/button";
 
 const NAV = [
@@ -39,15 +39,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           ))}
         </nav>
         <div className="space-y-2 border-t border-sidebar-border p-3 text-xs">
-          <Button variant="ghost"
-            onClick={() => {
-              resetDemo();
-              toast.success("Demo data reset");
-            }}
-            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-          >
-            <RotateCcw className="h-3.5 w-3.5" aria-hidden /> Reset demo data
-          </Button>
+          <ResetDemoButton />
           <div className="px-3 text-sidebar-muted">Simulated staff role</div>
           <div className="px-3 font-medium text-sidebar-accent-foreground">{CURRENT_USER}</div>
         </div>
@@ -62,8 +54,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           ))}
         </header>
         <div className="border-b border-demo/20 bg-demo-soft px-4 py-1.5 text-center text-xs text-demo md:px-8">
-          UI prototype — fictional data stored in this browser. No real messages are sent and no carriers are contacted.
+          Local Demo Mode — fictional records; no messages or carrier contact.
         </div>
+        <div className="px-4 md:hidden"><ResetDemoButton /></div>
         <main className="flex-1 px-4 py-6 md:px-8">{children}</main>
       </div>
     </div>

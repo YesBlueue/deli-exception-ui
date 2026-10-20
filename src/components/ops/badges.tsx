@@ -28,6 +28,7 @@ const S: Record<WorkflowStatus, string> = {
   IN_PROGRESS: "bg-accent text-accent-foreground border-primary/30",
   RESOLVED: "bg-success-soft text-success border-success/30",
   REOPENED: "bg-high-soft text-high border-high/30",
+  IGNORED: "bg-muted text-muted-foreground border-border",
 };
 
 export function StatusBadge({ s }: { s: WorkflowStatus }) {

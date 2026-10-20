@@ -11,11 +11,12 @@ const MGL: Partial<Record<NormalizedEventType, string>> = { SHIPMENT_CREATED: "1
 function raw(c: CarrierId, tn: string, t: NormalizedEventType, at: Date | null, n: number) {
   if (c === "gsx") return { awb: tn, evt: GSX[t], evt_id: `GSX-SEED-${tn}-${n}`, ...(at ? { ts: at.toISOString() } : {}) };
   if (c === "irw") return { tracking_number: tn, status: IRW[t], ...(at ? { occurred_at: Math.floor(at.getTime() / 1000) } : {}) };
+  const localAt = at ? new Date(at.getTime() + 390 * 60000) : null;
   const p = (x: number) => String(x).padStart(2, "0");
   return {
     consignment: { no: tn },
     event: { code: Number(MGL[t]), ref: `MSEED${tn}${n}` },
-    ...(at ? { when: `${at.getFullYear()}-${p(at.getMonth() + 1)}-${p(at.getDate())} ${p(at.getHours())}:${p(at.getMinutes())}` } : {}),
+    ...(localAt ? { when: `${localAt.getUTCFullYear()}-${p(localAt.getUTCMonth() + 1)}-${p(localAt.getUTCDate())} ${p(localAt.getUTCHours())}:${p(localAt.getUTCMinutes())}` } : {}),
   };
 }
 

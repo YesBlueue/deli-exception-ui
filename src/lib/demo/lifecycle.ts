@@ -1,6 +1,6 @@
 import type { WorkflowStatus } from "./types";
 
-const ACTIVE: WorkflowStatus[] = ["IN_PROGRESS", "AWAITING_CUSTOMER", "AWAITING_CARRIER", "RESOLVED"];
+const ACTIVE: WorkflowStatus[] = ["IN_PROGRESS", "AWAITING_CUSTOMER", "AWAITING_CARRIER", "RESOLVED", "IGNORED"];
 
 export const TRANSITIONS: Record<WorkflowStatus, WorkflowStatus[]> = {
   NEW: ["ACTION_REQUIRED", ...ACTIVE],
@@ -9,6 +9,7 @@ export const TRANSITIONS: Record<WorkflowStatus, WorkflowStatus[]> = {
   AWAITING_CUSTOMER: ["IN_PROGRESS", "AWAITING_CARRIER", "RESOLVED"],
   AWAITING_CARRIER: ["IN_PROGRESS", "AWAITING_CUSTOMER", "RESOLVED"],
   RESOLVED: ["REOPENED"],
+  IGNORED: ["REOPENED"],
   REOPENED: ["ACTION_REQUIRED", ...ACTIVE],
 };
 
@@ -24,4 +25,5 @@ export const STATUS_LABEL: Record<WorkflowStatus, string> = {
   IN_PROGRESS: "In progress",
   RESOLVED: "Resolved",
   REOPENED: "Reopened",
+  IGNORED: "Ignored",
 };

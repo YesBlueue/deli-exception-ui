@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { CARRIERS } from "@/lib/demo/carriers";
 import { STATUS_LABEL } from "@/lib/demo/lifecycle";
+import { SlaCountdown } from "@/components/ops/SlaCountdown";
+import { isActiveException } from "@/lib/demo/sla";
 import { suggestedAction } from "@/lib/demo/priority";
 import { usePlatformData as useDB } from "@/lib/services/platform";
 import type { Priority, WorkflowStatus } from "@/lib/demo/types";
@@ -42,9 +44,10 @@ function Dashboard() {
   const rows = useMemo(() => {
     if (!db) return [];
     return db.exceptions
-      .map((x) => ({ x, s: db.shipments.find((s) => s.id === x.shipmentId)! }))
+      .map((x) => ({ x, s: db.shipments.find((s) => s.id === x.shipmentId) }))
       .filter(({ x, s }) => {
-        if (fs === "open" ? x.workflowStatus === "RESOLVED" : fs !== ALL && x.workflowStatus !== fs) return false;
+        if (!s) return false;
+        if (fs === "open" ? !isActiveException(x.workflowStatus) : fs !== ALL && x.workflowStatus !== fs) return false;
         if (fp !== ALL && x.priority !== fp) return false;
         if (ft !== ALL && x.type !== ft) return false;
         if (fc !== ALL && s.carrierId !== fc) return false;
@@ -57,7 +60,7 @@ function Dashboard() {
 
   const stats = useMemo(() => {
     if (!db) return null;
-    const open = db.exceptions.filter((x) => x.workflowStatus !== "RESOLVED");
+    const open = db.exceptions.filter((x) => isActiveException(x.workflowStatus));
     const today = new Date().toDateString();
     return {
       open: open.length,
@@ -137,7 +140,7 @@ function Dashboard() {
                 <table className="w-full text-sm">
                   <thead className="bg-muted/60 text-left text-xs uppercase tracking-wide text-muted-foreground">
                     <tr>
-                      {["Priority", "Order", "Customer", "Carrier", "Exception", "Since", "Status", "Suggested next action"].map((h) => (
+                      {["Priority", "Order", "Customer", "Carrier", "Exception", "SLA", "Status", "Suggested next action"].map((h) => (
                         <th key={h} className="px-4 py-2.5 font-medium">{h}</th>
                       ))}
                     </tr>
@@ -152,11 +155,11 @@ function Dashboard() {
                         className="cursor-pointer border-t transition-colors hover:bg-accent/50 focus-visible:bg-accent/50"
                       >
                         <td className="px-4 py-3"><PriorityBadge p={x.priority} /></td>
-                        <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">{s.orderId}</td>
-                        <td className="px-4 py-3">{s.customerName}</td>
-                        <td className="px-4 py-3 text-muted-foreground">{CARRIERS[s.carrierId].name}</td>
+                        <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">{s?.orderId}</td>
+                        <td className="px-4 py-3">{s?.customerName}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{CARRIERS[s?.carrierId ?? "gsx"].name}</td>
                         <td className="px-4 py-3">{TYPE_LABEL[x.type]}</td>
-                        <td className="whitespace-nowrap px-4 py-3 text-muted-foreground tabular-nums">{ago(x.openedAt)}</td>
+                        <td className="whitespace-nowrap px-4 py-3 text-muted-foreground tabular-nums">{<SlaCountdown exception={x} />}</td>
                         <td className="px-4 py-3"><StatusBadge s={x.workflowStatus} /></td>
                         <td className="px-4 py-3 text-muted-foreground">{x.workflowStatus === "RESOLVED" ? "—" : suggestedAction(x.type)}</td>
                       </tr>
@@ -173,11 +176,11 @@ function Dashboard() {
                           <PriorityBadge p={x.priority} />
                           <StatusBadge s={x.workflowStatus} />
                         </div>
-                        <div className="font-medium">{TYPE_LABEL[x.type]} · <span className="font-mono text-xs">{s.orderId}</span></div>
-                        <div className="text-sm text-muted-foreground">{s.customerName} · {CARRIERS[s.carrierId].name} · {ago(x.openedAt)}</div>
-                        {x.workflowStatus !== "RESOLVED" && <div className="text-sm text-primary">→ {suggestedAction(x.type)}</div>}
+                        <div className="font-medium">{TYPE_LABEL[x.type]} · <span className="font-mono text-xs">{s?.orderId}</span></div>
+                        <div className="text-sm text-muted-foreground">{s?.customerName} · {CARRIERS[s?.carrierId ?? "gsx"].name} · {ago(x.openedAt)}</div>
+                        {isActiveException(x.workflowStatus) && <div className="text-sm text-primary">→ {suggestedAction(x.type)}</div>}
                       </div>
-                      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+                      <SlaCountdown exception={x} /><ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
                     </Link>
                   </li>
                 ))}

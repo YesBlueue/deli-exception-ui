@@ -32,7 +32,8 @@ export type WorkflowStatus =
   | "AWAITING_CARRIER"
   | "IN_PROGRESS"
   | "RESOLVED"
-  | "REOPENED";
+  | "REOPENED"
+  | "IGNORED";
 // Additional terminal state preserves the richer existing workflow.
 
 export interface Address {
