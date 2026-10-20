@@ -12,12 +12,17 @@ function save(value: AuthState) {
   window.localStorage.setItem(KEY, JSON.stringify(value));
   window.dispatchEvent(new Event("resolveiq-auth"));
 }
+async function withAuthLock<T>(save: () => Promise<T>): Promise<T> {
+  if (typeof navigator === "undefined" || !navigator.locks) throw Error("Use a current browser for demo sign-in.");
+  return navigator.locks.request("resolveiq-demo-auth", save);
+}
 export function readDemoAuth(): { mode: "cloud" | "demo"; user: CustomerIdentity | null } {
   const data = read(); const account = data.accounts.find((a) => a.id === data.sessionId);
   return { mode: data.mode, user: account ? projectDemoIdentity(account) : null };
 }
 export function setAuthMode(mode: "cloud" | "demo") { save({ ...read(), mode }); }
 export async function demoSignUp(input: { name: string; email: string; password: string; confirmPassword: string }) {
+  return withAuthLock(async () => {
   const parsed = signUpSchema.parse(input); const data = read();
   if (data.accounts.some((a) => a.email === parsed.email)) throw Error("This demo email already has an account. Please log in.");
   const account = await makeDemoAccount(parsed.name, parsed.email, parsed.password);
@@ -25,6 +30,7 @@ export async function demoSignUp(input: { name: string; email: string; password:
   if (latest.accounts.some((a) => a.email === account.email)) throw Error("This demo email already has an account. Please log in.");
   save({ accounts: [...latest.accounts, account], sessionId: account.id, mode: "demo" });
   return projectDemoIdentity(account);
+  });
 }
 export async function demoLogIn(input: { email: string; password: string }) {
   const parsed = signInSchema.parse(input); const data = read(); const account = data.accounts.find((a) => a.email === parsed.email);

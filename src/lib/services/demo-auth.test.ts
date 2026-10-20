@@ -2,7 +2,7 @@ import { webcrypto } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { demoSignUp, demoLogIn, demoLogOut, readDemoAuth } from "./demo-auth";
 import { hashDemoPassword } from "@/lib/demo/customer-auth";
-beforeEach(() => { localStorage.clear(); vi.stubGlobal("crypto", webcrypto); });
+beforeEach(() => { localStorage.clear(); vi.stubGlobal("crypto", webcrypto); Object.defineProperty(navigator, "locks", { configurable: true, value: { request: async (_key: string, fn: () => unknown) => fn() } }); });
 afterEach(() => vi.unstubAllGlobals());
 describe("isolated demo accounts", () => {
   it("hashes passwords with per-account salt and never stores plaintext", async () => { await demoSignUp({ name: "Alice", email: "alice@example.test", password: "Local-only-pass", confirmPassword: "Local-only-pass" }); const stored = localStorage.getItem("resolveiq-demo-auth-v1"); expect(stored).not.toContain("Local-only-pass"); expect(stored).toContain("passwordHash"); expect(await hashDemoPassword("same", "salt-a")).not.toBe(await hashDemoPassword("same", "salt-b")); });

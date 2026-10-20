@@ -55,6 +55,7 @@ function CustomerComplaintApp() {
   const queryClient = useQueryClient();
   const [step, setStep] = useState<Step>("order");
   const [orderId, setOrderId] = useState("");
+  useEffect(() => { setStep("order"); setOrderId(""); setRecord(null); setViewed(null); }, [user?.id]);
 
   const reset = () => {
     setStep("order");

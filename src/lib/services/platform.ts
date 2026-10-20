@@ -2,12 +2,22 @@
 import { mutate, readPlatformSnapshot } from "./demo-store";
 import { createComplaint, lookupOrder, COMPLAINT_APP_CONFIG, type ComplaintCategory, type ComplaintPhotoMeta } from "@/lib/demo/complaint-app";
 import type { CustomerIdentity } from "@/lib/demo/customer-auth";
+import { submitComplaint as submitAccessComplaint } from "@/lib/demo/customer";
 export { useDB as usePlatformData, mutate as updatePlatformData, resetDemo } from "./demo-store";
 export { getCustomerOrder, getCustomerHistory, markComplaintSeen, ensureCustomerLink, submitComplaint, updateComplaint, addInternalComplaintNote } from "@/lib/demo/customer";
 export { COMPLAINT_APP_CATEGORIES, COMPLAINT_APP_CONFIG, formatSubmissionTime, photoRequired, validateComplaint } from "@/lib/demo/complaint-app";
 export type { ComplaintCategory, ComplaintRecord } from "@/lib/demo/complaint-app";
 export { addExceptionAction } from "@/lib/demo/engine";
 const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+function withComplaintLock<T>(save: () => T): Promise<T> {
+  if (typeof navigator === "undefined" || !navigator.locks) return Promise.reject(Error("This browser does not support safe demo saves. Use a current browser."));
+  return navigator.locks.request("resolveiq-complaint-save", save);
+}
+export async function submitAccessComplaintAsync(access: string, input: { category: ComplaintCategory; description: string; photos: ComplaintPhotoMeta[] }) {
+  const submittedAt = new Date();
+  try { return await withComplaintLock(() => mutate((db) => submitAccessComplaint(db, access, input, submittedAt))); }
+  catch (e) { return { ok: false as const, error: e instanceof Error ? e.message : "Could not save this complaint." }; }
+}
 /** Each simulated identity receives its own fictional orders, never another account's rows. */
 export function ensureDemoOrders(identity: CustomerIdentity) {
   if (readPlatformSnapshot()?.shipments.some((s) => s.customerId === identity.id)) return;
@@ -30,7 +40,7 @@ export async function submitComplaintAsync(customerId: string, input: { orderId:
   const submittedAt = new Date();
   await wait(COMPLAINT_APP_CONFIG.submitDelayMs);
   try {
-    const saved = await (typeof navigator !== "undefined" && navigator.locks ? navigator.locks.request("resolveiq-complaint-save", () => mutate((db) => createComplaint(db, customerId, input, submittedAt))) : Promise.reject(Error("This browser does not support safe demo saves. Use a current browser.")));
+    const saved = await withComplaintLock(() => mutate((db) => createComplaint(db, customerId, input, submittedAt)));
     return { ok: true as const, record: saved };
   } catch (e) { return { ok: false as const, error: e instanceof Error ? e.message : "Could not save this complaint. Try fewer or smaller photos." }; }
 }
