@@ -15,7 +15,7 @@ export function getCustomerOrder(db: DB, access: string, now = new Date()) {
   if (!resolved) return null;
   const { shipment: s, link } = resolved;
   return {
-    shipment: { id: s.id, orderId: s.orderId, customerName: s.customerName, carrierId: s.carrierId, trackingId: s.trackingId, status: s.status, address: { ...s.address } },
+    shipment: { id: s.id, orderId: s.orderId, customerName: s.customerName, status: s.status },
     estimatedDelivery: link.estimatedDelivery,
     complaints: db.complaints.filter((c) => c.shipmentId === s.id).map(({ id, reference, category, description, status, customerResponse, submittedAt, updatedAt }) => ({ id, reference, category, description, status, customerResponse, submittedAt, updatedAt })),
   };
