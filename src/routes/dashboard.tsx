@@ -150,11 +150,11 @@ function Dashboard() {
                         className="cursor-pointer border-t transition-colors hover:bg-accent/50 focus-visible:bg-accent/50"
                       >
                         <td className="px-4 py-3"><PriorityBadge p={x.priority} /></td>
-                        <td className="px-4 py-3 font-mono text-xs">{s.orderId}</td>
+                        <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">{s.orderId}</td>
                         <td className="px-4 py-3">{s.customerName}</td>
                         <td className="px-4 py-3 text-muted-foreground">{CARRIERS[s.carrierId].name}</td>
                         <td className="px-4 py-3">{TYPE_LABEL[x.type]}</td>
-                        <td className="px-4 py-3 text-muted-foreground tabular-nums">{ago(x.openedAt)}</td>
+                        <td className="whitespace-nowrap px-4 py-3 text-muted-foreground tabular-nums">{ago(x.openedAt)}</td>
                         <td className="px-4 py-3"><StatusBadge s={x.workflowStatus} /></td>
                         <td className="px-4 py-3 text-muted-foreground">{x.workflowStatus === "RESOLVED" ? "—" : suggestedAction(x.type)}</td>
                       </tr>
