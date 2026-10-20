@@ -1,10 +1,8 @@
 import { Link } from "@tanstack/react-router";
-import { FlaskConical, Inbox, LayoutDashboard, MessageSquare, PackageSearch, RotateCcw, Smartphone } from "lucide-react";
+import { FlaskConical, Inbox, LayoutDashboard, MessageSquare, PackageSearch, Smartphone } from "lucide-react";
 import type { ReactNode } from "react";
-import { toast } from "sonner";
 import { CURRENT_USER } from "@/lib/demo/config";
 import { ResetDemoButton } from "./ResetDemoButton";
-import { Button } from "@/components/ui/button";
 
 const NAV = [
   { to: "/overview", label: "Overview", Icon: LayoutDashboard },

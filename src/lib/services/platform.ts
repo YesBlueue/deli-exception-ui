@@ -10,6 +10,7 @@ export { addExceptionAction } from "@/lib/demo/engine";
 const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 /** Each simulated identity receives its own fictional orders, never another account's rows. */
 export function ensureDemoOrders(identity: CustomerIdentity) {
+  if (readPlatformSnapshot()?.shipments.some((s) => s.customerId === identity.id)) return;
   mutate((db) => {
     if (db.shipments.some((s) => s.customerId === identity.id)) return;
     const source = db.shipments.find((s) => s.id === "shp_06");
