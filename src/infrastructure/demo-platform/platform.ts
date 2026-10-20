@@ -1,0 +1,46 @@
+/** Browser adapters only. Replace these adapters with hosted queries during migration. */
+import { mutate, readPlatformSnapshot } from "./demo-store";
+import { createComplaint, lookupOrder, COMPLAINT_APP_CONFIG, type ComplaintCategory, type ComplaintPhotoMeta } from "@/core/domain/complaint-app";
+import type { CustomerIdentity } from "@/core/domain/customer-auth";
+import { submitComplaint as submitAccessComplaint } from "@/core/domain/customer";
+export { useDB as usePlatformData, mutate as updatePlatformData, resetDemo } from "./demo-store";
+export { applySupportResponse, getCustomerOrder, getCustomerHistory, markComplaintSeen, ensureCustomerLink, submitComplaint, updateComplaint, addInternalComplaintNote } from "@/core/domain/customer";
+export { COMPLAINT_APP_CATEGORIES, COMPLAINT_APP_CONFIG, formatSubmissionTime, photoRequired, validateComplaint } from "@/core/domain/complaint-app";
+export type { ComplaintCategory, ComplaintRecord } from "@/core/domain/complaint-app";
+export { addExceptionAction } from "@/core/domain/engine";
+const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+function withComplaintLock<T>(save: () => T): Promise<T> {
+  if (typeof navigator === "undefined" || !navigator.locks) return Promise.reject(Error("This browser does not support safe demo saves. Use a current browser."));
+  return navigator.locks.request("resolveiq-complaint-save", save);
+}
+export async function submitAccessComplaintAsync(access: string, input: { category: ComplaintCategory; description: string; photos: ComplaintPhotoMeta[] }) {
+  const submittedAt = new Date();
+  try { return await withComplaintLock(() => mutate((db) => submitAccessComplaint(db, access, input, submittedAt))); }
+  catch (e) { return { ok: false as const, error: e instanceof Error ? e.message : "Could not save this complaint." }; }
+}
+/** Each simulated identity receives its own fictional orders, never another account's rows. */
+export function ensureDemoOrders(identity: CustomerIdentity) {
+  if (readPlatformSnapshot()?.shipments.some((s) => s.customerId === identity.id)) return;
+  mutate((db) => {
+    if (db.shipments.some((s) => s.customerId === identity.id)) return;
+    const source = db.shipments.find((s) => s.id === "shp_06");
+    if (!source) throw Error("Demo seed is missing.");
+    for (const [orderId, status] of [["ORD-24081", "DELIVERED"], ["ORD-24077", "DELIVERED"], ["ORD-24063", "DELIVERED"], ["ORD-24090", "IN_TRANSIT"], ["ORD-24055", "DELIVERED"]] as const) {
+      db.shipments.push({ ...structuredClone(source), id: `${identity.id}:${orderId}`, customerId: identity.id, customerName: identity.name, customerPhone: "", orderId, status, trackingId: `DEMO:${identity.id}:${orderId}` });
+    }
+  });
+}
+export async function lookupOrderAsync(customerId: string, rawOrderId: string) {
+  await wait(COMPLAINT_APP_CONFIG.lookupDelayMs);
+  const db = readPlatformSnapshot();
+  if (!db) throw Error("Demo order lookup is only available in a browser.");
+  return lookupOrder(db, customerId, rawOrderId);
+}
+export async function submitComplaintAsync(customerId: string, input: { orderId: string; category: ComplaintCategory; description: string; photos: ComplaintPhotoMeta[] }) {
+  const submittedAt = new Date();
+  await wait(COMPLAINT_APP_CONFIG.submitDelayMs);
+  try {
+    const saved = await withComplaintLock(() => mutate((db) => createComplaint(db, customerId, input, submittedAt)));
+    return { ok: true as const, record: saved };
+  } catch (e) { return { ok: false as const, error: e instanceof Error ? e.message : "Could not save this complaint. Try fewer or smaller photos." }; }
+}
