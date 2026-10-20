@@ -10,33 +10,102 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as CorrectAddressTokenRouteImport } from './routes/correct-address.$token'
+import { Route as DemoEventsRouteImport } from './routes/demo.events'
+import { Route as ExceptionsIdRouteImport } from './routes/exceptions.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CorrectAddressTokenRoute = CorrectAddressTokenRouteImport.update({
+  id: '/correct-address/$token',
+  path: '/correct-address/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoEventsRoute = DemoEventsRouteImport.update({
+  id: '/demo/events',
+  path: '/demo/events',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExceptionsIdRoute = ExceptionsIdRouteImport.update({
+  id: '/exceptions/$id',
+  path: '/exceptions/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRoute
+  '/login': typeof LoginRoute
+  '/correct-address/$token': typeof CorrectAddressTokenRoute
+  '/demo/events': typeof DemoEventsRoute
+  '/exceptions/$id': typeof ExceptionsIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRoute
+  '/login': typeof LoginRoute
+  '/correct-address/$token': typeof CorrectAddressTokenRoute
+  '/demo/events': typeof DemoEventsRoute
+  '/exceptions/$id': typeof ExceptionsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRoute
+  '/login': typeof LoginRoute
+  '/correct-address/$token': typeof CorrectAddressTokenRoute
+  '/demo/events': typeof DemoEventsRoute
+  '/exceptions/$id': typeof ExceptionsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/dashboard'
+    | '/login'
+    | '/correct-address/$token'
+    | '/demo/events'
+    | '/exceptions/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/dashboard'
+    | '/login'
+    | '/correct-address/$token'
+    | '/demo/events'
+    | '/exceptions/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/dashboard'
+    | '/login'
+    | '/correct-address/$token'
+    | '/demo/events'
+    | '/exceptions/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DashboardRoute: typeof DashboardRoute
+  LoginRoute: typeof LoginRoute
+  CorrectAddressTokenRoute: typeof CorrectAddressTokenRoute
+  DemoEventsRoute: typeof DemoEventsRoute
+  ExceptionsIdRoute: typeof ExceptionsIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +117,51 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/correct-address/$token': {
+      id: '/correct-address/$token'
+      path: '/correct-address/$token'
+      fullPath: '/correct-address/$token'
+      preLoaderRoute: typeof CorrectAddressTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo/events': {
+      id: '/demo/events'
+      path: '/demo/events'
+      fullPath: '/demo/events'
+      preLoaderRoute: typeof DemoEventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/exceptions/$id': {
+      id: '/exceptions/$id'
+      path: '/exceptions/$id'
+      fullPath: '/exceptions/$id'
+      preLoaderRoute: typeof ExceptionsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DashboardRoute: DashboardRoute,
+  LoginRoute: LoginRoute,
+  CorrectAddressTokenRoute: CorrectAddressTokenRoute,
+  DemoEventsRoute: DemoEventsRoute,
+  ExceptionsIdRoute: ExceptionsIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
