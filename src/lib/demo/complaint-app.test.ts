@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createComplaint, formatSubmissionTime, listComplaints, lookupOrder, validateComplaint, submitComplaintAsync } from "./complaint-app";
+import { COMPLAINT_APP_CATEGORIES, createComplaint, formatSubmissionTime, listComplaints, lookupOrder, validateComplaint, submitComplaintAsync } from "./complaint-app";
 
 describe("customer complaint app rules", () => {
   it("rejects an empty order ID", () => {
@@ -26,8 +26,22 @@ describe("customer complaint app rules", () => {
     if (r.ok) expect(r.orderId).toBe("ORD-24081");
   });
   it("does not limit the description length", () => {
-    expect(validateComplaint({ category: "DAMAGED", description: "", photos: [] })).toBeNull();
-    expect(validateComplaint({ category: "DAMAGED", description: "x".repeat(5000), photos: [] })).toBeNull();
+    expect(validateComplaint({ category: "OTHER", description: "", photos: [] })).toBeNull();
+    expect(validateComplaint({ category: "OTHER", description: "x".repeat(5000), photos: [] })).toBeNull();
+  });
+  it("requires a photo for damaged, missing-item and wrong-item reports", () => {
+    for (const category of ["DAMAGED", "MISSING_ITEM", "WRONG_ITEM"] as const) {
+      expect(validateComplaint({ category, description: "", photos: [] })).toMatch(/photo/i);
+    }
+  });
+  it("keeps photos optional for package missing, order delay and other reports", () => {
+    for (const category of ["PACKAGE_MISSING", "ORDER_DELAY", "OTHER"] as const) {
+      expect(validateComplaint({ category, description: "", photos: [] })).toBeNull();
+    }
+  });
+  it("accepts Order Delay as a category", () => {
+    expect(validateComplaint({ category: "ORDER_DELAY", description: "The parcel is two weeks late.", photos: [] })).toBeNull();
+    expect(Object.keys(COMPLAINT_APP_CATEGORIES)).toContain("ORDER_DELAY");
   });
   it("automatically records the submission time before the simulated delay", async () => {
     vi.useFakeTimers();
