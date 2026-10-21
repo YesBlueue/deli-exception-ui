@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   MessageSquare,
   PackageSearch,
+  Palette,
   Smartphone,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -22,7 +23,9 @@ const NAV = [
   { to: "/demo/events", label: "Event simulator", Icon: FlaskConical },
   { to: "/customer/complaint", label: "Customer portal", Icon: Smartphone },
   { to: "/seller", label: "Seller portal", Icon: MessageSquare },
-] as const;
+  // Development-only reference page (404 in production builds).
+  ...(process.env.NODE_ENV === "production" ? [] : [{ to: "/design-system", label: "Design system", Icon: Palette }]),
+];
 
 /** Matches a nav item on its own path and on nested paths, like the previous router's fuzzy active match. */
 function isActive(pathname: string, to: string) {
@@ -34,7 +37,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { data } = usePortal();
   return (
     <div className="flex min-h-screen">
-      <aside className="hidden w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground md:flex">
+      <aside className="hidden w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:flex">
         <div className="flex items-center gap-2 border-b border-sidebar-border px-5 py-5">
           <PackageSearch className="h-5 w-5 text-sidebar-primary" aria-hidden />
           <div className="leading-tight">
@@ -53,7 +56,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 href={to}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent",
+                  "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-sidebar-foreground transition-colors hover:bg-muted",
                   active && "bg-sidebar-accent text-sidebar-accent-foreground font-medium",
                 )}
               >
@@ -72,7 +75,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
         <header
-          className="flex items-center gap-1 overflow-x-auto bg-sidebar px-3 py-2 md:hidden"
+          className="flex items-center gap-1 overflow-x-auto border-b border-sidebar-border bg-sidebar px-3 py-2 md:hidden"
           aria-label="Mobile navigation"
         >
           <PackageSearch className="mr-2 h-5 w-5 shrink-0 text-sidebar-primary" aria-hidden />

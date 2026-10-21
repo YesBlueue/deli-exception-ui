@@ -2,7 +2,7 @@
 
 Last updated: 21 October 2026
 
-Branch: `nextjs-migration`
+Current integration branch: `backend/groq-phase4-integration` (target: `nextjs-migration`)
 
 This document connects the revised product plan to the current implementation. It separates unfinished code from external configuration and verification work. It includes the bounded verification stop checkpoint of 21 October 2026; it does not declare Phase 4 or production readiness complete.
 
@@ -235,6 +235,14 @@ The owner replaced Gemini with Groq `openai/gpt-oss-120b`. This supersedes earli
 - All 125 tests across 20 files, TypeScript, production build, and changed-file lint passed. A tracked/unignored-file scan found zero Groq-key patterns; local environment and smoke-result files remain ignored. The live staff browser draft/edit/explicit-publication gate and final local acceptance remain pending; Phase 4 is incomplete. The chat-shared Groq key should be rotated before wider use, without recording its value in documentation.
 - Restarted the local Next.js server with network access and Groq configuration. Before the requested staff browser check, `RPT-2026-000018` had zero apology drafts and one existing customer reply (`NEW`/`DAMAGE`, source `DELIVERED`). Requested draft generation without publication first; preserve that baseline when verifying no implicit reply or workflow action.
 - The participant confirms **Draft apology with Groq** generates editable text with the draft-only review notice and that the customer still sees only the original reply before publication. Backend read-back confirms one draft with model `openai/gpt-oss-120b`, one provider-neutral `SAVE_DRAFT` audit entry, and the unchanged single customer reply, report `NEW`/`DAMAGE`, source `DELIVERED`. Staff review/edit/explicit publication and customer refresh persistence are now the pending final Groq gate.
+
+### Radix UI and backend integration: 21 October 2026
+
+The owner requested combining the unpushed backend continuation with the teammate's Radix Themes UI. Fetch confirmed the UI branch `radix-themes` (`8d87a6e`) was already merged into `origin/nextjs-migration` at `c37c6a8` through PR #1.
+
+Saved local backend work on `backend/groq-phase4-integration` as `9b0369e`, then merged the updated shared branch. Resolved overlaps in `ExceptionWorkspace.tsx` and its test by retaining Radix `Heading`/`Text`/`Notice`, Theme-wrapped tests, and Groq labels/explicit reviewed publication. Project guidance retains both the new Radix design rules and Groq operational restrictions. Existing migrations, verification history, local credentials, and demo records are preserved. No shared branch history is rewritten; use this integration branch for review before merging it into the shared branch.
+
+Combined verification passed: all 125 tests across 20 files, TypeScript, production build, and lint on resolved/backend files. The first parallel run timed out importing the login route under concurrent build/typecheck; a repeat after build completion passed the complete suite without test or timeout changes. Production browser verification passed real unauthenticated API denial and explicit authenticated fixtures for customer submission/replies/unread clearing and seller handoffs; 390px overflow assertions passed, and customer-mobile/seller-desktop screenshots were inspected. Fixture results do not establish new live Google or staff Groq-publication acceptance of the merged UI. No database changes or live business mutations were made for this integration.
 
 ## 6. Current policy limits and unresolved decisions
 

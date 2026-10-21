@@ -1,11 +1,12 @@
 "use client";
 
+import { Heading } from "@radix-ui/themes";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Send } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
+import { Field } from "@/shared/ui/patterns";
 import { Textarea } from "@/shared/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { COMPLAINT_STATUSES } from "@/core/domain/customer";
@@ -34,11 +35,10 @@ export function ReplyComposer({
     carrier,
   };
   return (
-    <section className="space-y-4 rounded-lg border p-4">
-      <h3 className="text-sm font-semibold">Reply to customer</h3>
+    <section className="space-y-4 rounded-md border p-4">
+      <Heading as="h3" size="3">Reply to customer</Heading>
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label>Quick-insert template</Label>
+        <Field label="Quick-insert template">
           <Select
             value=""
             onValueChange={(id) => {
@@ -60,9 +60,8 @@ export function ReplyComposer({
               ))}
             </SelectContent>
           </Select>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="reply-reason">Key reason / notes</Label>
+        </Field>
+        <Field label="Key reason / notes" htmlFor="reply-reason">
           <Input
             id="reply-reason"
             value={notes}
@@ -70,10 +69,9 @@ export function ReplyComposer({
             maxLength={2000}
             placeholder="e.g. photos confirm crushed box"
           />
-        </div>
+        </Field>
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="customer-response">Message to customer</Label>
+      <Field label="Message to customer" htmlFor="customer-response">
         <Textarea
           id="customer-response"
           value={draft}
@@ -82,22 +80,23 @@ export function ReplyComposer({
           maxLength={2000}
           placeholder="Review and edit before sending"
         />
-      </div>
+      </Field>
       <div className="flex flex-wrap items-end gap-3">
-        <div className="min-w-44 space-y-2">
-          <Label htmlFor="review-status">Complaint status</Label>
-          <Select value={status} onValueChange={(v) => setStatus(v as ComplaintStatus)}>
-            <SelectTrigger id="review-status">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(COMPLAINT_STATUSES).map(([k, v]) => (
-                <SelectItem key={k} value={k}>
-                  {v}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="min-w-44">
+          <Field label="Complaint status" htmlFor="review-status">
+            <Select value={status} onValueChange={(v) => setStatus(v as ComplaintStatus)}>
+              <SelectTrigger id="review-status">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(COMPLAINT_STATUSES).map(([k, v]) => (
+                  <SelectItem key={k} value={k}>
+                    {v}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
         </div>
         <Button
           onClick={() => {

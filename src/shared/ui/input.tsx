@@ -1,22 +1,15 @@
 import * as React from "react";
+import { TextField } from "@radix-ui/themes";
 
-import { cn } from "@/shared/utils";
+type InputProps = Omit<React.ComponentProps<"input">, "size" | "color" | "defaultValue" | "value"> & {
+  value?: string | number;
+  defaultValue?: string | number;
+};
 
-const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
-  ({ className, type, ...props }, ref) => {
-    return (
-      <input
-        type={type}
-        className={cn(
-          "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-          className,
-        )}
-        ref={ref}
-        {...props}
-      />
-    );
-  },
-);
+/** Text input rendered by Radix Themes. `className` styles the field box; other props go to the <input>. */
+const Input = React.forwardRef<HTMLInputElement, InputProps>(({ type, ...props }, ref) => (
+  <TextField.Root ref={ref} size="2" {...(type && { type: type as NonNullable<TextField.RootProps["type"]> })} {...props} />
+));
 Input.displayName = "Input";
 
 export { Input };

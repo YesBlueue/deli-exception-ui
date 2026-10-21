@@ -2,10 +2,13 @@
 import { useState } from "react";
 import { usePortal, portalRequest } from "@/infrastructure/portal/use-portal";
 import { CATEGORY_LABELS, classifyReport } from "@/core/domain/exception-rules";
+import { Heading, Text } from "@radix-ui/themes";
+import { PackageSearch } from "lucide-react";
 import { Button } from "@/shared/ui/button";
-import { Label } from "@/shared/ui/label";
+import { BrandMark, EmptyState, Field, Notice, SiteShell } from "@/shared/ui/patterns";
 import { Textarea } from "@/shared/ui/textarea";
-import { DemoBanner, Panel, PortalHeader, PortalState, Tag, friendly, time } from "./shared";
+import { cn } from "@/shared/utils";
+import { DEMO_BANNER_TEXT, Panel, PortalNav, PortalState, Tag, friendly, time } from "./shared";
 export function CustomerWorkspace() {
   const q = usePortal();
   const [selected, setSelected] = useState("");
@@ -85,42 +88,39 @@ export function CustomerWorkspace() {
     }
   }
   return (
-    <div className="min-h-screen bg-background">
-      <PortalHeader title="Delivery company · Customer support" />
-      <DemoBanner />
-      <main className="mx-auto max-w-3xl space-y-6 px-4 py-8">
+    <SiteShell
+      width="md"
+      brand={<BrandMark icon={PackageSearch} name="Delivery company · Customer support" />}
+      headerAside={<PortalNav />}
+      banner={DEMO_BANNER_TEXT}
+    >
+      <div className="space-y-6">
         {!s ? (
           <PortalState loading={q.isPending} error={q.error} retry={() => void q.refetch()} />
         ) : (
           <>
             <header>
-              <h1 className="text-2xl font-semibold">Your orders and reports</h1>
-              <p className="mt-2 text-sm text-muted-foreground">
+              <Heading as="h1" size="7">Your orders and reports</Heading>
+              <Text as="p" size="2" color="gray" mt="2">
                 Hello, {s.user.name}. Choose an authorized order to report a delivery issue.
-              </p>
+              </Text>
             </header>
             {error && (
-              <p
-                role="alert"
-                className="rounded border border-destructive/30 p-3 text-sm text-destructive"
-              >
+              <Notice tone="error" role="alert">
                 {error}
-              </p>
+              </Notice>
             )}
             {notice && (
-              <p
-                role="status"
-                className="rounded border border-primary/30 p-3 text-sm text-primary"
-              >
+              <Notice tone="success" role="status">
                 {notice}
-              </p>
+              </Notice>
             )}
             {!orders.length ? (
               <Panel title="Prepare your demo orders">
-                <p className="text-sm text-muted-foreground">
+                <Text as="p" size="2" color="gray">
                   This hackathon uses fictional orders from two shops. Preparing a set associates
                   only newly created demo orders with your Google account.
-                </p>
+                </Text>
                 <Button disabled={busy} onClick={() => void provision()}>
                   Load my demo orders
                 </Button>
@@ -137,7 +137,10 @@ export function CustomerWorkspace() {
                         setSelected(o.id);
                         setNotice("");
                       }}
-                      className={`space-y-2 rounded-lg border p-4 text-left ${selected === o.id ? "border-primary bg-accent" : "bg-card hover:bg-muted"}`}
+                      className={cn(
+                        "space-y-2 rounded-md border p-4 text-left transition-colors",
+                        selected === o.id ? "border-primary bg-accent" : "bg-card hover:bg-muted",
+                      )}
                     >
                       <span className="block font-mono text-sm font-semibold">
                         {o.seller_order_reference}
@@ -163,7 +166,7 @@ export function CustomerWorkspace() {
                     void submit();
                   }}
                 >
-                  <Label htmlFor="report-description">Describe the issue</Label>
+                  <Field label="Describe the issue" htmlFor="report-description">
                   <Textarea
                     id="report-description"
                     rows={5}
@@ -174,6 +177,7 @@ export function CustomerWorkspace() {
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="For example: My order is delayed and I have not had an update."
                   />
+                  </Field>
                   {description.length >= 10 && (
                     <p className="text-xs text-muted-foreground">
                       Rule preview: {CATEGORY_LABELS[preview.category]}
@@ -182,19 +186,20 @@ export function CustomerWorkspace() {
                       Eligibility and categorization are validated when you submit.
                     </p>
                   )}
-                  <Label htmlFor="report-photos">Supporting photos (optional)</Label>
-                  <input
-                    id="report-photos"
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    multiple
-                    onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
-                    className="block w-full text-sm"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Up to 3 images, 2 MB each. Only you and authorized operations staff can view
-                    them.
-                  </p>
+                  <Field
+                    label="Supporting photos (optional)"
+                    htmlFor="report-photos"
+                    hint="Up to 3 images, 2 MB each. Only you and authorized operations staff can view them."
+                  >
+                    <input
+                      id="report-photos"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      multiple
+                      onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
+                      className="block w-full rounded-md border border-dashed border-input p-3 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-1.5 file:text-sm file:font-medium"
+                    />
+                  </Field>
                   <Button disabled={busy || description.trim().length < 10}>
                     {busy ? "Saving…" : "Submit report"}
                   </Button>
@@ -203,9 +208,7 @@ export function CustomerWorkspace() {
             )}
             <Panel title="Your report history">
               {!reports.length && (
-                <p className="text-sm text-muted-foreground">
-                  No reports yet. Updates and replies appear here.
-                </p>
+                <EmptyState icon={PackageSearch} title="No reports yet." description="Updates and replies appear here." />
               )}
               <div className="divide-y">
                 {reports.map((r) => {
@@ -223,11 +226,11 @@ export function CustomerWorkspace() {
                   return (
                     <article key={r.id} className="space-y-3 py-4">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-mono text-sm font-semibold">
+                        <Text size="2" weight="bold" className="font-mono">
                           {r.complaint_reference}
-                        </span>
+                        </Text>
                         <Tag>{friendly(r.status)}</Tag>
-                        {unread && <Tag>New update</Tag>}
+                        {unread && <Tag tone="default">New update</Tag>}
                       </div>
                       <p className="text-sm">
                         {orders.find((o) => o.id === r.delivery_job_id)?.seller_order_reference} ·{" "}
@@ -260,7 +263,7 @@ export function CustomerWorkspace() {
                               ))}
                           </div>
                           {replies.map((reply) => (
-                            <div key={reply.id} className="space-y-2 rounded bg-accent p-3">
+                            <div key={reply.id} className="space-y-2 rounded-md bg-accent p-3">
                               <p className="text-xs text-muted-foreground">
                                 Operations reply · {time(reply.created_at)}
                               </p>
@@ -288,7 +291,7 @@ export function CustomerWorkspace() {
             </Panel>
           </>
         )}
-      </main>
-    </div>
+      </div>
+    </SiteShell>
   );
 }

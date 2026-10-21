@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { Heading, Text } from "@radix-ui/themes";
 import { useEffect, useState } from "react";
 import { usePortal, portalRequest } from "@/infrastructure/portal/use-portal";
 import type { PortalSnapshot } from "@/infrastructure/portal/types";
@@ -11,9 +12,18 @@ import {
   nextAction,
 } from "@/core/domain/exception-rules";
 import { Button } from "@/shared/ui/button";
-import { Label } from "@/shared/ui/label";
 import { Textarea } from "@/shared/ui/textarea";
 import { Input } from "@/shared/ui/input";
+import {
+  BackLink,
+  Field,
+  KeyValueList,
+  Notice,
+  OptionSelect,
+  PageHeader,
+  Panel as PatternPanel,
+  Timeline,
+} from "@/shared/ui/patterns";
 import { Panel, PortalState, Tag, friendly, time } from "./shared";
 import type { Tables } from "@/infrastructure/supabase/types";
 type Run = (command: string, input: Record<string, unknown>) => Promise<void>;
@@ -36,7 +46,9 @@ export function ExceptionWorkspace({ id }: { id: string }) {
   if (!s.isStaff)
     return (
       <Panel title="Operations access required">
-        <p className="text-sm">This account cannot access exception investigations.</p>
+        <Text as="p" size="2">
+          This account cannot access exception investigations.
+        </Text>
       </Panel>
     );
   const ex = s.exceptions.find((v) => v.id === id);
@@ -44,8 +56,10 @@ export function ExceptionWorkspace({ id }: { id: string }) {
   if (!ex || !order)
     return (
       <Panel title="Exception unavailable">
-        <p className="text-sm">This exception does not exist or is outside your access.</p>
-        <Link href="/dashboard" className="text-sm text-primary">
+        <Text as="p" size="2">
+          This exception does not exist or is outside your access.
+        </Text>
+        <Link href="/dashboard" className="text-sm text-primary hover:underline">
           Back to inbox
         </Link>
       </Panel>
@@ -86,86 +100,97 @@ export function ExceptionWorkspace({ id }: { id: string }) {
       setBusy(false);
     }
   };
+  const staffName = (userId: string | null) => s.staff.find((v) => v.user_id === userId)?.full_name;
   return (
-    <div className="mx-auto max-w-7xl space-y-5">
-      <Link href="/dashboard" className="text-sm text-primary">
-        ← Exception inbox
-      </Link>
-      <header className="space-y-3 rounded-lg border bg-card p-5 shadow-card">
-        <div className="flex flex-wrap gap-2">
-          <Tag tone={ex.priority.toLowerCase() as "high"}>{ex.priority}</Tag>
-          <Tag>{friendly(ex.status)}</Tag>
-          <Tag>{order.provenance}</Tag>
-          <span
-            className={`self-center text-xs ${sla.breached ? "text-destructive" : "text-muted-foreground"}`}
-          >
-            {sla.label}
+    <div className="mx-auto max-w-7xl space-y-6">
+      <BackLink href="/dashboard">Exception inbox</BackLink>
+      <PageHeader
+        eyebrow={
+          <span className="flex flex-wrap items-center gap-2">
+            <Tag tone={ex.priority.toLowerCase() as "high"}>{ex.priority}</Tag>
+            <Tag>{friendly(ex.status)}</Tag>
+            <Tag>{order.provenance}</Tag>
+            <span className={sla.breached ? "text-critical" : undefined}>{sla.label}</span>
           </span>
-        </div>
-        <h1 className="text-2xl font-semibold">
-          {CATEGORY_LABELS[ex.exception_type as keyof typeof CATEGORY_LABELS] ??
-            friendly(ex.exception_type)}{" "}
-          · {order.seller_order_reference}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {exceptionSummary(order.seller_order_reference, seller, ex.exception_type, order.status)}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          Opened {time(ex.detected_at)} · Age{" "}
-          {Math.max(0, Math.floor((now - Date.parse(ex.detected_at)) / 36e5))}h ·{" "}
-          {s.staff.find((v) => v.user_id === ex.assignee_user_id)?.full_name ?? "Unassigned"}
-        </p>
-      </header>
+        }
+        title={
+          <>
+            {CATEGORY_LABELS[ex.exception_type as keyof typeof CATEGORY_LABELS] ??
+              friendly(ex.exception_type)}{" "}
+            · <span className="font-mono">{order.seller_order_reference}</span>
+          </>
+        }
+        description={
+          <>
+            {exceptionSummary(
+              order.seller_order_reference,
+              seller,
+              ex.exception_type,
+              order.status,
+            )}
+            <br />
+            Opened {time(ex.detected_at)} · Age{" "}
+            {Math.max(0, Math.floor((now - Date.parse(ex.detected_at)) / 36e5))}h ·{" "}
+            {staffName(ex.assignee_user_id) ?? "Unassigned"}
+          </>
+        }
+      />
       {error && (
-        <p
-          role="alert"
-          className="rounded border border-destructive/40 p-3 text-sm text-destructive"
-        >
+        <Notice tone="error" role="alert">
           {error}
-        </p>
+        </Notice>
       )}
       {notice && (
-        <p role="status" className="text-sm text-primary">
+        <Notice tone="success" role="status">
           {notice}
-        </p>
+        </Notice>
       )}
-      <div className="grid gap-5 lg:grid-cols-3">
-        <div className="space-y-5 lg:col-span-2">
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="min-w-0 space-y-6 lg:col-span-2">
           <Panel title="Suggested next action">
-            <p className="font-medium text-primary">{suggestion.action}</p>
-            <p className="text-sm text-muted-foreground">{suggestion.reason}</p>
-            <p className="text-xs text-muted-foreground">
+            <Text as="p" size="3" weight="medium" className="text-primary">
+              {suggestion.action}
+            </Text>
+            <Text as="p" size="2" color="gray">
+              {suggestion.reason}
+            </Text>
+            <Text as="p" size="1" color="gray">
               Rule {suggestion.rule} · {suggestion.version} · Guidance only. No operation runs until
               staff explicitly chooses an action.
-            </p>
+            </Text>
           </Panel>
           <Panel title="Priority explanation">
-            <p className="text-sm">{ex.priority_reason}</p>
-            <p className="text-xs text-muted-foreground">
+            <Text as="p" size="2">
+              {ex.priority_reason}
+            </Text>
+            <Text as="p" size="1" color="gray">
               SLA: critical 2h, high 8h, medium 24h, low 48h from original opening. Source delivery
               status is independent.
-            </p>
+            </Text>
           </Panel>
-          <section className="space-y-5">
-            <h2 className="text-lg font-semibold">Linked customer reports</h2>
+          <section className="space-y-4">
+            <Heading as="h2" size="4">
+              Linked customer reports
+            </Heading>
             {reports.map((r) => (
               <ReportReview key={r.id} report={r} snapshot={s} run={run} disabled={busy} />
             ))}
             {!reports.length && (
-              <p className="text-sm text-muted-foreground">
+              <Text as="p" size="2" color="gray">
                 This exception came from a source update. No customer report is linked.
-              </p>
+              </Text>
             )}
           </section>
           <Panel title="Private staff notes">
-            <Label htmlFor="staff-note">Investigation note</Label>
-            <Textarea
-              id="staff-note"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              maxLength={4000}
-              placeholder="Only authorized operations staff can read this."
-            />
+            <Field label="Investigation note" htmlFor="staff-note">
+              <Textarea
+                id="staff-note"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                maxLength={4000}
+                placeholder="Only authorized operations staff can read this."
+              />
+            </Field>
             <Button
               disabled={busy || !note.trim()}
               variant="secondary"
@@ -182,12 +207,13 @@ export function ExceptionWorkspace({ id }: { id: string }) {
                 .filter((n) => n.exception_id === id)
                 .sort((a, b) => a.created_at.localeCompare(b.created_at))
                 .map((n) => (
-                  <li key={n.id} className="rounded bg-muted p-3">
-                    <p className="text-xs text-muted-foreground">
-                      {time(n.created_at)} ·{" "}
-                      {s.staff.find((v) => v.user_id === n.author_user_id)?.full_name ?? "Staff"}
-                    </p>
-                    <p className="mt-2 whitespace-pre-wrap break-words text-sm">{n.body}</p>
+                  <li key={n.id} className="rounded-md bg-muted p-3">
+                    <Text as="p" size="1" color="gray">
+                      {time(n.created_at)} · {staffName(n.author_user_id) ?? "Staff"}
+                    </Text>
+                    <Text as="p" size="2" mt="2" className="whitespace-pre-wrap break-words">
+                      {n.body}
+                    </Text>
                   </li>
                 ))}
             </ol>
@@ -198,76 +224,71 @@ export function ExceptionWorkspace({ id }: { id: string }) {
               {s.updates
                 .filter((u) => u.delivery_job_id === order.id)
                 .map((u) => (
-                  <article key={u.id} className="space-y-2 py-3">
-                    <p className="text-xs text-muted-foreground">
+                  <article key={u.id} className="space-y-1 py-3">
+                    <Text as="p" size="1" color="gray">
                       {u.title} · {time(u.created_at)}
-                    </p>
-                    <p className="whitespace-pre-wrap break-words text-sm">{u.body}</p>
+                    </Text>
+                    <Text as="p" size="2" className="whitespace-pre-wrap break-words">
+                      {u.body}
+                    </Text>
                   </article>
                 ))}
             </div>
           </Panel>
-          <Panel title="Audit history">
-            <ol className="space-y-4">
-              {s.audit
+          <PatternPanel title="Audit history" flush>
+            <Timeline
+              items={s.audit
                 .filter((a) => a.delivery_exception_id === id)
                 .sort((a, b) => b.created_at.localeCompare(a.created_at))
-                .map((a) => (
-                  <li key={a.id}>
-                    <p className="text-xs text-muted-foreground">
-                      {time(a.created_at)} · {friendly(a.action_type)}
-                    </p>
-                    <p className="mt-1 whitespace-pre-wrap break-words text-sm">{a.description}</p>
-                  </li>
-                ))}
-            </ol>
-          </Panel>
+                .map((a) => ({
+                  key: a.id,
+                  body: <span className="whitespace-pre-wrap break-words">{a.description}</span>,
+                  time: <time dateTime={a.created_at}>{time(a.created_at)}</time>,
+                  meta: <>· {friendly(a.action_type)}</>,
+                }))}
+            />
+          </PatternPanel>
         </div>
-        <aside className="space-y-5">
+        <aside className="min-w-0 space-y-6">
           <Panel title="Assignment">
-            <Label htmlFor="assignee">Operations assignee</Label>
-            <select
-              id="assignee"
-              value={ex.assignee_user_id ?? ""}
-              disabled={busy}
-              onChange={(e) =>
-                void run("assign", { exceptionId: id, assignee: e.target.value }).catch(() => {})
-              }
-              className="h-10 w-full rounded border bg-card px-3 text-sm"
-            >
-              <option value="">Unassigned</option>
-              {s.staff
-                .filter((v) => v.is_active && ["ADMIN", "OPERATIONS"].includes(v.role))
-                .map((v) => (
-                  <option key={v.user_id} value={v.user_id}>
-                    {v.full_name}
-                  </option>
-                ))}
-            </select>
+            <Field label="Operations assignee" htmlFor="assignee">
+              <OptionSelect
+                id="assignee"
+                value={ex.assignee_user_id ?? ""}
+                disabled={busy}
+                onValueChange={(value) =>
+                  void run("assign", { exceptionId: id, assignee: value }).catch(() => {})
+                }
+                emptyLabel="Unassigned"
+                options={s.staff
+                  .filter((v) => v.is_active && ["ADMIN", "OPERATIONS"].includes(v.role))
+                  .map((v) => ({ value: v.user_id, label: v.full_name }))}
+              />
+            </Field>
           </Panel>
           <Panel title="Exception workflow">
-            <Label htmlFor="exception-status">Move to</Label>
-            <select
-              id="exception-status"
-              value={target}
-              onChange={(e) => setTarget(e.target.value)}
-              className="h-10 w-full rounded border bg-card px-3 text-sm"
-            >
-              <option value="">Choose permitted status</option>
-              {EXCEPTION_TRANSITIONS[ex.status]?.map((v) => (
-                <option key={v} value={v}>
-                  {friendly(v)}
-                </option>
-              ))}
-            </select>
-            <Label htmlFor="transition-reason">Audit reason</Label>
-            <Textarea
-              id="transition-reason"
-              value={reason}
-              maxLength={4000}
-              onChange={(e) => setReason(e.target.value)}
-            />
+            <Field label="Move to" htmlFor="exception-status">
+              <OptionSelect
+                id="exception-status"
+                value={target}
+                onValueChange={setTarget}
+                placeholder="Choose permitted status"
+                options={(EXCEPTION_TRANSITIONS[ex.status] ?? []).map((v) => ({
+                  value: v,
+                  label: friendly(v),
+                }))}
+              />
+            </Field>
+            <Field label="Audit reason" htmlFor="transition-reason">
+              <Textarea
+                id="transition-reason"
+                value={reason}
+                maxLength={4000}
+                onChange={(e) => setReason(e.target.value)}
+              />
+            </Field>
             <Button
+              className="w-full"
               disabled={busy || !target || !reason.trim()}
               onClick={() =>
                 void run("exception_status", { exceptionId: id, status: target, text: reason })
@@ -282,8 +303,8 @@ export function ExceptionWorkspace({ id }: { id: string }) {
             </Button>
           </Panel>
           <Panel title="Received order context">
-            <dl className="space-y-3 text-sm">
-              {[
+            <KeyValueList
+              items={[
                 ["Order", order.seller_order_reference],
                 ["Seller", seller],
                 ["Customer", order.recipient_name],
@@ -294,39 +315,37 @@ export function ExceptionWorkspace({ id }: { id: string }) {
                 ["Source updated", time(order.source_updated_at)],
                 ["Received", time(order.received_at)],
                 ["Confirmation", order.confirmation_details ?? "Not available"],
-              ].map(([k, v]) => (
-                <div key={k}>
-                  <dt className="text-xs text-muted-foreground">{k}</dt>
-                  <dd className="mt-1 break-words">{v}</dd>
-                </div>
-              ))}
-            </dl>
-            <p className="text-xs text-muted-foreground">
+              ].map(([label, value]) => ({ label, value }))}
+            />
+            <Text as="p" size="1" color="gray">
               Delivery creation and execution remain in the existing delivery system.
-            </p>
+            </Text>
           </Panel>
-          <Panel title="Relevant received updates">
-            <ol className="space-y-4">
-              {s.events
+          <PatternPanel title="Relevant received updates" flush>
+            <Timeline
+              items={s.events
                 .filter((e) => e.delivery_job_id === order.id)
                 .sort((a, b) => b.received_at.localeCompare(a.received_at))
                 .slice(0, 10)
-                .map((e) => (
-                  <li key={e.id} className="space-y-1 text-sm">
-                    <p className="font-medium">
+                .map((e) => ({
+                  key: e.id,
+                  body: (
+                    <span className="font-medium">
                       {friendly(e.event_code)} · {friendly(e.processing_result)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
+                    </span>
+                  ),
+                  time: (
+                    <span>
                       Occurred {time(e.event_at)}
                       <br />
                       Received {time(e.received_at)}
                       <br />
                       {e.source} · {e.source_event_id}
-                    </p>
-                  </li>
-                ))}
-            </ol>
-          </Panel>
+                    </span>
+                  ),
+                }))}
+            />
+          </PatternPanel>
         </aside>
       </div>
     </div>
@@ -344,14 +363,15 @@ function SellerUpdate({
   const [body, setBody] = useState("");
   return (
     <div className="space-y-3">
-      <Label htmlFor="seller-update">Update for the seller only</Label>
-      <Textarea
-        id="seller-update"
-        value={body}
-        onChange={(e) => setBody(e.target.value)}
-        maxLength={4000}
-        placeholder="Include only findings that should be shared with the seller."
-      />
+      <Field label="Update for the seller only" htmlFor="seller-update">
+        <Textarea
+          id="seller-update"
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          maxLength={4000}
+          placeholder="Include only findings that should be shared with the seller."
+        />
+      </Field>
       <Button
         variant="outline"
         disabled={disabled || !body.trim()}
@@ -410,13 +430,15 @@ function ReportReview({
         {r.needs_review && <Tag>Staff review required</Tag>}
         {r.refund_requested && <Tag>Refund handoff</Tag>}
       </div>
-      <p className="whitespace-pre-wrap break-words text-sm">{r.customer_description}</p>
-      <p className="text-xs text-muted-foreground">
+      <Text as="p" size="2" className="whitespace-pre-wrap break-words">
+        {r.customer_description}
+      </Text>
+      <Text as="p" size="1" color="gray">
         {r.category_reason} · {r.rule_version} · Submitted {time(r.submitted_at)}
-      </p>
+      </Text>
       <details className="text-xs text-muted-foreground">
-        <summary>Original rule classification</summary>
-        <pre className="mt-2 overflow-auto whitespace-pre-wrap">
+        <summary className="cursor-pointer">Original rule classification</summary>
+        <pre className="mt-2 overflow-auto whitespace-pre-wrap rounded-md bg-muted p-2 font-mono">
           {JSON.stringify(r.original_classification, null, 2)}
         </pre>
       </details>
@@ -436,11 +458,13 @@ function ReportReview({
           ))}
       </div>
       <div className="space-y-3 border-t pt-4">
-        <h3 className="text-sm font-semibold">Customer portal reply</h3>
-        <p className="text-xs text-muted-foreground">
+        <Heading as="h3" size="3">
+          Customer portal reply
+        </Heading>
+        <Text as="p" size="1" color="gray">
           Apology drafting sends only the report text, category, and report status to Groq. No
           private notes or contact details are included.
-        </p>
+        </Text>
         <div className="flex flex-wrap gap-2">
           <Button variant="secondary" disabled={disabled || busy} onClick={() => void generate()}>
             {busy ? "Drafting…" : "Draft apology with Groq"}
@@ -458,23 +482,24 @@ function ReportReview({
           </Button>
         </div>
         {error && (
-          <p role="alert" className="text-sm text-destructive">
+          <Notice tone="error" role="alert">
             {error}
-          </p>
+          </Notice>
         )}
         {generated && (
-          <p role="status" className="text-xs text-medium">
+          <Notice tone="warning" role="status">
             Groq draft only — review all facts before publishing.
-          </p>
+          </Notice>
         )}
-        <Label htmlFor={`reply-${r.id}`}>Reply text</Label>
-        <Textarea
-          id={`reply-${r.id}`}
-          rows={5}
-          value={draft}
-          maxLength={4000}
-          onChange={(e) => setDraft(e.target.value)}
-        />
+        <Field label="Reply text" htmlFor={`reply-${r.id}`}>
+          <Textarea
+            id={`reply-${r.id}`}
+            rows={5}
+            value={draft}
+            maxLength={4000}
+            onChange={(e) => setDraft(e.target.value)}
+          />
+        </Field>
         <Button
           disabled={disabled || busy || !draft.trim()}
           onClick={() =>
@@ -493,53 +518,49 @@ function ReportReview({
             .filter((reply) => reply.complaint_id === r.id)
             .sort((a, b) => a.created_at.localeCompare(b.created_at))
             .map((reply) => (
-              <article key={reply.id} className="rounded bg-accent p-3">
-                <p className="text-xs text-muted-foreground">Published {time(reply.created_at)}</p>
-                <p className="mt-2 whitespace-pre-wrap break-words text-sm">{reply.body}</p>
+              <article key={reply.id} className="rounded-md bg-accent p-3">
+                <Text as="p" size="1" color="gray">
+                  Published {time(reply.created_at)}
+                </Text>
+                <Text as="p" size="2" mt="2" className="whitespace-pre-wrap break-words">
+                  {reply.body}
+                </Text>
               </article>
             ))}
         </div>
       </div>
       <div className="grid gap-3 border-t pt-4 sm:grid-cols-2">
-        <div className="space-y-3">
-          <Label htmlFor={`category-${r.id}`}>Staff category correction</Label>
-          <select
+        <Field label="Staff category correction" htmlFor={`category-${r.id}`}>
+          <OptionSelect
             id={`category-${r.id}`}
             value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="h-10 w-full rounded border bg-card px-3 text-sm"
-          >
-            {Object.entries(CATEGORY_LABELS).map(([id, label]) => (
-              <option key={id} value={id}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="space-y-3">
-          <Label htmlFor={`report-status-${r.id}`}>Report status</Label>
-          <select
+            onValueChange={setCategory}
+            options={Object.entries(CATEGORY_LABELS).map(([id, label]) => ({ value: id, label }))}
+          />
+        </Field>
+        <Field label="Report status" htmlFor={`report-status-${r.id}`}>
+          <OptionSelect
             id={`report-status-${r.id}`}
             value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            className="h-10 w-full rounded border bg-card px-3 text-sm"
-          >
-            <option value="NEW">New</option>
-            {["IN_REVIEW", "WAITING_FOR_SELLER", "RESOLVED"].map((v) => (
-              <option key={v} value={v}>
-                {friendly(v)}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="space-y-3 sm:col-span-2">
-          <Label htmlFor={`reason-${r.id}`}>Private audit reason</Label>
-          <Input
-            id={`reason-${r.id}`}
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            maxLength={4000}
+            onValueChange={setStatus}
+            options={[
+              { value: "NEW", label: "New" },
+              ...["IN_REVIEW", "WAITING_FOR_SELLER", "RESOLVED"].map((v) => ({
+                value: v,
+                label: friendly(v),
+              })),
+            ]}
           />
+        </Field>
+        <div className="space-y-3 sm:col-span-2">
+          <Field label="Private audit reason" htmlFor={`reason-${r.id}`}>
+            <Input
+              id={`reason-${r.id}`}
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              maxLength={4000}
+            />
+          </Field>
           <div className="flex flex-wrap gap-2">
             <Button
               size="sm"
@@ -568,16 +589,18 @@ function ReportReview({
       </div>
       {r.refund_requested && (
         <div className="space-y-3 border-t pt-4">
-          <Label htmlFor={`handoff-${r.id}`}>
-            Seller-visible delivery findings for refund review
-          </Label>
-          <Textarea
-            id={`handoff-${r.id}`}
-            value={handoff}
-            maxLength={4000}
-            onChange={(e) => setHandoff(e.target.value)}
-            placeholder="Describe verified findings only. This does not approve or execute a refund."
-          />
+          <Field
+            label="Seller-visible delivery findings for refund review"
+            htmlFor={`handoff-${r.id}`}
+          >
+            <Textarea
+              id={`handoff-${r.id}`}
+              value={handoff}
+              maxLength={4000}
+              onChange={(e) => setHandoff(e.target.value)}
+              placeholder="Describe verified findings only. This does not approve or execute a refund."
+            />
+          </Field>
           <Button
             variant="outline"
             disabled={disabled || !handoff.trim()}

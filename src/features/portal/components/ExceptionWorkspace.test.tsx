@@ -10,7 +10,10 @@ vi.mock("@/infrastructure/portal/use-portal", () => ({
   usePortal: () => ({ data: state.data, command, isPending: false, error: null, refetch: vi.fn() }),
   portalRequest,
 }));
+import { Theme } from "@radix-ui/themes";
 import { ExceptionWorkspace } from "./ExceptionWorkspace";
+// Radix Themes components (e.g. Select) need the <Theme> the root layout provides in the app.
+const inTheme = { wrapper: Theme };
 beforeEach(() => {
   vi.clearAllMocks();
   command.mockResolvedValue({ ok: true });
@@ -88,7 +91,7 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 it("renders explainable guidance and context without executing a command", () => {
-  render(<ExceptionWorkspace id="case" />);
+  render(<ExceptionWorkspace id="case" />, inTheme);
   expect(screen.getByText("Review the latest delivery event.")).toBeInTheDocument();
   expect(screen.getByText(/DELAY_UPDATE/)).toHaveTextContent("guidance-v1");
   expect(screen.getByText("My delivery is delayed")).toBeInTheDocument();
@@ -98,7 +101,7 @@ it("renders explainable guidance and context without executing a command", () =>
 });
 it("keeps a Groq apology as an editable draft until staff explicitly publishes", async () => {
   portalRequest.mockResolvedValue({ text: "Hello, we are sorry for the delay." });
-  render(<ExceptionWorkspace id="case" />);
+  render(<ExceptionWorkspace id="case" />, inTheme);
   fireEvent.click(screen.getByRole("button", { name: "Draft apology with Groq" }));
   await waitFor(() =>
     expect(screen.getByLabelText("Reply text")).toHaveValue("Hello, we are sorry for the delay."),
@@ -119,7 +122,7 @@ it("keeps a Groq apology as an editable draft until staff explicitly publishes",
 });
 it("does not render operational content for a non-staff account", () => {
   state.data!.isStaff = false;
-  render(<ExceptionWorkspace id="case" />);
+  render(<ExceptionWorkspace id="case" />, inTheme);
   expect(screen.getByText("Operations access required")).toBeInTheDocument();
   expect(screen.queryByText("My delivery is delayed")).not.toBeInTheDocument();
   expect(command).not.toHaveBeenCalled();

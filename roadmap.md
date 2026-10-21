@@ -1,5 +1,7 @@
 # Delivery exception platform
 
+- [x] Combine backend/Groq continuation with teammate Radix Themes UI on `backend/groq-phase4-integration` (`9b0369e` plus shared `nextjs-migration` at `c37c6a8`). All 125 tests, typecheck, build, resolved/backend-file lint, and production browser fixtures passed. Review this branch before merging into the shared branch; live Phase 4 gates remain separate.
+
 - [x] Phase 1: repository assessment.
 - [x] Phase 2: confirmed one-company exception scope and architecture.
 - [x] Phase 3: connected Next.js customer, operations, and seller portals; Google OAuth path; shared Supabase demo data; rule-based categorization/routing/guidance; staff-reviewed apology integration (now Groq, replacing Gemini).

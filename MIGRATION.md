@@ -1,5 +1,7 @@
 # Phase 3 implementation inventory
 
+Current integration combines the backend Groq/Phase 4 continuation (`9b0369e`) with the teammate's Radix Themes UI already merged into shared `nextjs-migration` (`c37c6a8`). The integration branch is `backend/groq-phase4-integration`. Radix theme tokens/shared patterns replace the older UI presentation while preserving Supabase data paths, role gates, rule-based guidance, evidence boundaries, and staff-reviewed Groq drafting. Combined-check results are recorded in implementation status; prior UI acceptance is not automatically proof of the merged UI.
+
 ## Product boundary
 
 One delivery company, many sellers and customers. The same Next.js app hosts all portals. This application consumes minimal source context for exception handling; it does not create deliveries, dispatch couriers, execute refunds, or expose full tracking history.

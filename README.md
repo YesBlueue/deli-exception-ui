@@ -8,6 +8,8 @@ For another laptop or a new coding-agent session, start with [Teammate and Agent
 
 The customer portal is part of this same responsive Next.js website. There is no separate native mobile application.
 
+The combined backend/Groq and Radix Themes UI work is on `backend/groq-phase4-integration`, based on the UI already merged into shared `nextjs-migration` at `c37c6a8`. Use that review branch to continue the combined implementation. Its 125 tests, typecheck, production build, resolved/backend-file lint, and explicit fixture browser checks passed; remaining live acceptance gates are documented in the implementation status.
+
 ## Run locally
 
 ```sh
@@ -85,6 +87,10 @@ from public.sellers where external_seller_id = 'demo-lotus';
 The application does not need a service-role key for normal workflows. User-scoped server clients and RLS enforce reads; private guarded transaction functions validate mutations. Evidence uses the private `report-evidence` Storage bucket and short-lived authorized downloads.
 
 ## Structure and rules
+
+### Shared visual system
+
+The portals use Radix Themes with shared layout/form/table patterns in `src/shared/ui/patterns`. Theme settings are in `src/shared/theme.ts`; navy/orange brand and status tokens are in `src/styles/globals.css`. The development-only `/design-system` page shows the components and patterns. Follow the design rules in `AGENTS.md` when extending UI; keep the connected Supabase adapters and explicit staff actions intact.
 
 - `src/app/`: Next.js routes, OAuth callback, API handlers, staff layout gate.
 - `src/features/portal/components/`: connected customer, seller, operations, detail, and simulator views.
