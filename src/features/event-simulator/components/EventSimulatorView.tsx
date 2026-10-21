@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { Badge, Text } from "@radix-ui/themes";
 import { FlaskConical } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { SimBadge } from "@/features/exceptions/components/badges";
 import { Button } from "@/shared/ui/button";
 import { Label } from "@/shared/ui/label";
+import { Field, Notice, PageHeader, Panel } from "@/shared/ui/patterns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { Switch } from "@/shared/ui/switch";
@@ -51,73 +53,67 @@ export function EventSimulatorView() {
   };
 
   return (
-      <div className="mx-auto max-w-5xl space-y-6">
-        <div className="flex flex-wrap items-center gap-3">
-          <FlaskConical className="h-6 w-6 text-demo" aria-hidden />
-          <h1 className="text-2xl font-semibold tracking-tight">Carrier event simulator</h1>
-          <SimBadge>Demo only — not a live carrier connection</SimBadge>
-        </div>
+    <div className="mx-auto max-w-5xl space-y-6">
+      <PageHeader
+        eyebrow={<SimBadge>Demo only — not a live carrier connection</SimBadge>}
+        title={<span className="flex items-center gap-2"><FlaskConical className="size-6 text-demo" aria-hidden />Carrier event simulator</span>}
+      />
 
-        {!db ? (
-          <Skeleton className="h-96" />
-        ) : (
-          <div className="grid gap-4 lg:grid-cols-2">
-            <section className="space-y-4 rounded-lg border bg-card p-5 shadow-card">
-              <div className="space-y-1.5">
-                <Label htmlFor="carrier">Carrier</Label>
+      {!db ? (
+        <Skeleton className="h-96" />
+      ) : (
+        <div className="grid items-start gap-6 lg:grid-cols-2">
+          <Panel title="Event">
+            <div className="space-y-4">
+              <Field label="Carrier" htmlFor="carrier">
                 <Select value={carrier} onValueChange={(v) => { setCarrier(v as CarrierId); setShipmentId(""); setPayload(""); }}>
                   <SelectTrigger id="carrier"><SelectValue /></SelectTrigger>
                   <SelectContent>{Object.values(CARRIERS).map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
                 </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="ship">Shipment</Label>
+              </Field>
+              <Field label="Shipment" htmlFor="ship">
                 <Select value={shipmentId} onValueChange={setShipmentId}>
                   <SelectTrigger id="ship"><SelectValue placeholder="Choose shipment" /></SelectTrigger>
                   <SelectContent>{shipments.map((s) => <SelectItem key={s.id} value={s.id}>{s.orderId} · {s.customerName} · {s.status.toLowerCase()}</SelectItem>)}</SelectContent>
                 </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="type">Event type</Label>
+              </Field>
+              <Field label="Event type" htmlFor="type">
                 <Select value={type} onValueChange={(v) => setType(v as NormalizedEventType)}>
                   <SelectTrigger id="type"><SelectValue /></SelectTrigger>
                   <SelectContent>{(Object.keys(EVENT_LABEL) as NormalizedEventType[]).map((t) => <SelectItem key={t} value={t}>{EVENT_LABEL[t]}</SelectItem>)}</SelectContent>
                 </Select>
-              </div>
+              </Field>
               <div className="flex items-center gap-2">
                 <Switch id="ts" checked={withTs} onCheckedChange={setWithTs} />
                 <Label htmlFor="ts">Include carrier timestamp</Label>
               </div>
               <Button variant="outline" onClick={generate} disabled={!ship} className="w-full">Generate {CARRIERS[carrier].name} payload</Button>
-              <div className="space-y-1.5">
-                <Label htmlFor="payload">Raw payload (editable)</Label>
+              <Field label="Raw payload (editable)" htmlFor="payload" hint="Tip: submit the same payload twice to test de-duplication. Irrawaddy sends no event ID, so it dedupes on tracking + type + time.">
                 <Textarea id="payload" rows={8} className="font-mono text-xs" value={payload} onChange={(e) => setPayload(e.target.value)} placeholder="Generate a payload, then edit it if you like." />
-                <p className="text-xs text-muted-foreground">Tip: submit the same payload twice to test de-duplication. Irrawaddy sends no event ID, so it dedupes on tracking + type + time.</p>
-              </div>
+              </Field>
               <Button onClick={submit} disabled={!payload.trim()} className="w-full">Submit event</Button>
-            </section>
-
-            <div className="space-y-4">
-              <section className="rounded-lg border bg-card p-5 shadow-card" aria-live="polite">
-                <h2 className="text-sm font-semibold">Result</h2>
-                {!result ? (
-                  <p className="mt-2 text-sm text-muted-foreground">No event submitted yet.</p>
-                ) : result.ok ? (
-                  <div className="mt-2 space-y-2 text-sm">
-                    <div className="inline-flex rounded border border-success/30 bg-success-soft px-2 py-0.5 text-xs font-semibold text-success">{result.outcome.replace(/_/g, " ")}</div>
-                    <p>{result.message}</p>
-                    {result.exceptionId && (
-                      <Button asChild size="sm" variant="outline"><Link href={`/exceptions/${result.exceptionId}`}>Open exception</Link></Button>
-                    )}
-                  </div>
-                ) : (
-                  <div className="mt-2 rounded-md border border-critical/30 bg-critical-soft p-3 text-sm text-critical">{result.error}</div>
-                )}
-              </section>
-
             </div>
-          </div>
-        )}
-      </div>
+          </Panel>
+
+          <Panel title="Result">
+            <div aria-live="polite">
+              {!result ? (
+                <Text as="p" size="2" color="gray">No event submitted yet.</Text>
+              ) : result.ok ? (
+                <div className="space-y-3">
+                  <Badge color="green" variant="soft">{result.outcome.replace(/_/g, " ")}</Badge>
+                  <Text as="p" size="2">{result.message}</Text>
+                  {result.exceptionId && (
+                    <Button asChild size="sm" variant="outline"><Link href={`/exceptions/${result.exceptionId}`}>Open exception</Link></Button>
+                  )}
+                </div>
+              ) : (
+                <Notice tone="error">{result.error}</Notice>
+              )}
+            </div>
+          </Panel>
+        </div>
+      )}
+    </div>
   );
 }

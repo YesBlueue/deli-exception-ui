@@ -1,10 +1,11 @@
 "use client";
 
+import { Heading, Text } from "@radix-ui/themes";
 import { useState } from "react";
 import { Eye, EyeOff, Loader2, LogIn, UserPlus } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
+import { Field, Notice } from "@/shared/ui/patterns";
 import { supabase } from "@/infrastructure/supabase/client";
 import { signInSchema, signUpSchema } from "@/core/domain/customer-auth-validation";
 import { useCustomerAuth } from "./CustomerAuthProvider";
@@ -49,15 +50,15 @@ export function CustomerAccountForm({ onAuthenticated }: { onAuthenticated?: () 
     } finally { setBusy(false); }
   }
   return <form className="space-y-5" onSubmit={(event) => { event.preventDefault(); void submit(); }}>
-    <div><h1 className="text-2xl font-semibold">{signup ? "Create your account" : "Welcome back"}</h1><p className="mt-2 text-sm text-muted-foreground">{signup ? "Create an account to report an order problem." : "Log in to Shwe Market Support to report an order problem."}</p></div>
-    {signup && <div className="space-y-1.5"><Label htmlFor="customer-name">Name</Label><Input id="customer-name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" maxLength={100} className="h-12" disabled={busy} /></div>}
-    <div className="space-y-1.5"><Label htmlFor="customer-email">Email</Label><Input id="customer-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" className="h-12" disabled={busy} /></div>
-    <div className="space-y-1.5"><Label htmlFor="customer-password">Password</Label><div className="relative"><Input id="customer-password" type={visible ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={signup ? "new-password" : "current-password"} maxLength={128} className="h-12 pr-12" disabled={busy} /><Button type="button" size="icon" variant="ghost" className="absolute right-1 top-1 size-10" aria-label={visible ? "Hide password" : "Show password"} onClick={() => setVisible(!visible)}>{visible ? <EyeOff /> : <Eye />}</Button></div>{signup && <p className="text-xs text-muted-foreground">At least 8 characters.</p>}</div>
-    {signup && <div className="space-y-1.5"><Label htmlFor="customer-confirm-password">Confirm password</Label><Input id="customer-confirm-password" type={visible ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="new-password" className="h-12" disabled={busy} /></div>}
-    {error && <p role="alert" className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
-    {notice && <p role="status" className="text-sm text-primary">{notice}</p>}
+    <div><Heading as="h1" size="7">{signup ? "Create your account" : "Welcome back"}</Heading><Text as="p" size="2" color="gray" mt="2">{signup ? "Create an account to report an order problem." : "Log in to Shwe Market Support to report an order problem."}</Text></div>
+    {signup && <Field label="Name" htmlFor="customer-name"><Input id="customer-name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" maxLength={100} className="h-12" disabled={busy} /></Field>}
+    <Field label="Email" htmlFor="customer-email"><Input id="customer-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" className="h-12" disabled={busy} /></Field>
+    <Field label="Password" htmlFor="customer-password" {...(signup && { hint: "At least 8 characters." })}><div className="relative"><Input id="customer-password" type={visible ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={signup ? "new-password" : "current-password"} maxLength={128} className="h-12 pr-12" disabled={busy} /><Button type="button" size="icon" variant="ghost" className="absolute right-1 top-1 size-10" aria-label={visible ? "Hide password" : "Show password"} onClick={() => setVisible(!visible)}>{visible ? <EyeOff /> : <Eye />}</Button></div></Field>
+    {signup && <Field label="Confirm password" htmlFor="customer-confirm-password"><Input id="customer-confirm-password" type={visible ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="new-password" className="h-12" disabled={busy} /></Field>}
+    {error && <Notice tone="error" role="alert">{error}</Notice>}
+    {notice && <Notice tone="success" role="status">{notice}</Notice>}
     <Button type="submit" disabled={busy} className="h-12 w-full text-base">{busy ? <Loader2 className="animate-spin" /> : signup ? <UserPlus /> : <LogIn />}{busy ? "Please wait…" : signup ? "Sign Up" : "Log In"}</Button>
-    <div className="text-center text-sm text-muted-foreground">{signup ? "Already have an account?" : "Don’t have an account?"}<Button type="button" variant="link" disabled={busy} onClick={changeForm}>{signup ? "Log In" : "Sign Up"}</Button></div>
+    <Text as="div" size="2" color="gray" className="text-center">{signup ? "Already have an account?" : "Don’t have an account?"}<Button type="button" variant="link" disabled={busy} onClick={changeForm}>{signup ? "Log In" : "Sign Up"}</Button></Text>
     {auth.mode === "cloud" && <Button type="button" variant="outline" className="h-auto min-h-10 w-full whitespace-normal" disabled={busy} onClick={() => { auth.changeMode("demo"); setEmail(""); setPassword(""); setConfirmPassword(""); setError(""); setNotice(""); setSignup(true); }}>{fallback ? "Use local demo sign-in instead" : "Use local demo sign-in"}</Button>}
     {auth.mode === "demo" && <Button type="button" variant="outline" className="w-full" disabled={busy} onClick={() => { auth.changeMode("cloud"); setEmail(""); setPassword(""); setConfirmPassword(""); setError(""); setNotice(""); }}>Use cloud login</Button>}
   </form>;

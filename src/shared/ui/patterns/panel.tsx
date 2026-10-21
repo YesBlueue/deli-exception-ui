@@ -17,7 +17,7 @@ export function Panel({ title, aside, toolbar, flush = false, className, childre
   children: ReactNode;
 }) {
   return (
-    <Card size="1" className={cn("min-w-0 !p-0", className)}>
+    <Card size="1" className={cn("flex min-w-0 flex-col !p-0", className)}>
       {title && (
         <div className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3">
           <Heading as="h2" size="3">{title}</Heading>
@@ -25,7 +25,7 @@ export function Panel({ title, aside, toolbar, flush = false, className, childre
         </div>
       )}
       {toolbar && <div className="border-b p-3">{toolbar}</div>}
-      <div className={flush ? undefined : "p-4"}>{children}</div>
+      <div className={cn("flex-1", !flush && "p-4")}>{children}</div>
     </Card>
   );
 }

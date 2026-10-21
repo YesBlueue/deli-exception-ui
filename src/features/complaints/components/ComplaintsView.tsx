@@ -1,18 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import { Text } from "@radix-ui/themes";
 import { useState } from "react";
-import { ArrowUpRight, Inbox, Search } from "lucide-react";
+import { ArrowUpRight, Inbox } from "lucide-react";
 import { ComplaintReview } from "@/features/complaints/components/ComplaintReview";
 import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/ui/dialog";
+import { ButtonRow, EmptyState, FilterBar, LinkList, PageHeader, Panel, SearchField } from "@/shared/ui/patterns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { COMPLAINT_CATEGORIES, COMPLAINT_STATUSES } from "@/core/domain/customer";
 import { CARRIERS } from "@/core/domain/carriers";
 import { ensureCustomerLink, updatePlatformData, usePlatformData } from "@/infrastructure/demo-platform/platform";
 import { ago } from "@/features/exceptions/components/badges";
+
 export function ComplaintsView() {
   const db = usePlatformData();
   const [category, setCategory] = useState("all");
@@ -24,5 +26,75 @@ export function ComplaintsView() {
   const rows = db.complaints.map((c) => ({ id: c.id, shipmentId: c.shipmentId, reference: c.reference, category: c.category, statusCode: c.status, title: COMPLAINT_CATEGORIES[c.category], status: COMPLAINT_STATUSES[c.status], at: c.submittedAt })).map((r) => ({ ...r, shipment: db.shipments.find((s) => s.id === r.shipmentId) })).filter((r) => r.shipment && (category === "all" || r.category === category) && (statusFilter === "all" || r.statusCode === statusFilter) && (!query || `${r.reference} ${r.shipment?.customerId ?? ""} ${r.title} ${r.shipment?.orderId} ${r.shipment?.customerName}`.toLowerCase().includes(query.toLowerCase()))).sort((a, b) => b.at.localeCompare(a.at));
   const active = rows.find((r) => r.id === selected);
   const complaint = db.complaints.find((c) => c.id === active?.id);
-  return <div className="mx-auto max-w-7xl"><header className="mb-6"><p className="mb-1 text-xs font-medium uppercase text-primary">Customer care</p><h1 className="text-2xl font-semibold">Customer complaints</h1><p className="mt-1 text-sm text-muted-foreground">Post-delivery complaints from customers</p></header><div className="mb-5 flex flex-wrap items-center gap-3"><div className="relative min-w-48 flex-1 sm:max-w-xs"><Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" /><Input aria-label="Search customer complaints" placeholder="Search reference, customer or order" value={query} onChange={(e) => setQuery(e.target.value)} className="pl-9" /></div><Select value={category} onValueChange={setCategory}><SelectTrigger className="w-full sm:w-52" aria-label="Filter complaint category"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All categories</SelectItem>{Object.entries(COMPLAINT_CATEGORIES).map(([k,v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent></Select><Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="w-full sm:w-44" aria-label="Filter complaint status"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All statuses</SelectItem>{Object.entries(COMPLAINT_STATUSES).map(([k,v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent></Select></div><div className="grid gap-6 "><section className="min-w-0 border-y"><h2 className="border-b py-3 text-xs font-medium uppercase text-muted-foreground">{rows.length} complaints</h2>{!rows.length ? <div className="py-12 text-center"><Inbox className="mx-auto mb-3 size-8 text-muted-foreground" /><p className="text-sm">No matching complaints</p></div> : <div className="divide-y">{rows.map((r) => <Button key={r.id} variant="ghost" className={`h-auto w-full justify-start whitespace-normal rounded-none px-3 py-4 text-left ${r.id === active?.id ? "bg-accent" : ""}`} onClick={() => { setSelected(r.id); setAccess(null); }}><span className="min-w-0 flex-1"><span className="block font-mono text-xs text-primary">{r.reference}</span><span className="block text-sm font-semibold">{r.title}</span><span className="mt-1 block text-xs text-muted-foreground">{r.shipment?.customerName} · {r.shipment?.orderId}</span><span className="mt-2 flex flex-wrap justify-between gap-1 text-xs"><span className="text-primary">{r.status}</span><span className="text-muted-foreground">{ago(r.at)}</span></span></span></Button>)}</div>}</section><Dialog open={!!selected} onOpenChange={(open) => { if (!open) setSelected(null); }}><DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl"><DialogHeader><DialogTitle>Complaint details</DialogTitle></DialogHeader><section className="min-w-0 pt-5">{active?.shipment ? <><div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b pb-4"><div><p className="font-medium">{active.shipment.customerName} · {active.shipment.orderId}</p><p className="mt-1 text-xs text-muted-foreground">{CARRIERS[active.shipment.carrierId]?.name ?? active.shipment.carrierId} · Shipment: {active.shipment.status.toLowerCase().replaceAll("_", " ")}</p></div>{access ? <Button asChild size="sm" variant="outline"><Link href={`/customer/${access}`} target="_blank">Open customer view<ArrowUpRight /></Link></Button> : <Button size="sm" variant="outline" onClick={() => { const token = updatePlatformData((d) => ensureCustomerLink(d, active.shipmentId)); setAccess(token); }}>Prepare customer preview<ArrowUpRight /></Button>}</div>{complaint && <ComplaintReview key={complaint.id} complaint={complaint} shipment={active.shipment} activity={db.requestActivity.filter((a) => a.requestId === complaint.id)} />}</> : <p className="py-20 text-center text-muted-foreground">Select a complaint to review.</p>}</section></DialogContent></Dialog></div></div>;
+
+  return (
+    <div className="mx-auto max-w-7xl space-y-6">
+      <PageHeader eyebrow="Customer care" title="Customer complaints" description="Post-delivery complaints from customers" />
+
+      <Panel
+        title={`${rows.length} complaints`}
+        flush
+        toolbar={
+          <FilterBar search={<SearchField label="Search customer complaints" placeholder="Search reference, customer or order" value={query} onChange={setQuery} />}>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger className="xl:w-52" aria-label="Filter complaint category"><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="all">All categories</SelectItem>{Object.entries(COMPLAINT_CATEGORIES).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
+            </Select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="xl:w-44" aria-label="Filter complaint status"><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="all">All statuses</SelectItem>{Object.entries(COMPLAINT_STATUSES).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
+            </Select>
+          </FilterBar>
+        }
+      >
+        {!rows.length ? (
+          <EmptyState icon={Inbox} title="No matching complaints" />
+        ) : (
+          <LinkList label="Complaints">
+            {rows.map((r) => (
+              <ButtonRow key={r.id} selected={r.id === active?.id} onClick={() => { setSelected(r.id); setAccess(null); }}>
+                <span className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
+                  <span className="min-w-0">
+                    <Text as="span" size="1" className="block font-mono text-primary">{r.reference}</Text>
+                    <Text as="span" size="2" weight="medium" className="block">{r.title}</Text>
+                    <Text as="span" size="1" color="gray" className="mt-0.5 block">{r.shipment?.customerName} · {r.shipment?.orderId}</Text>
+                  </span>
+                  <span className="text-right">
+                    <Text as="span" size="1" weight="medium" className="block text-primary">{r.status}</Text>
+                    <Text as="span" size="1" color="gray" className="block">{ago(r.at)}</Text>
+                  </span>
+                </span>
+              </ButtonRow>
+            ))}
+          </LinkList>
+        )}
+      </Panel>
+
+      <Dialog open={!!selected} onOpenChange={(open) => { if (!open) setSelected(null); }}>
+        <DialogContent maxWidth="42rem" className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Complaint details</DialogTitle></DialogHeader>
+          <section className="min-w-0 pt-4">
+            {active?.shipment ? (
+              <>
+                <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b pb-4">
+                  <div>
+                    <Text as="p" size="2" weight="medium">{active.shipment.customerName} · {active.shipment.orderId}</Text>
+                    <Text as="p" size="1" color="gray" mt="1">{CARRIERS[active.shipment.carrierId]?.name ?? active.shipment.carrierId} · Shipment: {active.shipment.status.toLowerCase().replaceAll("_", " ")}</Text>
+                  </div>
+                  {access ? (
+                    <Button asChild size="sm" variant="outline"><Link href={`/customer/${access}`} target="_blank">Open customer view<ArrowUpRight /></Link></Button>
+                  ) : (
+                    <Button size="sm" variant="outline" onClick={() => { const token = updatePlatformData((d) => ensureCustomerLink(d, active.shipmentId)); setAccess(token); }}>Prepare customer preview<ArrowUpRight /></Button>
+                  )}
+                </div>
+                {complaint && <ComplaintReview key={complaint.id} complaint={complaint} shipment={active.shipment} activity={db.requestActivity.filter((a) => a.requestId === complaint.id)} />}
+              </>
+            ) : (
+              <Text as="p" color="gray" className="py-20 text-center">Select a complaint to review.</Text>
+            )}
+          </section>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
 }

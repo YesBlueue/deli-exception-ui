@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Info, Send } from "lucide-react";
+import { Code, Text } from "@radix-ui/themes";
+import { FileQuestion, Info, Send } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ExceptionComposers } from "@/features/exceptions/components/ExceptionComposers";
@@ -18,7 +19,7 @@ import {
   AlertDialogTitle,
 } from "@/shared/ui/alert-dialog";
 import { Button } from "@/shared/ui/button";
-import { Label } from "@/shared/ui/label";
+import { BackLink, EmptyState, Field, KeyValueList, Notice, PageHeader, Panel, Timeline } from "@/shared/ui/patterns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { Textarea } from "@/shared/ui/textarea";
@@ -29,18 +30,6 @@ import { STATUS_LABEL, TRANSITIONS } from "@/core/domain/lifecycle";
 import { draftMessage, suggestedAction } from "@/core/domain/priority";
 import { updatePlatformData as mutate, usePlatformData as useDB, ensureCustomerLink } from "@/infrastructure/demo-platform/platform";
 import type { WorkflowStatus } from "@/core/domain/types";
-
-function Card({ title, children, aside }: { title: string; children: React.ReactNode; aside?: React.ReactNode }) {
-  return (
-    <section className="rounded-lg border bg-card shadow-card">
-      <div className="flex items-center justify-between gap-2 border-b px-4 py-3">
-        <h2 className="text-sm font-semibold">{title}</h2>
-        {aside}
-      </div>
-      <div className="p-4">{children}</div>
-    </section>
-  );
-}
 
 export function ExceptionDetailView({ id }: { id: string }) {
   const db = useDB();
@@ -54,20 +43,22 @@ export function ExceptionDetailView({ id }: { id: string }) {
 
   if (!db)
     return (
-        <div className="mx-auto grid max-w-7xl gap-4 lg:grid-cols-3">
-          <div className="space-y-4 lg:col-span-2"><Skeleton className="h-32" /><Skeleton className="h-64" /></div>
-          <Skeleton className="h-96" />
-        </div>
+      <div className="mx-auto grid max-w-7xl gap-4 lg:grid-cols-3">
+        <div className="space-y-4 lg:col-span-2"><Skeleton className="h-32" /><Skeleton className="h-64" /></div>
+        <Skeleton className="h-96" />
+      </div>
     );
 
   const x = db.exceptions.find((e) => e.id === id);
   if (!x)
     return (
-        <div className="mx-auto max-w-md py-20 text-center">
-          <h1 className="text-lg font-semibold">Exception not found</h1>
-          <p className="mt-1 text-sm text-muted-foreground">It may belong to another organisation or the demo data was reset.</p>
-          <Button asChild variant="outline" className="mt-4"><Link href="/dashboard">Back to inbox</Link></Button>
-        </div>
+      <EmptyState
+        icon={FileQuestion}
+        titleAs="h1"
+        title="Exception not found"
+        description="It may belong to another organisation or the demo data was reset."
+        action={<Button asChild variant="outline"><Link href="/dashboard">Back to inbox</Link></Button>}
+      />
     );
 
   const s = db.shipments.find((sh) => sh.id === x.shipmentId);
@@ -106,139 +97,144 @@ export function ExceptionDetailView({ id }: { id: string }) {
 
   return (
     <>
-      <div className="mx-auto max-w-7xl space-y-4">
-        <Link href="/dashboard" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" aria-hidden /> Inbox
-        </Link>
+      <div className="mx-auto max-w-7xl space-y-6">
+        <BackLink href="/dashboard">Inbox</BackLink>
 
-        <header className="flex flex-col gap-3 rounded-lg border bg-card p-5 shadow-card sm:flex-row sm:items-start sm:justify-between">
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
+        <PageHeader
+          eyebrow={
+            <span className="flex flex-wrap items-center gap-2">
               <PriorityBadge p={x.priority} />
-              <StatusBadge s={x.workflowStatus} /><SlaCountdown exception={x} />
-              <span className="text-xs text-muted-foreground">Opened {ago(x.openedAt)}</span>
+              <StatusBadge s={x.workflowStatus} />
+              <SlaCountdown exception={x} />
+              <span>Opened {ago(x.openedAt)}</span>
+            </span>
+          }
+          title={<>{TYPE_LABEL[x.type]} · <span className="font-mono">{s.orderId}</span></>}
+          description={x.summary}
+          actions={
+            <div className="sm:text-right">
+              <Text as="div" size="2" weight="medium">{s.customerName}</Text>
+              <Text as="div" size="2" color="gray">{CARRIERS[s.carrierId].name}</Text>
             </div>
-            <h1 className="text-xl font-semibold">{TYPE_LABEL[x.type]} · <span className="font-mono text-base">{s.orderId}</span></h1>
-            <p className="text-sm text-muted-foreground">{x.summary}</p>
-          </div>
-          <div className="text-sm sm:text-right">
-            <div className="font-medium">{s.customerName}</div>
-            <div className="text-muted-foreground">{CARRIERS[s.carrierId].name}</div>
-          </div>
-        </header>
+          }
+        />
 
-        <div className="flex flex-wrap items-center justify-between gap-3 border-y py-3">
-          <div><span className="text-sm font-medium">Customer support</span><p className="text-xs text-muted-foreground">Order-specific post-delivery complaints and support</p></div>
-          <div className="flex flex-wrap gap-2"><Button asChild size="sm" variant="ghost"><Link href="/requests">Review customer complaints</Link></Button>{customerAccess ? <Button asChild size="sm" variant="outline"><Link href={`/customer/${customerAccess}`} target="_blank">Open customer portal</Link></Button> : <Button size="sm" variant="outline" onClick={() => setCustomerAccess(mutate((d) => ensureCustomerLink(d, s.id)))}>Prepare customer preview</Button>}</div>
-        </div>
+        <Panel
+          title="Customer support"
+          aside={
+            <div className="flex flex-wrap gap-2">
+              <Button asChild size="sm" variant="ghost"><Link href="/requests">Review customer complaints</Link></Button>
+              {customerAccess ? (
+                <Button asChild size="sm" variant="outline"><Link href={`/customer/${customerAccess}`} target="_blank">Open customer portal</Link></Button>
+              ) : (
+                <Button size="sm" variant="outline" onClick={() => setCustomerAccess(mutate((d) => ensureCustomerLink(d, s.id)))}>Prepare customer preview</Button>
+              )}
+            </div>
+          }
+        >
+          <Text as="p" size="2" color="gray">Order-specific post-delivery complaints and support</Text>
+        </Panel>
 
-        <div className="grid gap-4 lg:grid-cols-3">
-          <div className="space-y-4 lg:col-span-2">
-            <Card title="Why this priority" aside={<span className="text-xs text-muted-foreground">Evaluated {fmtTime(x.evaluatedAt)} · rule-based</span>}>
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="min-w-0 space-y-6 lg:col-span-2">
+            <Panel title="Why this priority" aside={<Text size="1" color="gray">Evaluated {fmtTime(x.evaluatedAt)} · rule-based</Text>}>
               <ul className="space-y-2">
                 {x.reasons.map((r) => (
-                  <li key={r.rule} className="flex gap-3 text-sm">
-                    <code className="h-fit shrink-0 rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">{r.rule}</code>
-                    <span>{r.text}</span>
+                  <li key={r.rule} className="flex gap-3">
+                    <Code size="1" color="gray" className="h-fit shrink-0">{r.rule}</Code>
+                    <Text size="2">{r.text}</Text>
                   </li>
                 ))}
               </ul>
               {x.missingData.length > 0 && (
-                <div className="mt-3 rounded-md border border-medium/30 bg-medium-soft p-3 text-sm text-medium">
-                  <div className="font-medium">Missing data</div>
-                  <ul className="mt-1 list-disc pl-5">{x.missingData.map((m) => <li key={m}>{m}</li>)}</ul>
-                </div>
+                <Notice tone="warning" title="Missing data" className="mt-3">
+                  <ul className="list-disc pl-5">{x.missingData.map((m) => <li key={m}>{m}</li>)}</ul>
+                </Notice>
               )}
-            </Card>
+            </Panel>
 
             {x.workflowStatus !== "RESOLVED" && (
-              <Card title="Suggested next action" aside={<span className="flex items-center gap-1 text-xs text-muted-foreground"><Info className="h-3.5 w-3.5" aria-hidden />AI copilot off — rule-based suggestion</span>}>
-                <p className="font-medium text-primary">{suggestedAction(x.type)}</p>
+              <Panel title="Suggested next action" aside={<Text size="1" color="gray" className="flex items-center gap-1"><Info className="size-3.5" aria-hidden />AI copilot off — rule-based suggestion</Text>}>
+                <Text as="p" size="3" weight="medium" className="text-primary">{suggestedAction(x.type)}</Text>
                 <div className="mt-4 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="msg">Customer message draft</Label>
+                  <div className="flex items-center justify-between gap-2">
+                    <Text as="label" htmlFor="msg" size="2" weight="medium">Customer message draft</Text>
                     <SimBadge>Not sent until approved</SimBadge>
                   </div>
                   <Textarea id="msg" rows={4} value={message} onChange={(e) => setDraft(e.target.value)} maxLength={600} />
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs text-muted-foreground">To {s.customerPhone} · {message.length}/600</span>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <Text size="1" color="gray">To {s.customerPhone} · {message.length}/600</Text>
                     <Button onClick={() => setConfirm(true)} disabled={!message.trim()}>
-                      <Send className="h-4 w-4" aria-hidden /> Review &amp; approve
+                      <Send aria-hidden /> Review &amp; approve
                     </Button>
                   </div>
                 </div>
-              </Card>
+              </Panel>
             )}
 
             <ExceptionComposers id={x.id} />
-            <Card title="Activity & audit trail">
-              {timeline.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No activity yet.</p>
-              ) : (
-                <ol className="relative space-y-4 border-l pl-5">
-                  {timeline.map((t, i) => (
-                    <li key={i} className="relative text-sm">
-                      <span className="absolute -left-[25px] top-1.5 h-2 w-2 rounded-full bg-primary" aria-hidden />
-                      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                        <span>{fmtTime(t.at)}</span>·<span>{t.actor}</span>{t.sim && <SimBadge />}
-                      </div>
-                      <div className="mt-0.5">{t.text}</div>
-                    </li>
-                  ))}
-                </ol>
-              )}
-            </Card>
+
+            <Panel title="Activity & audit trail" flush>
+              <Timeline
+                empty="No activity yet."
+                items={timeline.map((t, i) => ({
+                  key: String(i),
+                  body: t.text,
+                  time: <time dateTime={t.at}>{fmtTime(t.at)}</time>,
+                  meta: <>· <span>{t.actor}</span>{t.sim && <SimBadge />}</>,
+                }))}
+              />
+            </Panel>
           </div>
 
-          <div className="space-y-4">
-            <Card title="Workflow status">
+          <div className="min-w-0 space-y-6">
+            <Panel title="Workflow status">
               <div className="space-y-3">
-                <div className="flex items-center gap-2 text-sm">Current: <StatusBadge s={x.workflowStatus} /></div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="to">Move to</Label>
+                <Text as="div" size="2" className="flex items-center gap-2">Current: <StatusBadge s={x.workflowStatus} /></Text>
+                <Field label="Move to" htmlFor="to">
                   <Select value={to} onValueChange={setTo}>
                     <SelectTrigger id="to"><SelectValue placeholder="Choose allowed status" /></SelectTrigger>
                     <SelectContent>
                       {TRANSITIONS[x.workflowStatus].map((st) => <SelectItem key={st} value={st}>{STATUS_LABEL[st]}</SelectItem>)}
                     </SelectContent>
                   </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="reason">Reason</Label>
+                </Field>
+                <Field label="Reason" htmlFor="reason" error={reasonErr} errorId="reason-err">
                   <Textarea id="reason" rows={2} value={reason} onChange={(e) => { setReason(e.target.value); setReasonErr(""); }} aria-invalid={!!reasonErr} aria-describedby="reason-err" />
-                  {reasonErr && <p id="reason-err" className="text-xs text-destructive">{reasonErr}</p>}
-                </div>
+                </Field>
                 <Button className="w-full" variant="secondary" disabled={!to} onClick={changeStatus}>Update status</Button>
               </div>
-            </Card>
+            </Panel>
 
-            <Card title="Shipment">
-              <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-                <dt className="text-muted-foreground">Tracking</dt><dd className="font-mono text-xs">{s.trackingId}</dd>
-                <dt className="text-muted-foreground">Carrier</dt><dd>{CARRIERS[s.carrierId].name}</dd>
-                <dt className="text-muted-foreground">Parcel status</dt><dd>{s.status.replace("_", " ").toLowerCase()}</dd>
-                <dt className="text-muted-foreground">Order value</dt><dd>{s.valueMMK === null ? <span className="text-medium">Unknown</span> : `${s.valueMMK.toLocaleString()} MMK`}</dd>
-                <dt className="text-muted-foreground">Phone</dt><dd>{s.customerPhone}</dd>
-                <dt className="text-muted-foreground">Address</dt><dd>{s.address.recipient}<br />{s.address.street}<br />{s.address.township}, {s.address.city}</dd>
-              </dl>
-            </Card>
+            <Panel title="Shipment">
+              <KeyValueList
+                items={[
+                  { label: "Tracking", value: <span className="font-mono text-xs">{s.trackingId}</span> },
+                  { label: "Carrier", value: CARRIERS[s.carrierId].name },
+                  { label: "Parcel status", value: s.status.replace("_", " ").toLowerCase() },
+                  { label: "Order value", value: s.valueMMK === null ? <span className="text-medium">Unknown</span> : `${s.valueMMK.toLocaleString()} MMK` },
+                  { label: "Phone", value: s.customerPhone },
+                  { label: "Address", value: <>{s.address.recipient}<br />{s.address.street}<br />{s.address.township}, {s.address.city}</> },
+                ]}
+              />
+            </Panel>
 
-            <Card title="Shipment history">
-              <ol className="space-y-3">
+            <Panel title="Shipment history" flush>
+              <ol className="divide-y">
                 {events.map((e) => (
-                  <li key={e.id} className="text-sm">
+                  <li key={e.id} className="px-4 py-2.5">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-medium">{EVENT_LABEL[e.type]}</span>
-                      <span className="text-xs text-muted-foreground">{e.eventTime ? fmtTime(e.eventTime) : <span className="text-medium">no carrier time</span>}</span>
+                      <Text size="2" weight="medium">{EVENT_LABEL[e.type]}</Text>
+                      <Text size="1" color="gray">{e.eventTime ? fmtTime(e.eventTime) : <span className="text-medium">no carrier time</span>}</Text>
                     </div>
-                    <Button variant="link" size="sm" className="h-auto px-0 text-xs" onClick={() => setRawOpen(rawOpen === e.id ? null : e.id)}>
+                    <Button variant="link" size="sm" className="px-0 text-xs" onClick={() => setRawOpen(rawOpen === e.id ? null : e.id)}>
                       {rawOpen === e.id ? "Hide" : "Show"} raw payload
                     </Button>
-                    {rawOpen === e.id && <pre className="mt-1 overflow-x-auto rounded bg-muted p-2 font-mono text-[11px]">{JSON.stringify(e.raw, null, 2)}</pre>}
+                    {rawOpen === e.id && <pre className="mt-1 overflow-x-auto rounded-md bg-muted p-2 font-mono text-xs">{JSON.stringify(e.raw, null, 2)}</pre>}
                   </li>
                 ))}
               </ol>
-            </Card>
+            </Panel>
           </div>
         </div>
       </div>
@@ -251,7 +247,7 @@ export function ExceptionDetailView({ id }: { id: string }) {
               In this prototype the send is <strong>simulated</strong> — nothing reaches {s.customerName}. It will be logged and the exception moves to “Awaiting customer”.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <blockquote className="rounded-md border bg-muted/50 p-3 text-sm">{message}</blockquote>
+          <blockquote className="rounded-md border bg-muted p-3 text-sm">{message}</blockquote>
           <AlertDialogFooter>
             <AlertDialogCancel>Keep editing</AlertDialogCancel>
             <AlertDialogAction onClick={send}>Approve &amp; send (simulated)</AlertDialogAction>

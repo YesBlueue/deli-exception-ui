@@ -2,16 +2,18 @@
 
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { Badge, Card, Heading, Text } from "@radix-ui/themes";
 
 import { CustomerAccountForm } from "@/features/customer-auth/components/CustomerAccountForm";
 import { useCustomerAuth } from "@/features/customer-auth/components/CustomerAuthProvider";
-import { ArrowLeft, Camera, CheckCircle2, ImagePlus, Loader2, PackageSearch, ShieldCheck, X } from "lucide-react";
+import { ArrowLeft, Camera, CheckCircle2, ImagePlus, Loader2, PackageSearch, ShieldCheck } from "lucide-react";
 import { useEffect, useRef, useState, type DragEvent } from "react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
 import { Textarea } from "@/shared/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
+import { BrandMark, Field, KeyValueList, Notice, PhotoThumb, SiteShell } from "@/shared/ui/patterns";
+import { cn } from "@/shared/utils";
 import {
   COMPLAINT_APP_CATEGORIES,
   COMPLAINT_APP_CONFIG,
@@ -59,42 +61,66 @@ export function ComplaintAppView() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <header className="border-b bg-card">
-        <div className="mx-auto flex max-w-lg items-center gap-2 px-4 py-4">
-          <PackageSearch className="size-5 text-primary" />
-          <span className="text-sm font-semibold tracking-tight">Shwe Market Support</span>
-          {user && <Button variant="ghost" size="sm" className="ml-auto" onClick={() => void signOut()}>Sign out</Button>}
+    <SiteShell
+      width="sm"
+      brand={<BrandMark icon={PackageSearch} name="Shwe Market Support" />}
+      headerAside={user && <Button variant="ghost" size="sm" onClick={() => void signOut()}>Sign out</Button>}
+      banner={<>Local Demo Mode — fictional complaint records{mode === "demo" && <p className="mt-1 font-semibold">Demo sign-in (simulated) — not production security</p>}</>}
+      footer="Order lookup and complaint submissions are simulated. Cloud and demo accounts are separate."
+    >
+      {setupError && <Notice tone="error" role="alert" className="mb-4">{setupError}</Notice>}
+      {loading ? <Loader2 className="mx-auto animate-spin text-muted-foreground" aria-label="Loading account" /> : !user ? <CustomerAccountForm onAuthenticated={reset} /> : (
+        <div key={user.id}>
+          {unread > 0 && (
+            <Notice tone="info" role="status" title={`You have ${unread} new update(s) from support`} className="mb-6">
+              <Button variant="link" className="px-0" onClick={() => document.getElementById("complaint-history")?.scrollIntoView({ behavior: "smooth" })}>View updates</Button>
+            </Notice>
+          )}
+          {step === "order" && (
+            <OrderStep customerId={user.id}
+              onFound={(id) => {
+                setOrderId(id);
+                setStep("form");
+              }}
+            />
+          )}
+          {step === "form" && (
+            <ComplaintStep customerId={user.id}
+              orderId={orderId}
+              onBack={() => setStep("order")}
+              onSubmitted={(saved) => { setRecord(saved); setStep("done"); }}
+            />
+          )}
+          {step === "done" && <ConfirmationStep record={record} onReset={reset} />}
+          <section id="complaint-history" className="mt-10 border-t pt-6">
+            <Heading as="h2" size="4">Your complaints</Heading>
+            {history.length === 0 ? <Text as="p" size="2" color="gray" mt="3">No complaints submitted yet.</Text> : (
+              <div className="mt-3 divide-y">
+                {history.map((c) => (
+                  <article key={c.id} className="py-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Text size="2" weight="bold" className="font-mono">{c.reference}</Text>
+                      <Badge color="gray" variant="soft">{COMPLAINT_STATUSES[c.status]}</Badge>
+                      {c.unread && <Badge color="indigo" variant="solid">New</Badge>}
+                    </div>
+                    <Text as="p" size="2" mt="2">{c.orderId} · {COMPLAINT_APP_CATEGORIES[c.category]}</Text>
+                    <Text as="p" size="1" color="gray" mt="1">{formatSubmissionTime(c.submittedAt)}</Text>
+                    <Button variant="link" className="px-0" onClick={() => { setViewed(viewed === c.id ? null : c.id); updatePlatformData((data) => markComplaintSeen(data, user.id, c.id)); }}>View complaint</Button>
+                    {viewed === c.id && (
+                      <div className="mt-2 space-y-3 border-l-2 border-primary pl-3">
+                        <Text as="p" size="2" className="whitespace-pre-wrap break-words">{c.description}</Text>
+                        <Text as="p" size="2" weight="medium" className="whitespace-pre-wrap break-words">{c.customerResponse || "Awaiting a support response."}</Text>
+                        <div className="flex flex-wrap gap-2">{c.photos.map((p, i) => <PhotoThumb key={i} src={p.dataUrl} alt={p.name} />)}</div>
+                      </div>
+                    )}
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
         </div>
-      </header>
-      <div className="border-b border-demo/20 bg-demo-soft px-4 py-2 text-center text-xs text-demo">Local Demo Mode — fictional complaint records{mode === "demo" && <p className="mt-1 font-semibold">Demo sign-in (simulated) — not production security</p>}</div>
-      <main className="mx-auto w-full max-w-lg flex-1 px-4 py-8 sm:py-12">
-        {setupError && <p role="alert" className="mb-4 text-sm text-destructive">{setupError}</p>}
-        {loading ? <Loader2 className="mx-auto animate-spin text-muted-foreground" aria-label="Loading account" /> : !user ? <CustomerAccountForm onAuthenticated={reset} /> : <div key={user.id}>
-        {unread > 0 && <div role="status" className="mb-6 border-l-4 border-primary bg-accent p-4"><p className="text-sm font-semibold">You have {unread} new update(s) from support</p><Button variant="link" className="px-0" onClick={() => document.getElementById("complaint-history")?.scrollIntoView({ behavior: "smooth" })}>View updates</Button></div>}
-        {step === "order" && (
-          <OrderStep customerId={user.id}
-            onFound={(id) => {
-              setOrderId(id);
-              setStep("form");
-            }}
-          />
-        )}
-        {step === "form" && (
-          <ComplaintStep customerId={user.id}
-            orderId={orderId}
-            onBack={() => setStep("order")}
-            onSubmitted={(saved) => { setRecord(saved); setStep("done"); }}
-          />
-        )}
-        {step === "done" && <ConfirmationStep record={record} onReset={reset} />}
-        <section id="complaint-history" className="mt-10 border-t pt-6"><h2 className="text-lg font-semibold">Your complaints</h2>{history.length === 0 ? <p className="mt-3 text-sm text-muted-foreground">No complaints submitted yet.</p> : <div className="mt-3 divide-y">{history.map((c) => <article key={c.id} className="py-4"><div className="flex flex-wrap items-center gap-2"><span className="font-mono text-sm font-semibold">{c.reference}</span><span className="rounded border bg-muted px-2 py-1 text-xs">{COMPLAINT_STATUSES[c.status]}</span>{c.unread && <span className="rounded bg-primary px-2 py-1 text-xs font-semibold text-primary-foreground">New</span>}</div><p className="mt-2 text-sm">{c.orderId} · {COMPLAINT_APP_CATEGORIES[c.category]}</p><p className="mt-1 text-xs text-muted-foreground">{formatSubmissionTime(c.submittedAt)}</p><Button variant="link" className="px-0" onClick={() => { setViewed(viewed === c.id ? null : c.id); updatePlatformData((data) => markComplaintSeen(data, user.id, c.id)); }}>View complaint</Button>{viewed === c.id && <div className="space-y-3 border-l-2 border-primary pl-3"><p className="whitespace-pre-wrap break-words text-sm">{c.description}</p><p className="whitespace-pre-wrap break-words text-sm font-medium">{c.customerResponse || "Awaiting a support response."}</p><div className="flex flex-wrap gap-2">{c.photos.map((p, i) => <img key={i} src={p.dataUrl} alt={p.name} className="size-20 rounded border object-cover" />)}</div></div>}</article>)}</div>}</section>
-        </div>}
-      </main>
-      <footer className="border-t py-4 text-center text-xs text-muted-foreground">
-        Order lookup and complaint submissions are simulated. Cloud and demo accounts are separate.
-      </footer>
-    </div>
+      )}
+    </SiteShell>
   );
 }
 
@@ -120,13 +146,10 @@ function OrderStep({ customerId, onFound }: { customerId: string; onFound: (orde
       }}
     >
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Report an Order Problem</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Something wrong with your delivery? Tell us here and our support team will look into it.
-        </p>
+        <Heading as="h1" size="7">Report an Order Problem</Heading>
+        <Text as="p" size="2" color="gray" mt="2">Something wrong with your delivery? Tell us here and our support team will look into it.</Text>
       </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="order-id">Order ID</Label>
+      <Field label="Order ID" htmlFor="order-id" hint={<span id="order-id-help">You can find it in your order confirmation, for example <span className="font-mono">ORD-24081</span>.</span>}>
         <Input
           id="order-id"
           value={value}
@@ -136,23 +159,16 @@ function OrderStep({ customerId, onFound }: { customerId: string; onFound: (orde
           className="h-12 font-mono"
           aria-describedby="order-id-help"
         />
-        <p id="order-id-help" className="text-xs text-muted-foreground">
-          You can find it in your order confirmation, for example <span className="font-mono">ORD-24081</span>.
-        </p>
-      </div>
-      {error && (
-        <p role="alert" className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {error}
-        </p>
-      )}
+      </Field>
+      {error && <Notice tone="error" role="alert">{error}</Notice>}
       <Button type="submit" className="h-12 w-full text-base" disabled={checking}>
         {checking && <Loader2 className="animate-spin" />}
         {checking ? "Checking order…" : "Continue"}
       </Button>
-      <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
+      <Text as="p" size="1" color="gray" className="flex items-start gap-1.5">
         <ShieldCheck className="mt-0.5 size-3.5 shrink-0" />
         Your order ID is only used to link your complaint to the right order. We don&apos;t share your details.
-      </p>
+      </Text>
     </form>
   );
 }
@@ -242,14 +258,13 @@ function ComplaintStep({ customerId, orderId, onBack, onSubmitted }: { customerI
       }}
     >
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">What happened?</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Order <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs font-medium text-foreground">{orderId}</span>
-        </p>
+        <Heading as="h1" size="7">What happened?</Heading>
+        <Text as="p" size="2" color="gray" mt="2">
+          Order <Badge color="gray" variant="soft" className="font-mono">{orderId}</Badge>
+        </Text>
       </div>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="complaint-category">Complaint category</Label>
+      <Field label="Complaint category" htmlFor="complaint-category">
         <Select value={category} onValueChange={(v) => setCategory(v as ComplaintCategory)}>
           <SelectTrigger id="complaint-category" className="h-12">
             <SelectValue placeholder="Choose a category…" />
@@ -262,10 +277,9 @@ function ComplaintStep({ customerId, orderId, onBack, onSubmitted }: { customerI
             ))}
           </SelectContent>
         </Select>
-      </div>
+      </Field>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="complaint-description">Describe what happened</Label>
+      <Field label="Describe what happened" htmlFor="complaint-description" hint="Include any details that help our team understand the issue.">
         <Textarea
           id="complaint-description"
           rows={5}
@@ -273,18 +287,11 @@ function ComplaintStep({ customerId, orderId, onBack, onSubmitted }: { customerI
           onChange={(e) => setDescription(e.target.value)}
           placeholder="For example: the parcel arrived opened and one item was missing…"
         />
-        <p className="text-xs text-muted-foreground">Include any details that help our team understand the issue.</p>
-      </div>
+      </Field>
 
-      <div className="space-y-2">
-        <Label>
-          Photo evidence{" "}
-          {category && photoRequired(category) ? (
-            <span className="font-normal text-destructive">(required)</span>
-          ) : (
-            <span className="font-normal text-muted-foreground">(optional)</span>
-          )}
-        </Label>
+      <Field
+        label={<>Photo evidence{" "}{category && photoRequired(category) ? <Text weight="regular" color="red">(required)</Text> : <Text weight="regular" color="gray">(optional)</Text>}</>}
+      >
         <div
           onDragOver={(e) => {
             e.preventDefault();
@@ -292,35 +299,21 @@ function ComplaintStep({ customerId, orderId, onBack, onSubmitted }: { customerI
           }}
           onDragLeave={() => setDragging(false)}
           onDrop={onDrop}
-          className={`rounded-lg border border-dashed p-4 transition-colors ${dragging ? "border-primary bg-primary/5" : "border-input"}`}
+          className={cn("rounded-md border border-dashed p-4 transition-colors", dragging ? "border-primary bg-accent" : "border-input")}
         >
           <div className="flex flex-wrap gap-3">
-            {photos.map((p, i) => (
-              <div key={i} className="relative">
-                <img src={p.dataUrl} alt={p.name} className="size-20 rounded-md border object-cover" />
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="secondary"
-                  className="absolute -right-2 -top-2 size-6"
-                  aria-label={`Remove ${p.name}`}
-                  onClick={() => setPhotos(photos.filter((_, n) => n !== i))}
-                >
-                  <X />
-                </Button>
-              </div>
-            ))}
+            {photos.map((p, i) => <PhotoThumb key={i} src={p.dataUrl} alt={p.name} onRemove={() => setPhotos(photos.filter((_, n) => n !== i))} />)}
             {photos.length < COMPLAINT_APP_CONFIG.maxPhotos && (
-              <Button type="button" variant="outline" className="h-20 border-dashed" onClick={() => fileInput.current?.click()}>
+              <Button type="button" variant="ghost" className="h-20 border border-dashed border-input" onClick={() => fileInput.current?.click()}>
                 <ImagePlus />
                 Add photo
               </Button>
             )}
           </div>
-          <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Camera className="size-3.5" />
+          <Text as="p" size="1" color="gray" mt="2" className="flex items-center gap-1.5">
+            <Camera className="size-3.5 shrink-0" />
             JPEG, PNG or WebP, up to 2 MB each. On desktop you can drag photos here. Photos stay on your device in this demo. A photo is required for damaged package, missing item and wrong item reports.
-          </p>
+          </Text>
         </div>
         <input
           ref={fileInput}
@@ -334,13 +327,9 @@ function ComplaintStep({ customerId, orderId, onBack, onSubmitted }: { customerI
             void addFiles(files);
           }}
         />
-      </div>
+      </Field>
 
-      {error && (
-        <p role="alert" className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {error}
-        </p>
-      )}
+      {error && <Notice tone="error" role="alert">{error}</Notice>}
 
       <div className="flex flex-col gap-2 sm:flex-row">
         <Button type="submit" className="h-12 flex-1 text-base" disabled={submitting}>
@@ -362,36 +351,22 @@ function ConfirmationStep({ record, onReset }: { record: ComplaintRecord | null;
     <div className="space-y-6 text-center">
       <CheckCircle2 className="mx-auto size-14 text-success" />
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Your Complaint Has Been Submitted</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Thank you — the seller&apos;s support team will review your complaint and follow up.</p>
+        <Heading as="h1" size="7">Your Complaint Has Been Submitted</Heading>
+        <Text as="p" size="2" color="gray" mt="2">Thank you — the seller&apos;s support team will review your complaint and follow up.</Text>
       </div>
-      <dl className="space-y-3 rounded-lg border bg-card p-5 text-left text-sm shadow-card">
-        <div className="flex items-center justify-between gap-4">
-          <dt className="text-muted-foreground">Reference</dt>
-          <dd className="font-mono font-semibold text-primary">{record.reference}</dd>
-        </div>
-        <div className="flex items-center justify-between gap-4">
-          <dt className="text-muted-foreground">Order</dt>
-          <dd className="font-mono">{record.orderId}</dd>
-        </div>
-        <div className="flex items-center justify-between gap-4">
-          <dt className="text-muted-foreground">Category</dt>
-          <dd>{COMPLAINT_APP_CATEGORIES[record.category]}</dd>
-        </div>
-        <div className="flex items-start justify-between gap-4">
-          <dt className="shrink-0 text-muted-foreground">Report submitted</dt>
-          <dd className="text-right">{formatSubmissionTime(record.submittedAt)}</dd>
-        </div>
-        <div className="flex items-start justify-between gap-4">
-          <dt className="shrink-0 text-muted-foreground">Description</dt>
-          <dd className="min-w-0 whitespace-pre-wrap break-words text-right">{record.description}</dd>
-        </div>
-        <div className="flex items-center justify-between gap-4">
-          <dt className="text-muted-foreground">Photo evidence</dt>
-          <dd>{record.photos.length > 0 ? `${record.photos.length} photo${record.photos.length > 1 ? "s" : ""} attached` : "None attached"}</dd>
-        </div>
-      </dl>
-      <p className="text-xs text-muted-foreground">Keep your reference number — the support team may ask for it.</p>
+      <Card size="2" className="text-left">
+        <KeyValueList
+          items={[
+            { label: "Reference", value: <span className="font-mono font-semibold text-primary">{record.reference}</span> },
+            { label: "Order", value: <span className="font-mono">{record.orderId}</span> },
+            { label: "Category", value: COMPLAINT_APP_CATEGORIES[record.category] },
+            { label: "Report submitted", value: formatSubmissionTime(record.submittedAt) },
+            { label: "Description", value: <span className="whitespace-pre-wrap">{record.description}</span> },
+            { label: "Photo evidence", value: record.photos.length > 0 ? `${record.photos.length} photo${record.photos.length > 1 ? "s" : ""} attached` : "None attached" },
+          ]}
+        />
+      </Card>
+      <Text as="p" size="1" color="gray">Keep your reference number — the support team may ask for it.</Text>
       <Button className="h-12 w-full text-base" onClick={onReset}>
         Submit Another Complaint
       </Button>

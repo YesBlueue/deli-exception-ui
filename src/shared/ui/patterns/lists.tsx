@@ -17,6 +17,15 @@ export function LinkRow({ href, children, className }: { href: string; children:
   );
 }
 
+/** Like LinkRow, for rows that open something in place (a dialog) instead of navigating. */
+export function ButtonRow({ onClick, selected = false, children }: { onClick: () => void; selected?: boolean; children: ReactNode }) {
+  return (
+    <li>
+      <button type="button" onClick={onClick} aria-pressed={selected} className={cn("w-full px-4 py-3 text-left transition-colors hover:bg-accent", selected && "bg-accent")}>{children}</button>
+    </li>
+  );
+}
+
 /** Label/number pairs, numbers right-aligned. */
 export function StatList({ items }: { items: { key: string; label: ReactNode; value: ReactNode }[] }) {
   return (
