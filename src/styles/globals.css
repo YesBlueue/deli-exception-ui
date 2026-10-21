@@ -23,6 +23,8 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-cta: var(--cta);
+  --color-cta-foreground: var(--cta-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -78,6 +80,8 @@
   --popover-foreground: var(--gray-12);
   --primary: var(--accent-9);
   --primary-foreground: var(--accent-contrast);
+  --cta: var(--orange-9);
+  --cta-foreground: var(--orange-contrast);
   --secondary: var(--gray-a3);
   --secondary-foreground: var(--gray-12);
   --muted: var(--gray-a3);
@@ -90,24 +94,24 @@
   --input: var(--gray-a7);
   --ring: var(--focus-8);
 
-  --sidebar: var(--gray-2);
-  --sidebar-foreground: var(--gray-11);
-  --sidebar-muted: var(--gray-a10);
-  --sidebar-primary: var(--accent-9);
-  --sidebar-primary-foreground: var(--accent-contrast);
-  --sidebar-accent: var(--gray-a4);
-  --sidebar-accent-foreground: var(--gray-12);
-  --sidebar-border: var(--gray-a5);
-  --sidebar-ring: var(--focus-8);
+  --sidebar: var(--brand-navy);
+  --sidebar-foreground: color-mix(in oklab, white 82%, var(--brand-navy));
+  --sidebar-muted: color-mix(in oklab, white 62%, var(--brand-navy));
+  --sidebar-primary: var(--brand-orange);
+  --sidebar-primary-foreground: var(--brand-navy-ink);
+  --sidebar-accent: color-mix(in oklab, white 14%, var(--brand-navy));
+  --sidebar-accent-foreground: white;
+  --sidebar-border: color-mix(in oklab, white 16%, var(--brand-navy));
+  --sidebar-ring: var(--brand-orange);
 
-  /* Status colors keep fixed meanings: critical red, high orange, medium amber, low gray,
+  /* Status colors keep fixed meanings: critical red, high crimson, medium yellow, low gray,
      success green, info blue, simulated/demo purple. */
   --critical: var(--red-11);
   --critical-soft: var(--red-a3);
-  --high: var(--orange-11);
-  --high-soft: var(--orange-a3);
-  --medium: var(--amber-11);
-  --medium-soft: var(--amber-a3);
+  --high: var(--crimson-11);
+  --high-soft: var(--crimson-a3);
+  --medium: var(--yellow-11);
+  --medium-soft: var(--yellow-a3);
   --low: var(--gray-11);
   --low-soft: var(--gray-a3);
   --success: var(--green-11);
@@ -118,6 +122,74 @@
   --demo-soft: var(--purple-a3);
 
   --shadow-card-v: var(--shadow-2);
+}
+
+/* Brand palette, 60-30-10: 60% light neutral surfaces (Radix gray), 30% navy (structure, text
+   accents, selection), 10% orange (calls to action only). Brand colors replace Radix's indigo and
+   orange scales, so Radix components using those colors pick them up. Light appearance only. */
+.radix-themes {
+  --brand-navy: #243e8a;
+  --brand-navy-ink: #14234f;
+  --brand-orange: #f4a124;
+
+  --indigo-1: color-mix(in oklab, var(--brand-navy) 2%, white);
+  --indigo-2: color-mix(in oklab, var(--brand-navy) 4%, white);
+  --indigo-3: color-mix(in oklab, var(--brand-navy) 8%, white);
+  --indigo-4: color-mix(in oklab, var(--brand-navy) 12%, white);
+  --indigo-5: color-mix(in oklab, var(--brand-navy) 17%, white);
+  --indigo-6: color-mix(in oklab, var(--brand-navy) 23%, white);
+  --indigo-7: color-mix(in oklab, var(--brand-navy) 32%, white);
+  --indigo-8: color-mix(in oklab, var(--brand-navy) 48%, white);
+  --indigo-9: var(--brand-navy);
+  --indigo-10: color-mix(in oklab, var(--brand-navy) 88%, black);
+  --indigo-11: var(--brand-navy);
+  --indigo-12: var(--brand-navy-ink);
+  --indigo-a1: color-mix(in oklab, var(--brand-navy) 2%, transparent);
+  --indigo-a2: color-mix(in oklab, var(--brand-navy) 4%, transparent);
+  --indigo-a3: color-mix(in oklab, var(--brand-navy) 8%, transparent);
+  --indigo-a4: color-mix(in oklab, var(--brand-navy) 12%, transparent);
+  --indigo-a5: color-mix(in oklab, var(--brand-navy) 17%, transparent);
+  --indigo-a6: color-mix(in oklab, var(--brand-navy) 23%, transparent);
+  --indigo-a7: color-mix(in oklab, var(--brand-navy) 32%, transparent);
+  --indigo-a8: color-mix(in oklab, var(--brand-navy) 48%, transparent);
+  --indigo-a9: var(--brand-navy);
+  --indigo-a10: color-mix(in oklab, var(--brand-navy) 88%, black);
+  --indigo-a11: var(--brand-navy);
+  --indigo-a12: var(--brand-navy-ink);
+  --indigo-contrast: white;
+  --indigo-surface: color-mix(in oklab, var(--brand-navy) 5%, white);
+  --indigo-indicator: var(--brand-navy);
+  --indigo-track: var(--brand-navy);
+
+  --orange-1: color-mix(in oklab, var(--brand-orange) 2%, white);
+  --orange-2: color-mix(in oklab, var(--brand-orange) 4%, white);
+  --orange-3: color-mix(in oklab, var(--brand-orange) 8%, white);
+  --orange-4: color-mix(in oklab, var(--brand-orange) 12%, white);
+  --orange-5: color-mix(in oklab, var(--brand-orange) 17%, white);
+  --orange-6: color-mix(in oklab, var(--brand-orange) 23%, white);
+  --orange-7: color-mix(in oklab, var(--brand-orange) 32%, white);
+  --orange-8: color-mix(in oklab, var(--brand-orange) 48%, white);
+  --orange-9: var(--brand-orange);
+  --orange-10: color-mix(in oklab, var(--brand-orange) 90%, black);
+  --orange-11: color-mix(in oklab, var(--brand-orange) 62%, black);
+  --orange-12: color-mix(in oklab, var(--brand-orange) 35%, black);
+  --orange-a1: color-mix(in oklab, var(--brand-orange) 2%, transparent);
+  --orange-a2: color-mix(in oklab, var(--brand-orange) 4%, transparent);
+  --orange-a3: color-mix(in oklab, var(--brand-orange) 8%, transparent);
+  --orange-a4: color-mix(in oklab, var(--brand-orange) 12%, transparent);
+  --orange-a5: color-mix(in oklab, var(--brand-orange) 17%, transparent);
+  --orange-a6: color-mix(in oklab, var(--brand-orange) 23%, transparent);
+  --orange-a7: color-mix(in oklab, var(--brand-orange) 32%, transparent);
+  --orange-a8: color-mix(in oklab, var(--brand-orange) 48%, transparent);
+  --orange-a9: var(--brand-orange);
+  --orange-a10: color-mix(in oklab, var(--brand-orange) 90%, black);
+  --orange-a11: color-mix(in oklab, var(--brand-orange) 62%, black);
+  --orange-a12: color-mix(in oklab, var(--brand-orange) 35%, black);
+  /* White on this orange fails WCAG contrast; calls to action use dark navy text. */
+  --orange-contrast: var(--brand-navy-ink);
+  --orange-surface: color-mix(in oklab, var(--brand-orange) 6%, white);
+  --orange-indicator: var(--brand-orange);
+  --orange-track: var(--brand-orange);
 }
 
 @layer base {
