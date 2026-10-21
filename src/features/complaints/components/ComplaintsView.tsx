@@ -71,7 +71,7 @@ export function ComplaintsView() {
       </Panel>
 
       <Dialog open={!!selected} onOpenChange={(open) => { if (!open) setSelected(null); }}>
-        <DialogContent maxWidth="42rem" className="max-h-[90vh] overflow-y-auto">
+        <DialogContent maxWidth="42rem" maxHeight="90vh" className="overflow-y-auto">
           <DialogHeader><DialogTitle>Complaint details</DialogTitle></DialogHeader>
           <section className="min-w-0 pt-4">
             {active?.shipment ? (

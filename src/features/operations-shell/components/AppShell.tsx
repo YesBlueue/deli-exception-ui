@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FlaskConical, Inbox, LayoutDashboard, MessageSquare, PackageSearch, Smartphone } from "lucide-react";
+import { FlaskConical, Inbox, LayoutDashboard, MessageSquare, PackageSearch, Palette, Smartphone } from "lucide-react";
 import type { ReactNode } from "react";
 import { CURRENT_USER } from "@/core/domain/config";
 import { cn } from "@/shared/utils";
@@ -14,7 +14,9 @@ const NAV = [
   { to: "/requests", label: "Customer complaints", Icon: MessageSquare },
   { to: "/demo/events", label: "Event simulator", Icon: FlaskConical },
   { to: "/customer-demos", label: "Customer previews", Icon: Smartphone },
-] as const;
+  // Development-only reference page (404 in production builds).
+  ...(process.env.NODE_ENV === "production" ? [] : [{ to: "/design-system", label: "Design system", Icon: Palette }]),
+];
 
 /** Matches a nav item on its own path and on nested paths, like the previous router's fuzzy active match. */
 function isActive(pathname: string, to: string) {

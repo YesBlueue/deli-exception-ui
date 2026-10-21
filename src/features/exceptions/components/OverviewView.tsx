@@ -39,7 +39,7 @@ export function OverviewView() {
         <StatTile label="Open complaints" value={db ? complaints : null} tone="info" />
       </StatGrid>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+      <div className="grid gap-6 lg:grid-cols-main-aside">
         <Panel title="Priority attention" flush>
           <LinkList label="Critical and high priority exceptions">
             {attention.map((x) => {

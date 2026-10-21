@@ -193,6 +193,11 @@
   --orange-track: var(--brand-orange);
 }
 
+/* Named layouts, so pages never need arbitrary grid templates. */
+@utility grid-cols-main-aside {
+  grid-template-columns: minmax(0, 1fr) 320px;
+}
+
 @layer base {
   * {
     border-color: var(--border);
