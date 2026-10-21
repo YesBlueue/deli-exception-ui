@@ -1,7 +1,10 @@
 "use client";
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { Badge, Heading, Text } from "@radix-ui/themes";
 import { Button } from "@/shared/ui/button";
+import { Notice, Panel as PatternPanel } from "@/shared/ui/patterns";
+import { Skeleton } from "@/shared/ui/skeleton";
 import { CustomerAccountForm } from "@/features/customer-auth/components/CustomerAccountForm";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/infrastructure/supabase/client";
@@ -9,14 +12,22 @@ import { useRouter } from "next/navigation";
 export const friendly = (value: string) => value.replaceAll("_", " ").toLowerCase();
 export const time = (value: string | null) =>
   value ? new Date(value).toLocaleString() : "Not provided";
+/** Titled design-system panel whose body stacks its children with consistent spacing. */
 export function Panel({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="space-y-4 rounded-lg border bg-card p-5 shadow-card">
-      <h2 className="text-base font-semibold">{title}</h2>
-      {children}
-    </section>
+    <PatternPanel title={title}>
+      <div className="space-y-4">{children}</div>
+    </PatternPanel>
   );
 }
+const TAG_COLOR = {
+  default: "gray",
+  critical: "red",
+  high: "crimson",
+  medium: "yellow",
+  low: "gray",
+} as const;
+/** Small status label; priority tones keep the design system's fixed status colors. */
 export function Tag({
   children,
   tone = "default",
@@ -24,17 +35,10 @@ export function Tag({
   children: ReactNode;
   tone?: "default" | "critical" | "high" | "medium" | "low";
 }) {
-  const colors = {
-    default: "bg-muted text-foreground",
-    critical: "bg-critical-soft text-critical",
-    high: "bg-high-soft text-high",
-    medium: "bg-medium-soft text-medium",
-    low: "bg-low-soft text-low",
-  };
   return (
-    <span className={`inline-flex rounded border px-2 py-1 text-xs font-medium ${colors[tone]}`}>
+    <Badge color={TAG_COLOR[tone] ?? "gray"} variant="soft" size="1">
       {children}
-    </span>
+    </Badge>
   );
 }
 export function PortalState({
@@ -48,9 +52,13 @@ export function PortalState({
 }) {
   if (loading)
     return (
-      <p role="status" className="py-10 text-sm text-muted-foreground">
-        Loading your workspace...
-      </p>
+      <div className="space-y-4 py-6">
+        <Text as="p" role="status" size="2" color="gray">
+          Loading your workspace...
+        </Text>
+        <Skeleton className="h-24" />
+        <Skeleton className="h-48" />
+      </div>
     );
   if (error?.message === "Sign in required")
     return (
@@ -60,15 +68,16 @@ export function PortalState({
     );
   return (
     <section className="mx-auto max-w-lg space-y-4 py-10">
-      <h1 className="text-xl font-semibold">Workspace unavailable</h1>
-      <p role="alert" className="text-sm text-destructive">
+      <Heading as="h1" size="5">Workspace unavailable</Heading>
+      <Notice tone="error" role="alert">
         {error?.message ?? "No data was returned."}
-      </p>
+      </Notice>
       <Button onClick={retry}>Try again</Button>
     </section>
   );
 }
-export function PortalHeader({ title }: { title: string }) {
+/** Links between the three portals plus sign-out. */
+export function PortalNav() {
   const cache = useQueryClient();
   const router = useRouter();
   async function signOut() {
@@ -82,26 +91,32 @@ export function PortalHeader({ title }: { title: string }) {
     router.refresh();
   }
   return (
+    <nav aria-label="Portals" className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+      <Link href="/customer/complaint" className="text-primary hover:underline">Customer</Link>
+      <Link href="/overview" className="text-primary hover:underline">Operations</Link>
+      <Link href="/seller" className="text-primary hover:underline">Seller</Link>
+      <Button size="sm" variant="ghost" onClick={() => void signOut()}>
+        Sign out
+      </Button>
+    </nav>
+  );
+}
+export function PortalHeader({ title }: { title: string }) {
+  return (
     <header className="border-b bg-card">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4">
-        <p className="font-semibold">{title}</p>
-        <nav className="flex flex-wrap items-center gap-3 text-sm text-primary">
-          <Link href="/customer/complaint">Customer</Link>
-          <Link href="/overview">Operations</Link>
-          <Link href="/seller">Seller</Link>
-          <Button size="sm" variant="ghost" onClick={() => void signOut()}>
-            Sign out
-          </Button>
-        </nav>
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 md:px-8">
+        <Text as="p" size="2" weight="bold">{title}</Text>
+        <PortalNav />
       </div>
     </header>
   );
 }
+export const DEMO_BANNER_TEXT =
+  "Hackathon demo | Fictional source-system orders and updates | Portal messages are saved in Supabase";
 export function DemoBanner() {
   return (
     <div className="border-b border-demo/20 bg-demo-soft px-4 py-2 text-center text-xs text-demo">
-      Hackathon demo | Fictional source-system orders and updates | Portal messages are saved in
-      Supabase
+      {DEMO_BANNER_TEXT}
     </div>
   );
 }

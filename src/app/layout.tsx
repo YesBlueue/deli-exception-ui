@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { Theme } from "@radix-ui/themes";
 import type { ReactNode } from "react";
 
 import "@/styles/globals.css";
+import { STAFF_THEME } from "@/shared/theme";
 import { Providers } from "./providers";
 
 import "@fontsource/ibm-plex-sans/latin-400.css";
@@ -22,9 +24,12 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body>
-        <Providers>{children}</Providers>
-      </body>
+      {/* The theme sits on <body> so content portalled to the body (dialogs, selects, toasts) stays themed. */}
+      <Theme asChild {...STAFF_THEME}>
+        <body>
+          <Providers>{children}</Providers>
+        </body>
+      </Theme>
     </html>
   );
 }

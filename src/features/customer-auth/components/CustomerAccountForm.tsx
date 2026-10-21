@@ -1,6 +1,8 @@
 "use client";
+import { Heading, Text } from "@radix-ui/themes";
 import { useState } from "react";
 import { Button } from "@/shared/ui/button";
+import { Notice } from "@/shared/ui/patterns";
 import { supabase } from "@/infrastructure/supabase/client";
 export function CustomerAccountForm({
   onAuthenticated: _onAuthenticated,
@@ -28,23 +30,23 @@ export function CustomerAccountForm({
   return (
     <section className="space-y-5">
       <div>
-        <h1 className="text-2xl font-semibold">Welcome to delivery support</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <Heading as="h1" size="7">Welcome to delivery support</Heading>
+        <Text as="p" size="2" color="gray" mt="2">
           Sign in to choose one of your orders, report an issue, and read replies here.
-        </p>
+        </Text>
       </div>
       <Button className="h-12 w-full" disabled={busy} onClick={() => void signIn()}>
         {busy ? "Connecting to Google..." : "Continue with Google"}
       </Button>
       {error && (
-        <p role="alert" className="text-sm text-destructive">
+        <Notice tone="error" role="alert">
           {error}
-        </p>
+        </Notice>
       )}
-      <p className="text-xs text-muted-foreground">
+      <Text as="p" size="1" color="gray">
         Your first Google sign-in creates your account. Demo orders are clearly labeled; no live
         delivery integration is connected.
-      </p>
+      </Text>
     </section>
   );
 }

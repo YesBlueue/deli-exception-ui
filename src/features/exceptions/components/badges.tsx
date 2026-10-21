@@ -50,7 +50,7 @@ export const TYPE_LABEL: Record<ExceptionType, string> = {
 
 export function SimBadge({ children = "Simulated" }: { children?: React.ReactNode }) {
   return (
-    <span className="inline-flex items-center rounded border border-demo/30 bg-demo-soft px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-demo">
+    <span className="inline-flex items-center rounded border border-demo/30 bg-demo-soft px-1.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-demo">
       {children}
     </span>
   );

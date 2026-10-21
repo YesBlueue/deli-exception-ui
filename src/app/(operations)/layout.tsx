@@ -2,7 +2,11 @@ import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { sessionClient } from "@/infrastructure/supabase/session.server";
 import { AppShell } from "@/features/operations-shell/components/AppShell";
+import { DevThemePanel } from "@/shared/DevThemePanel";
 import Link from "next/link";
+import { ShieldAlert } from "lucide-react";
+import { EmptyState } from "@/shared/ui/patterns";
+import { Button } from "@/shared/ui/button";
 export default async function OperationsLayout({ children }: { children: ReactNode }) {
   const client = await sessionClient();
   const { data } = await client.auth.getUser();
@@ -15,15 +19,24 @@ export default async function OperationsLayout({ children }: { children: ReactNo
   if (member.error) throw new Error("Unable to verify staff membership. Please retry.");
   if (!member.data?.is_active || !["ADMIN", "OPERATIONS"].includes(member.data.role))
     return (
-      <main className="mx-auto max-w-lg space-y-4 p-8">
-        <h1 className="text-2xl font-semibold">Operations access required</h1>
-        <p className="text-sm text-muted-foreground">
-          An administrator must assign this Google account an active staff membership.
-        </p>
-        <Link href="/customer/complaint" className="text-primary">
-          Open customer portal
-        </Link>
+      <main className="mx-auto max-w-lg p-8">
+        <EmptyState
+          icon={ShieldAlert}
+          titleAs="h1"
+          title="Operations access required"
+          description="An administrator must assign this Google account an active staff membership."
+          action={
+            <Button asChild variant="outline">
+              <Link href="/customer/complaint">Open customer portal</Link>
+            </Button>
+          }
+        />
       </main>
     );
-  return <AppShell>{children}</AppShell>;
+  return (
+    <>
+      <AppShell>{children}</AppShell>
+      <DevThemePanel />
+    </>
+  );
 }

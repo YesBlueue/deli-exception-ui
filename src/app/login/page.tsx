@@ -1,5 +1,7 @@
 import { CustomerAccountForm } from "@/features/customer-auth/components/CustomerAccountForm";
 import Link from "next/link";
+import { PackageSearch } from "lucide-react";
+import { BrandMark, Notice, SiteShell } from "@/shared/ui/patterns";
 export default async function Login({
   searchParams,
 }: {
@@ -7,18 +9,20 @@ export default async function Login({
 }) {
   const params = await searchParams;
   return (
-    <main className="mx-auto max-w-lg space-y-6 px-4 py-16">
-      {params.error && (
-        <p role="alert" className="text-destructive">
-          Google sign-in was cancelled or could not be completed. Try again.
-        </p>
-      )}
-      <CustomerAccountForm />
-      <div className="flex flex-wrap gap-4 text-sm text-primary">
-        <Link href="/customer/complaint">Customer portal</Link>
-        <Link href="/overview">Operations</Link>
-        <Link href="/seller">Seller portal</Link>
+    <SiteShell width="sm" brand={<BrandMark icon={PackageSearch} name="Delivery company" />}>
+      <div className="space-y-6 py-4">
+        {params.error && (
+          <Notice tone="error" role="alert">
+            Google sign-in was cancelled or could not be completed. Try again.
+          </Notice>
+        )}
+        <CustomerAccountForm />
+        <nav aria-label="Portals" className="flex flex-wrap gap-4 border-t pt-4 text-sm">
+          <Link href="/customer/complaint" className="text-primary hover:underline">Customer portal</Link>
+          <Link href="/overview" className="text-primary hover:underline">Operations</Link>
+          <Link href="/seller" className="text-primary hover:underline">Seller portal</Link>
+        </nav>
       </div>
-    </main>
+    </SiteShell>
   );
 }

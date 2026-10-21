@@ -1,9 +1,10 @@
 "use client";
 
+import { Heading, Text } from "@radix-ui/themes";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/shared/ui/button";
-import { Label } from "@/shared/ui/label";
+import { Field, PhotoThumb, Timeline } from "@/shared/ui/patterns";
 import { Textarea } from "@/shared/ui/textarea";
 import { COMPLAINT_CATEGORIES } from "@/core/domain/customer";
 import { CURRENT_USER } from "@/core/domain/config";
@@ -11,10 +12,55 @@ import { addInternalComplaintNote, updatePlatformData } from "@/infrastructure/d
 import { fmtTime } from "@/features/exceptions/components/badges";
 import { ReplyComposer } from "./ReplyComposer";
 import type { Complaint, RequestActivity, Shipment } from "@/core/domain/types";
+
 export function ComplaintReview({ complaint, activity, shipment }: { complaint: Complaint; activity: RequestActivity[]; shipment?: Shipment | undefined }) {
   const [note, setNote] = useState("");
-  return <div className="space-y-5"><div><p className="text-xs font-medium uppercase text-muted-foreground">Post-delivery complaint · {complaint.reference}</p><h2 className="mt-2 text-xl font-semibold">{COMPLAINT_CATEGORIES[complaint.category]}</h2><p className="mt-3 whitespace-pre-wrap break-words text-sm">{complaint.description}</p><p className="mt-2 text-xs text-muted-foreground">Submitted {fmtTime(complaint.submittedAt)}</p></div>{complaint.photos.length > 0 && <div className="flex flex-wrap gap-3">{complaint.photos.map((p, i) => <a key={i} href={p.dataUrl} target="_blank" rel="noreferrer"><img src={p.dataUrl} alt={p.name} className="size-28 rounded-md border object-cover" /></a>)}</div>}<ReplyComposer complaint={complaint} shipment={shipment} /><div className="space-y-2"><Label htmlFor="internal-note">Internal staff note</Label><Textarea id="internal-note" value={note} onChange={(e) => setNote(e.target.value)} maxLength={2000} placeholder="Investigation details — not visible to the customer" /></div><Button onClick={() => { const r = updatePlatformData((db) => addInternalComplaintNote(db, complaint.id, note, CURRENT_USER)); if (!r.ok) toast.error(r.error); else { toast.success("Internal note saved"); setNote(""); } }}>Save internal note</Button><Activity activity={activity} /></div>;
+  return (
+    <div className="space-y-6">
+      <div>
+        <Text as="p" size="1" color="gray">Post-delivery complaint · {complaint.reference}</Text>
+        <Heading as="h2" size="5" mt="1">{COMPLAINT_CATEGORIES[complaint.category]}</Heading>
+        <Text as="p" size="2" mt="3" className="whitespace-pre-wrap break-words">{complaint.description}</Text>
+        <Text as="p" size="1" color="gray" mt="2">Submitted {fmtTime(complaint.submittedAt)}</Text>
+      </div>
+      {complaint.photos.length > 0 && <div className="flex flex-wrap gap-3">{complaint.photos.map((p, i) => <PhotoThumb key={i} src={p.dataUrl} alt={p.name} size="lg" />)}</div>}
+      <ReplyComposer complaint={complaint} shipment={shipment} />
+      <div className="space-y-2">
+        <Field label="Internal staff note" htmlFor="internal-note">
+          <Textarea id="internal-note" value={note} onChange={(e) => setNote(e.target.value)} maxLength={2000} placeholder="Investigation details — not visible to the customer" />
+        </Field>
+        <Button variant="secondary" onClick={() => { const r = updatePlatformData((db) => addInternalComplaintNote(db, complaint.id, note, CURRENT_USER)); if (!r.ok) toast.error(r.error); else { toast.success("Internal note saved"); setNote(""); } }}>Save internal note</Button>
+      </div>
+      <Activity activity={activity} />
+    </div>
+  );
 }
+
 function Activity({ activity }: { activity: RequestActivity[] }) {
-  return <section className="border-t pt-5"><h3 className="mb-4 text-sm font-semibold">Activity history</h3>{!activity.length ? <p className="text-sm text-muted-foreground">No staff activity recorded yet.</p> : <ol className="space-y-4 border-l pl-4">{[...activity].reverse().map((a) => <li key={a.id}><p className="text-xs text-muted-foreground">{fmtTime(a.at)} · {a.actor}</p><p className="mt-1 text-sm">{a.text}</p>{a.internalNote && <p className="mt-2 whitespace-pre-wrap break-words bg-muted p-3 text-sm"><span className="mb-1 block text-xs font-medium text-muted-foreground">Internal only</span>{a.internalNote}</p>}</li>)}</ol>}</section>;
+  return (
+    <section className="border-t pt-4">
+      <Heading as="h3" size="3" mb="1">Activity history</Heading>
+      <div className="-mx-4">
+        <Timeline
+          empty="No staff activity recorded yet."
+          items={[...activity].reverse().map((a) => ({
+            key: a.id,
+            time: <time dateTime={a.at}>{fmtTime(a.at)}</time>,
+            meta: <>· <span>{a.actor}</span></>,
+            body: (
+              <>
+                <p>{a.text}</p>
+                {a.internalNote && (
+                  <div className="mt-2 rounded-md bg-muted p-3">
+                    <Text as="span" size="1" weight="medium" color="gray" className="mb-1 block">Internal only</Text>
+                    <span className="whitespace-pre-wrap break-words">{a.internalNote}</span>
+                  </div>
+                )}
+              </>
+            ),
+          }))}
+        />
+      </div>
+    </section>
+  );
 }

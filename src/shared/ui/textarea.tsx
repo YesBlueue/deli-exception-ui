@@ -1,21 +1,15 @@
 import * as React from "react";
+import { TextArea } from "@radix-ui/themes";
 
-import { cn } from "@/shared/utils";
+type TextareaProps = Omit<React.ComponentProps<"textarea">, "color" | "value" | "defaultValue"> & {
+  value?: string;
+  defaultValue?: string;
+};
 
-const Textarea = React.forwardRef<HTMLTextAreaElement, React.ComponentProps<"textarea">>(
-  ({ className, ...props }, ref) => {
-    return (
-      <textarea
-        className={cn(
-          "flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-          className,
-        )}
-        ref={ref}
-        {...props}
-      />
-    );
-  },
-);
+/** Multi-line input rendered by Radix Themes. `className` styles the field box; other props go to the <textarea>. */
+const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>((props, ref) => (
+  <TextArea ref={ref} size="2" resize="vertical" {...props} />
+));
 Textarea.displayName = "Textarea";
 
 export { Textarea };
