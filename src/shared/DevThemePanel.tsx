@@ -2,8 +2,8 @@
 
 import { ThemePanel } from "@radix-ui/themes";
 
-/** Live theme tuning for the nearest Radix <Theme>; never rendered in production builds. */
+/** Live theme tuning for the nearest Radix <Theme> (press T to show); never rendered in production builds. */
 export function DevThemePanel() {
   if (process.env.NODE_ENV === "production") return null;
-  return <ThemePanel defaultOpen />;
+  return <ThemePanel defaultOpen={false} />;
 }
