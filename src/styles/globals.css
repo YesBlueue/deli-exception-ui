@@ -94,15 +94,16 @@
   --input: var(--gray-a7);
   --ring: var(--focus-8);
 
-  --sidebar: var(--brand-navy);
-  --sidebar-foreground: color-mix(in oklab, white 82%, var(--brand-navy));
-  --sidebar-muted: color-mix(in oklab, white 62%, var(--brand-navy));
-  --sidebar-primary: var(--brand-orange);
-  --sidebar-primary-foreground: var(--brand-navy-ink);
-  --sidebar-accent: color-mix(in oklab, white 14%, var(--brand-navy));
-  --sidebar-accent-foreground: white;
-  --sidebar-border: color-mix(in oklab, white 16%, var(--brand-navy));
-  --sidebar-ring: var(--brand-orange);
+  /* Light sidebar: navy marks only the logo and the active page. */
+  --sidebar: var(--gray-2);
+  --sidebar-foreground: var(--gray-11);
+  --sidebar-muted: var(--gray-a10);
+  --sidebar-primary: var(--accent-9);
+  --sidebar-primary-foreground: var(--accent-contrast);
+  --sidebar-accent: var(--accent-a3);
+  --sidebar-accent-foreground: var(--accent-11);
+  --sidebar-border: var(--gray-a5);
+  --sidebar-ring: var(--focus-8);
 
   /* Status colors keep fixed meanings: critical red, high crimson, medium yellow, low gray,
      success green, info blue, simulated/demo purple. */
