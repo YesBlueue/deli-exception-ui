@@ -1,14 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, AlertTriangle, Inbox, MessageSquare } from "lucide-react";
-import { Button } from "@/shared/ui/button";
-import { PriorityBadge, StatusBadge, TYPE_LABEL } from "@/features/exceptions/components/badges";
+import { Callout, Text } from "@radix-ui/themes";
+import { ArrowRight, MessageSquare } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Button } from "@/shared/ui/button";
+import { LinkList, LinkRow, PageHeader, Panel, StatGrid, StatList, StatTile, Timeline } from "@/shared/ui/patterns";
+import { PriorityBadge, StatusBadge, TYPE_LABEL } from "@/features/exceptions/components/badges";
 import { CARRIERS } from "@/core/domain/carriers";
 import { getSla, isActiveException } from "@/core/domain/sla";
 import { SlaCountdown } from "@/features/exceptions/components/SlaCountdown";
 import { usePlatformData } from "@/infrastructure/demo-platform/platform";
+
 export function OverviewView() {
   const db = usePlatformData();
   const [now, setNow] = useState<number | null>(null);
@@ -18,5 +21,74 @@ export function OverviewView() {
   const complaints = db?.complaints.filter((c) => c.status === "SUBMITTED" || c.status === "INVESTIGATING").length ?? 0;
   const breaches = now === null ? 0 : open.filter((x) => getSla(x, now).breached).length;
   const activity = [...(db?.logs.map((l) => ({ id: l.id, at: l.at, text: l.reason })) ?? []), ...(db?.requestActivity.map((a) => ({ id: a.id, at: a.at, text: a.text })) ?? []), ...(db?.actions.map((a) => ({ id: a.id, at: a.at, text: a.summary })) ?? [])].sort((a,b) => b.at.localeCompare(a.at)).slice(0,8);
-  return <div className="mx-auto max-w-7xl space-y-8"><header className="flex flex-wrap items-end justify-between gap-4"><div><p className="mb-1 text-xs font-medium uppercase text-primary">Shwe Market operations</p><h1 className="text-3xl font-semibold">Operations overview</h1><p className="mt-2 text-sm text-muted-foreground">Delivery exceptions and customer care, at a glance.</p></div><Button asChild variant="outline"><Link href="/dashboard">Open exception inbox<ArrowRight /></Link></Button></header><div className="grid grid-cols-2 gap-4 lg:grid-cols-4">{[{ label: "Open exceptions", value: open.length, Icon: Inbox, color: "text-primary" }, { label: "Critical priority", value: critical.length, Icon: AlertTriangle, color: "text-critical" }, { label: "SLA breaches", value: breaches, Icon: AlertTriangle, color: "text-destructive" }, { label: "Open complaints", value: complaints, Icon: MessageSquare, color: "text-info" }].map(({ label, value, Icon, color }) => <article key={label} className="rounded-lg border bg-card p-5"><Icon className={`mb-5 size-5 ${color}`} /><p className="text-xs font-medium text-muted-foreground">{label}</p><p className={`mt-2 text-3xl font-semibold tabular-nums ${color}`}>{db ? value : "—"}</p></article>)}</div><div className="grid gap-8 lg:grid-cols-[1fr_320px]"><section className="min-w-0 border-t"><h2 className="border-b py-4 text-base font-semibold">Priority attention</h2><div className="divide-y">{[...critical, ...open.filter((x) => x.priority === "HIGH")].map((x) => { const s = db?.shipments.find((s) => s.id === x.shipmentId); if (!s) return null; return <Link key={x.id} href={`/exceptions/${x.id}`} className="flex flex-wrap items-center justify-between gap-3 py-4 hover:bg-accent/50"><div className="space-y-1"><p className="text-sm font-medium">{TYPE_LABEL[x.type]} · {s.customerName}</p><p className="font-mono text-xs text-muted-foreground">{s.orderId} · {s.trackingId}</p></div><div className="flex flex-wrap gap-2"><PriorityBadge p={x.priority} /><StatusBadge s={x.workflowStatus} /><SlaCountdown exception={x} /></div></Link>; })}</div></section><section className="border-t pt-4"><h2 className="text-base font-semibold">Customer care queue</h2><div className="mt-5 space-y-5"><div className="border-l-2 border-info pl-4"><p className="text-sm font-medium">{complaints} post-delivery complaints open</p><p className="mt-1 text-xs text-muted-foreground">Keep customers updated on investigations</p></div><Button asChild variant="outline" className="w-full"><Link href="/requests">Review customer complaints<ArrowRight /></Link></Button><Button asChild variant="ghost" className="w-full"><Link href="/customer-demos">Preview customer portal<ArrowRight /></Link></Button></div></section></div><div className="grid gap-8 lg:grid-cols-2"><section className="border-t pt-4"><h2 className="text-base font-semibold">Active exceptions by carrier</h2><div className="mt-3 divide-y">{Object.entries(CARRIERS).map(([id,carrier]) => <div key={id} className="flex justify-between gap-3 py-3 text-sm"><span>{carrier.name}</span><span className="tabular-nums">{open.filter((x) => db?.shipments.some((s) => s.id === x.shipmentId && s.carrierId === id)).length}</span></div>)}</div></section><section className="border-t pt-4"><h2 className="text-base font-semibold">Recent activity</h2><ol className="mt-3 divide-y">{activity.map((a) => <li key={a.id} className="py-3 text-sm"><p>{a.text}</p><time className="mt-1 block text-xs text-muted-foreground">{new Date(a.at).toLocaleString()}</time></li>)}</ol></section></div></div>;
+  const attention = [...critical, ...open.filter((x) => x.priority === "HIGH")];
+
+  return (
+    <div className="mx-auto max-w-7xl space-y-6">
+      <PageHeader
+        eyebrow="Shwe Market operations"
+        title="Operations overview"
+        description="Delivery exceptions and customer care, at a glance."
+        actions={<Button asChild variant="outline"><Link href="/dashboard">Open exception inbox<ArrowRight /></Link></Button>}
+      />
+
+      <StatGrid label="Summary">
+        <StatTile label="Open exceptions" value={db ? open.length : null} tone="accent" />
+        <StatTile label="Critical priority" value={db ? critical.length : null} tone="critical" />
+        <StatTile label="SLA breaches" value={db ? breaches : null} tone="critical" />
+        <StatTile label="Open complaints" value={db ? complaints : null} tone="info" />
+      </StatGrid>
+
+      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+        <Panel title="Priority attention" flush>
+          <LinkList label="Critical and high priority exceptions">
+            {attention.map((x) => {
+              const s = db?.shipments.find((s) => s.id === x.shipmentId);
+              if (!s) return null;
+              return (
+                <LinkRow key={x.id} href={`/exceptions/${x.id}`}>
+                  <div className="space-y-1">
+                    <Text as="p" size="2" weight="medium">{TYPE_LABEL[x.type]} · {s.customerName}</Text>
+                    <Text as="p" size="1" color="gray" className="font-mono">{s.orderId} · {s.trackingId}</Text>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <PriorityBadge p={x.priority} />
+                    <StatusBadge s={x.workflowStatus} />
+                    <SlaCountdown exception={x} />
+                  </div>
+                </LinkRow>
+              );
+            })}
+          </LinkList>
+        </Panel>
+
+        <Panel title="Customer care queue">
+          <div className="space-y-4">
+            <Callout.Root color="blue" variant="surface" size="1">
+              <Callout.Icon><MessageSquare className="size-4" /></Callout.Icon>
+              <Callout.Text weight="medium">{complaints} post-delivery complaints open</Callout.Text>
+              <Callout.Text size="1" color="gray">Keep customers updated on investigations</Callout.Text>
+            </Callout.Root>
+            <Button asChild variant="outline" className="w-full"><Link href="/requests">Review customer complaints<ArrowRight /></Link></Button>
+            <Button asChild variant="ghost" className="w-full"><Link href="/customer-demos">Preview customer portal<ArrowRight /></Link></Button>
+          </div>
+        </Panel>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Panel title="Active exceptions by carrier" flush>
+          <StatList
+            items={Object.entries(CARRIERS).map(([id, carrier]) => ({
+              key: id,
+              label: carrier.name,
+              value: open.filter((x) => db?.shipments.some((s) => s.id === x.shipmentId && s.carrierId === id)).length,
+            }))}
+          />
+        </Panel>
+        <Panel title="Recent activity" flush>
+          <Timeline items={activity.map((a) => ({ key: a.id, body: a.text, time: <time dateTime={a.at}>{new Date(a.at).toLocaleString()}</time> }))} />
+        </Panel>
+      </div>
+    </div>
+  );
 }
