@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
+import { Theme } from "@radix-ui/themes";
 import type { ReactNode } from "react";
 
 import "@/styles/globals.css";
+import { STAFF_THEME } from "@/shared/theme";
 import { Providers } from "./providers";
 
 const plexSans = IBM_Plex_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-plex-sans", display: "swap" });
@@ -19,9 +21,12 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${plexSans.variable} ${plexMono.variable}`}>
-      <body>
-        <Providers>{children}</Providers>
-      </body>
+      {/* The theme sits on <body> so content portalled to the body (dialogs, selects, toasts) stays themed. */}
+      <Theme asChild {...STAFF_THEME}>
+        <body>
+          <Providers>{children}</Providers>
+        </body>
+      </Theme>
     </html>
   );
 }

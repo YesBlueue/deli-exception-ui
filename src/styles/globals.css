@@ -1,4 +1,8 @@
+/* Layer order: Radix Themes component styles sit above Tailwind preflight and below utilities,
+   so Radix styles components by default and Tailwind classes can still adjust them. */
+@layer theme, base, radix, components, utilities;
 @import "tailwindcss" source(none);
+@import "@radix-ui/themes/styles.css" layer(radix);
 @source "../";
 @import "tw-animate-css";
 
@@ -57,68 +61,76 @@
   --shadow-card: var(--shadow-card-v);
 }
 
-:root {
-  --radius: 0.5rem;
-  --background: oklch(0.975 0.004 240);
-  --foreground: oklch(0.22 0.025 255);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.22 0.025 255);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.22 0.025 255);
-  --primary: oklch(0.52 0.1 195);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.95 0.008 240);
-  --secondary-foreground: oklch(0.25 0.03 255);
-  --muted: oklch(0.955 0.006 240);
-  --muted-foreground: oklch(0.5 0.02 255);
-  --accent: oklch(0.94 0.03 195);
-  --accent-foreground: oklch(0.32 0.07 200);
-  --destructive: oklch(0.55 0.2 27);
-  --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(0.91 0.008 245);
-  --input: oklch(0.88 0.01 245);
-  --ring: oklch(0.6 0.1 195);
+/* App tokens derive from the nearest Radix <Theme>, so accent, gray, radius and appearance
+   changes (including the dev ThemePanel and the nested customer theme) flow through every page.
+   Declared on .radix-themes because Radix scales only exist inside a Theme element. */
+.radix-themes {
+  --default-font-family: var(--font-plex-sans), "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --heading-font-family: var(--default-font-family);
+  --code-font-family: var(--font-plex-mono), "IBM Plex Mono", ui-monospace, monospace;
 
-  --sidebar: oklch(0.21 0.035 258);
-  --sidebar-foreground: oklch(0.9 0.01 250);
-  --sidebar-muted: oklch(0.65 0.02 255);
-  --sidebar-primary: oklch(0.72 0.11 190);
-  --sidebar-primary-foreground: oklch(0.18 0.03 258);
-  --sidebar-accent: oklch(0.28 0.04 258);
-  --sidebar-accent-foreground: oklch(0.98 0 0);
-  --sidebar-border: oklch(0.3 0.035 258);
-  --sidebar-ring: oklch(0.72 0.11 190);
+  --radius: var(--radius-3);
+  --background: var(--color-background);
+  --foreground: var(--gray-12);
+  --card: var(--color-panel-solid);
+  --card-foreground: var(--gray-12);
+  --popover: var(--color-panel-solid);
+  --popover-foreground: var(--gray-12);
+  --primary: var(--accent-9);
+  --primary-foreground: var(--accent-contrast);
+  --secondary: var(--gray-a3);
+  --secondary-foreground: var(--gray-12);
+  --muted: var(--gray-a3);
+  --muted-foreground: var(--gray-a11);
+  --accent: var(--accent-a3);
+  --accent-foreground: var(--accent-a11);
+  --destructive: var(--red-9);
+  --destructive-foreground: var(--red-contrast);
+  --border: var(--gray-a5);
+  --input: var(--gray-a7);
+  --ring: var(--focus-8);
 
-  --critical: oklch(0.5 0.19 25);
-  --critical-soft: oklch(0.95 0.035 25);
-  --high: oklch(0.55 0.15 50);
-  --high-soft: oklch(0.95 0.04 65);
-  --medium: oklch(0.5 0.11 85);
-  --medium-soft: oklch(0.96 0.05 95);
-  --low: oklch(0.5 0.02 255);
-  --low-soft: oklch(0.95 0.006 255);
-  --success: oklch(0.5 0.12 155);
-  --success-soft: oklch(0.95 0.04 155);
-  --info: oklch(0.5 0.12 245);
-  --info-soft: oklch(0.95 0.03 245);
-  --demo: oklch(0.45 0.1 300);
-  --demo-soft: oklch(0.96 0.025 300);
+  --sidebar: var(--gray-2);
+  --sidebar-foreground: var(--gray-11);
+  --sidebar-muted: var(--gray-a10);
+  --sidebar-primary: var(--accent-9);
+  --sidebar-primary-foreground: var(--accent-contrast);
+  --sidebar-accent: var(--gray-a4);
+  --sidebar-accent-foreground: var(--gray-12);
+  --sidebar-border: var(--gray-a5);
+  --sidebar-ring: var(--focus-8);
 
-  --shadow-card-v: 0 1px 2px oklch(0.2 0.03 255 / 0.05), 0 1px 3px oklch(0.2 0.03 255 / 0.04);
+  /* Status colors keep fixed meanings: critical red, high orange, medium amber, low gray,
+     success green, info blue, simulated/demo purple. */
+  --critical: var(--red-11);
+  --critical-soft: var(--red-a3);
+  --high: var(--orange-11);
+  --high-soft: var(--orange-a3);
+  --medium: var(--amber-11);
+  --medium-soft: var(--amber-a3);
+  --low: var(--gray-11);
+  --low-soft: var(--gray-a3);
+  --success: var(--green-11);
+  --success-soft: var(--green-a3);
+  --info: var(--blue-11);
+  --info-soft: var(--blue-a3);
+  --demo: var(--purple-11);
+  --demo-soft: var(--purple-a3);
+
+  --shadow-card-v: var(--shadow-2);
 }
 
 @layer base {
   * {
-    border-color: var(--color-border);
+    border-color: var(--border);
   }
   body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
-    font-family: var(--font-sans);
+    color: var(--foreground);
+    font-family: var(--default-font-family);
     letter-spacing: 0;
   }
   :focus-visible {
-    outline: 2px solid var(--color-ring);
+    outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
 }
