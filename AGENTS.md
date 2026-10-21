@@ -14,7 +14,7 @@ Before continuing work in a new session or checkout, read `PLAN_IMPLEMENTATION_S
 - Customer reads/writes require an account-to-delivery association. Google metadata and order references do not establish authorization.
 - Staff roles and seller memberships are backend-controlled. Only ADMIN/OPERATIONS memberships access operations workflows.
 - Customer messages, private notes, seller updates, and evidence have distinct audience boundaries.
-- Gemini is permitted only for server-side apology drafts reviewed by staff. Never use it for categorization, routing, next-action suggestions, or automatic workflow actions. No Lovable services.
+- Groq (`openai/gpt-oss-120b`) replaces Gemini for server-side apology drafts reviewed by staff. Never use any LLM for categorization, routing, next-action suggestions, or automatic workflow actions. No Lovable services. Keep GROQ_API_KEY server-only; GROQ_MODEL selects the model.
 - Next-action suggestions are deterministic explanations only; rendering them never triggers mutations.
 - Demo source context is explicitly labeled and provisioned in the database. Never fall back to browser fixtures after a failed real request.
 - Preserve existing colors, typography, spacing, shared components, and responsive layout. IBM Plex font files are locally served.
@@ -26,3 +26,13 @@ Before continuing work in a new session or checkout, read `PLAN_IMPLEMENTATION_S
 Run relevant domain/component/API tests, typecheck, and production build. Database assertions in supabase/tests roll back their fixtures. Browser fixture tests are not proof of live Google authentication. Do not claim Phase 4 or external integration complete without verification.
 
 Do not rewrite published Git history.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

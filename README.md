@@ -30,9 +30,11 @@ Enable Google in Supabase Auth. Configure Google's authorized redirect URI to th
 
 The first Google sign-in creates an account. Next.js exchanges the OAuth code using cookie-based PKCE sessions. Staff and seller permissions come from database memberships, not Google profile metadata. All users can sign in through `/login`.
 
-### Optional Gemini apology drafts
+### Optional Groq apology drafts
 
-Set server-only `GEMINI_API_KEY` and `GEMINI_MODEL` to a model available to your Google AI project. Gemini only drafts apology text. Staff reviews/edits it and separately publishes a portal reply. It cannot classify, route, assign, suggest next actions, or change statuses. Missing configuration or provider failure leaves manual composition available.
+Set server-only `GROQ_API_KEY` to your Groq key and `GROQ_MODEL=openai/gpt-oss-120b`. Groq replaces Gemini and only drafts apology text. Staff reviews/edits it and separately publishes a portal reply. It cannot classify, route, assign, suggest next actions, or change statuses. Missing configuration or provider failure leaves manual composition available. Requests use Groq Chat Completions without tools, disable returned reasoning for GPT-OSS, and accept only a complete text response.
+
+The real Groq adapter passed a generation check using fictional context. This does not establish the staff browser draft/edit/publish gate; verify that generating a draft creates no customer reply before explicitly publishing the edited text. `supabase/tests/apology_drafts.sql` separately verifies private draft persistence, model/audit metadata, and unchanged operational state with rolled-back fixtures. Earlier Gemini setup/checkpoints below are historical and no longer configure active drafting.
 
 ## Workflows
 
@@ -89,7 +91,7 @@ The application does not need a service-role key for normal workflows. User-scop
 - `src/core/domain/exception-rules.ts`: deterministic classification preview, explainable guidance, summaries, SLA, and transition definitions.
 - `src/infrastructure/portal/`: typed shared data adapter; no local-data fallback.
 - `src/infrastructure/supabase/`: generated types, browser/server cookie clients.
-- `src/infrastructure/ai/apology.server.ts`: server-only direct Gemini text drafting.
+- `src/infrastructure/ai/apology.server.ts`: server-only direct Groq text drafting.
 - `src/shared/` and `src/styles/globals.css`: preserved design system. IBM Plex fonts are self-hosted.
 
 Legacy browser-demo modules remain for historical tests/reference. Active portal routes no longer use them. See `MIGRATION.md` for boundaries, rule definitions, and verification limits.
@@ -118,13 +120,15 @@ The script checks that local Supabase configuration matches that project before 
 
 This script uses real requests without fixtures. It checks the OAuth callback, verified Google identity, reload persistence, backend order associations, selectable demo orders, denial of a fresh unassociated order ID, and sign-out. It writes a sanitized result to ignored `artifacts/phase4/google-live.json`; it does not save credentials, callback URLs, browser storage, or screenshots. Its denial probe uses a nonexistent UUID, so it does not prove cross-customer isolation. That requires a separate two-account acceptance run. Successful execution does not establish Phase 4 completion.
 
-Run `supabase/tests/portal_workflows.sql` through a trusted SQL connection for transaction/RLS assertions. Its temporary users and test records are rolled back. `supabase/tests/evidence_access.sql` checks evidence metadata and storage visibility. Google browser acceptance uses participant-controlled accounts; live Gemini requires confirmed server credentials/model. Phase 4 is not marked complete.
+Run `supabase/tests/portal_workflows.sql` through a trusted SQL connection for transaction/RLS assertions. Its temporary users and test records are rolled back. `supabase/tests/evidence_access.sql` checks evidence metadata and storage visibility. Google browser acceptance uses participant-controlled accounts; live Groq requires confirmed server credentials/model. Phase 4 is not marked complete.
 
 For bounded backend customer authorization checks, use `supabase/tests/customer_isolation.sql` against the confirmed demo project. It tests two synthetic authenticated identities against real RLS and guarded commands, including owned submissions, cross-customer read/submission/read-state denial, direct ownership-claim/update denial, and editable-metadata isolation. Its fixture rows roll back; PostgreSQL reference sequences may still advance. It does not verify Google tokens or replace real-session HTTP acceptance checks.
 
 `supabase/tests/operations_customer_reply.sql` checks operations private notes, report status, explicit reply publication, audit records, customer audience boundaries, denied customer staff commands, and independent source status. Run through a trusted SQL connection against the agreed demo project. Synthetic fixture rows roll back; reference sequences may advance. Real staff/customer browser journeys remain separate acceptance checks.
 
 ### Verification stop checkpoint: 21 October 2026
+
+**Later continuation:** the owner resumed Phase 4 at cross-seller isolation. `supabase/tests/seller_isolation.sql` passed against the confirmed shared demo project using synthetic identities with rolled-back records and memberships. It checks both sellers' positive controls, cross-seller tables/projections, private audiences, denied commands/direct writes, inactive membership, and metadata isolation. Separately, a real River Books seller and additional operations participant were verified and assigned approved memberships. Customer report `RPT-2026-000017` / `DEMO-000080` and audited seller findings persisted. The participant confirmed both seller refresh checks: each sees its own findings and excludes the other's records. Evidence upload/reopen, operations access, both seller denials, and unread reply clearing/persistence also passed as participant-reported local checks on `RPT-2026-000018`, with supporting metadata/reply/read-state read-backs. Live Gemini, deployed OAuth, and final acceptance remain pending. See the resumed checkpoint in [implementation status](PLAN_IMPLEMENTATION_STATUS.md#resumed-seller-isolation-verification-21-october-2026); the stopped state below is historical. Phase 4 remains incomplete.
 
 The owner stopped verification after participant-confirmed local customer Google login/report/persistence/sign-out, customer UI isolation, operations-to-customer notes/status/manual replies and privacy/access checks, and Lotus Home seller handoff visibility/privacy/access checks. Customer-isolation and operations/customer-reply SQL assertions passed separately against confirmed demo project `gvutlnfsiytnayvdxqyb`. Automated Chrome Google sign-in was blocked; the live script did not complete its authenticated checks.
 

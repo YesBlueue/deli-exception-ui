@@ -11,6 +11,11 @@ export async function GET(request: Request) {
       return NextResponse.redirect(new URL("/customer/complaint", url.origin), {
         headers: { "Cache-Control": "no-store" },
       });
+    // Log only structured diagnostics; OAuth codes, tokens and provider text stay private.
+    console.warn("[Auth] OAuth code exchange failed", {
+      code: error.code ?? "unknown",
+      status: error.status ?? 0,
+    });
   }
   return NextResponse.redirect(new URL("/login?error=oauth", url.origin), {
     headers: { "Cache-Control": "no-store" },

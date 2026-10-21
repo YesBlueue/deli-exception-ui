@@ -96,10 +96,10 @@ it("renders explainable guidance and context without executing a command", () =>
   expect(command).not.toHaveBeenCalled();
   expect(portalRequest).not.toHaveBeenCalled();
 });
-it("keeps a Gemini apology as an editable draft until staff explicitly publishes", async () => {
+it("keeps a Groq apology as an editable draft until staff explicitly publishes", async () => {
   portalRequest.mockResolvedValue({ text: "Hello, we are sorry for the delay." });
   render(<ExceptionWorkspace id="case" />);
-  fireEvent.click(screen.getByRole("button", { name: "Draft apology with Gemini" }));
+  fireEvent.click(screen.getByRole("button", { name: "Draft apology with Groq" }));
   await waitFor(() =>
     expect(screen.getByLabelText("Reply text")).toHaveValue("Hello, we are sorry for the delay."),
   );

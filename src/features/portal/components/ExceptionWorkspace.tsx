@@ -438,12 +438,12 @@ function ReportReview({
       <div className="space-y-3 border-t pt-4">
         <h3 className="text-sm font-semibold">Customer portal reply</h3>
         <p className="text-xs text-muted-foreground">
-          Apology drafting sends only the report text, category, and report status to Gemini. No
+          Apology drafting sends only the report text, category, and report status to Groq. No
           private notes or contact details are included.
         </p>
         <div className="flex flex-wrap gap-2">
           <Button variant="secondary" disabled={disabled || busy} onClick={() => void generate()}>
-            {busy ? "Drafting…" : "Draft apology with Gemini"}
+            {busy ? "Drafting…" : "Draft apology with Groq"}
           </Button>
           <Button
             variant="outline"
@@ -464,7 +464,7 @@ function ReportReview({
         )}
         {generated && (
           <p role="status" className="text-xs text-medium">
-            Gemini draft only — review all facts before publishing.
+            Groq draft only — review all facts before publishing.
           </p>
         )}
         <Label htmlFor={`reply-${r.id}`}>Reply text</Label>
