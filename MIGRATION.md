@@ -28,11 +28,16 @@ Gemini only drafts apologies using minimal report text/category/status. Credenti
 - `supabase/tests/portal_workflows.sql`: rollback-only role/ownership/workflow/ingestion assertions.
 - `supabase/tests/evidence_access.sql`: rollback-only evidence policy assertions.
 - `scripts/verify-portals.mjs`: explicit authenticated UI fixtures plus real unauthenticated API check.
+- `scripts/verify-google-live.mjs`: participant-driven live Google/customer checks; automated Chrome sign-in was blocked in the recorded run, so its authenticated checks did not complete.
+- `supabase/tests/customer_isolation.sql`: bounded two-customer RLS/RPC assertions with rolled-back synthetic identities and records.
+- `supabase/tests/operations_customer_reply.sql`: bounded operations note/status/reply/audience assertions with rolled-back synthetic identities and records.
 
-Historical Drizzle migrations and legacy browser-demo modules are not the active data path. No existing business records were migrated; the connected project's business tables were empty before implementation. Only labeled demo seller fixtures are persistently seeded by this work; verification users/reports are rolled back.
+Historical Drizzle migrations and legacy browser-demo modules are not the active data path. No existing business records were migrated; the connected project's business tables were empty before Phase 3 implementation. Phase 3 persistently seeded labeled demo sellers. Subsequent authorized participant verification created persistent demo business records and approved memberships; these differ from synthetic SQL fixtures, which roll back. Reference sequences may advance despite rollback. No schema migrations were added during this bounded verification continuation.
 
 ## Remaining external setup and verification
 
-Google is enabled in the connected project's Auth settings. Real consent/callback/login remains a manual account interaction; verify the deployed redirect allowlist and Google consent configuration. Staff/seller memberships require confirmed user UUIDs. Supply GEMINI_API_KEY and GEMINI_MODEL for live drafting. Actual source-system transport, identity mapping, retention policies, SLA policy, and seller acknowledgment requirements remain unconfirmed.
+The 21 October 2026 checkpoint records participant-reported regular-browser Google login/sign-out and customer reports, operations notes/status/manual replies with customer audience checks, and Lotus Home seller refund-handoff visibility/privacy checks. An active operations membership and Lotus Home `SELLER_STAFF` membership were explicitly approved, created, and verified against confirmed project `gvutlnfsiytnayvdxqyb`. The new bounded customer-isolation and operations/customer-reply SQL tests passed separately with synthetic identities. These are distinct evidence sources; neither establishes overall Phase 4 completion.
+
+The owner stopped verification before cross-seller isolation. No second River Books participant account was nominated or assigned. Real browser evidence upload/download, unread clearing, deployed Google redirects, live Gemini with confirmed GEMINI_API_KEY/GEMINI_MODEL, and final acceptance remain pending. Actual source-system transport, identity mapping, retention policies, SLA policy, and seller acknowledgment requirements remain unconfirmed. Resume only after new task authorization; see [implementation status](PLAN_IMPLEMENTATION_STATUS.md) and [handoff](TEAM_HANDOFF.md).
 
 The browser fixture checks do not verify real Google sessions or live Gemini. Source-system simulation is not a production integration. Phase 4 remains separate; do not represent it as completed.

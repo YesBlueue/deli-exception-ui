@@ -6,11 +6,11 @@ This guide transfers the project context to a teammate working on another laptop
 
 ## 1. Share the actual current code first
 
-At this handoff checkpoint, the Phase 3 application changes and documentation are still uncommitted in the original workspace. The checked-out branch is `nextjs-migration`, and its last commit is `35df8fb` (`Stop tracking .env and add .env.example`).
+At this handoff checkpoint, the Phase 3 implementation and handoff documentation are committed on `nextjs-migration` at `45f9f93582ba14c70b54ea098bcac32156cedd75` (`Implement single-company exception portals and team handoff`). The working tree was clean when this baseline was recorded. Confirm the teammate's clone includes this commit before continuing; the earlier `35df8fb` commit does not contain the Phase 3 implementation.
 
-**Cloning GitHub at that commit will not include the current Phase 3 implementation.** This paragraph records the handoff checkpoint, not a permanent description of GitHub's state.
+At the 21 October 2026 stop checkpoint, HEAD is still that baseline, but the working tree now contains uncommitted continuation documentation and three untracked verification artifacts: `scripts/verify-google-live.mjs`, `supabase/tests/customer_isolation.sql`, and `supabase/tests/operations_customer_reply.sql`. Preserve these along with the pre-existing documentation edits. Cloning the baseline alone will not include them. No commit or push was performed during this continuation.
 
-The owner should first review, commit, and push the intended changes:
+If additional changes are made before sharing the checkout, review and publish them before handing it off:
 
 ```sh
 git status
@@ -25,8 +25,6 @@ git rev-parse HEAD
 ```
 
 Share the resulting commit hash with the teammate. Do not commit `.env`, `.env.local`, credentials, `node_modules`, build output, or local screenshots. The repository's ignore rules exclude those local artifacts.
-
-These commands are handoff instructions; creating this guide did not commit or push anything.
 
 ## 2. Set up the teammate's laptop
 
@@ -111,15 +109,15 @@ Then inspect the code relevant to the assigned task. Do not replace these docume
 
 ## 6. What to continue with
 
-Phases 1 and 2 are complete. Phase 3's core implementation exists. **Phase 4 has not been authorized or completed by this handoff document.**
+Phases 1 and 2 are complete. Phase 3's core implementation exists. The owner authorized bounded customer, operations-to-customer, and Lotus Home seller verification during this continuation, then explicitly stopped verification on 21 October 2026. **Do not resume work or database/account changes without new task authorization. Phase 4 remains incomplete.**
 
-The immediate outstanding work is configuration and real-user verification:
+The checkpoint in [PLAN_IMPLEMENTATION_STATUS.md](PLAN_IMPLEMENTATION_STATUS.md) records participant-reported regular-browser customer login/report/persistence/sign-out, two-customer UI isolation, operations notes/status/manual reply and customer privacy/access checks, and Lotus Home handoff visibility/privacy/access checks. Real database customer-isolation and operations/customer-reply assertions passed separately using synthetic authenticated identities with rolled-back rows. Automated Chrome Google sign-in was blocked and its live script did not complete; never describe that script as a successful Google journey.
 
-1. Confirm customer, operations, and seller Google accounts and backend memberships.
-2. Check OAuth callbacks and redirect configuration for the teammate's local port and any deployment.
-3. Supply Gemini server configuration if live drafting is to be tested.
-4. After explicit Phase 4 authorization, verify real Google sessions, account/order isolation, report/evidence flows, operations actions, seller handoffs, portal updates, and staff-reviewed Gemini drafting.
-5. Record evidence and fix verified defects within the authorized scope.
+Persistent changes in the confirmed shared demo project `gvutlnfsiytnayvdxqyb` include explicitly approved active `OPERATIONS` and Lotus Home `SELLER_STAFF` memberships, plus participant-created demo reports/notes/statuses/replies/seller findings. SQL test fixtures rolled back, but reference sequences may advance. Do not repeat membership inserts blindly or remove these records as test cleanup. Personal account emails/UUIDs are not recorded here; confirm mappings through trusted administration if authorized work resumes.
+
+The proposed next bounded task, only after new authorization, is cross-seller isolation. No second River Books account was nominated or assigned. A second participant-controlled Google account and explicit membership approval are needed for real-browser acceptance. Existing Phase 3 synthetic cross-seller assertions are historical evidence and were not rerun during this continuation.
+
+Other outstanding verification includes real browser evidence upload/download, unread clearing, deployment-specific Google redirects, live Gemini drafting/review/explicit publication with confirmed server configuration, and final responsive/accessibility/security acceptance. Do not infer current Gemini credentials or model availability from the code.
 
 Live delivery-system integration is future work dependent on a confirmed source contract. Seller acknowledgment, optional report-direction email, evidence retry/cleanup, production hardening, and legacy cleanup have separate scope notes in [the implementation status document](PLAN_IMPLEMENTATION_STATUS.md). They are not automatic instructions to build extra features.
 
@@ -139,8 +137,9 @@ Read these files first, in order:
 6. TEAM_HANDOFF.md
 
 Inspect git status, the current branch/commit, and the relevant active code.
-Confirm this checkout includes the Phase 3 implementation, not only commit
-35df8fb. Preserve existing uncommitted work and do not rewrite published history.
+Confirm this checkout includes baseline commit
+45f9f93582ba14c70b54ea098bcac32156cedd75 or a later coordinated commit.
+Preserve existing uncommitted work and do not rewrite published history.
 
 This is a Next.js/Supabase exception-handling layer for one delivery company.
 The company's existing delivery system owns the full delivery lifecycle.
@@ -198,6 +197,8 @@ node scripts/verify-portals.mjs
 This script uses installed Chrome, checks a real unauthenticated API boundary, and then uses explicit authenticated UI fixtures. It does not perform real Google consent or prove live authenticated workflows.
 
 Database assertions are in [portal_workflows.sql](supabase/tests/portal_workflows.sql) and [evidence_access.sql](supabase/tests/evidence_access.sql). Use an agreed test environment and a trusted connection; their fixtures are rolled back. Do not treat them as seed scripts or replace the project with an empty database.
+
+The continuation adds [customer_isolation.sql](supabase/tests/customer_isolation.sql) and [operations_customer_reply.sql](supabase/tests/operations_customer_reply.sql), both executed successfully against the confirmed shared demo project. Eleven focused auth/configuration/portal/routing tests, typecheck/build and script lint passed earlier; four portal API tests and seven operations/API tests passed in later focused runs. These test sets overlap. These results are separate from the historical 110-test suite; no full suite was rerun at the stop checkpoint. The documentation-only stop update requires no additional application or database test run.
 
 ## 9. Keep the shared record current
 

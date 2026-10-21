@@ -4,7 +4,7 @@ Last updated: 21 October 2026
 
 Branch: `nextjs-migration`
 
-This document connects the revised product plan to the current implementation. It separates unfinished code from external configuration and verification work. It records the status after Phase 3; it does not declare Phase 4 or production readiness complete.
+This document connects the revised product plan to the current implementation. It separates unfinished code from external configuration and verification work. It includes the bounded verification stop checkpoint of 21 October 2026; it does not declare Phase 4 or production readiness complete.
 
 ## 1. Current product scope
 
@@ -123,7 +123,7 @@ Main implementation: [apology.server.ts](src/infrastructure/ai/apology.server.ts
 
 | Pending item                             | What is needed                                                                                                                                                                                        |
 | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Staff and seller account assignments     | Confirm Google account/user UUIDs and assign the appropriate backend memberships. There is no automatic role escalation.                                                                              |
+| Staff and seller account assignments     | Complete the account and membership confirmation checklist in [README.md](README.md#account-and-membership-confirmation-checklist), then assign approved memberships through a trusted administrator connection. There is no automatic role escalation. |
 | Deployment-specific Google configuration | Confirm Google consent settings, Supabase site URL, and the allowed `/auth/callback` URL for each deployed environment. Google was enabled in the connected project at the last implementation check. |
 | Live Gemini configuration                | Set server-only `GEMINI_API_KEY` and `GEMINI_MODEL` to credentials and a model available to the project. Do not place these secrets in public environment variables.                                  |
 
@@ -146,11 +146,10 @@ The last four implementation areas beyond the confirmed core workflow require th
 
 ### C. Remaining verification: Phase 4
 
-- Complete a real Google consent/callback/sign-in/sign-out journey in the intended environment.
-- Exercise the customer order/report flow with a real signed-in account.
-- Exercise operations and seller pages with their confirmed memberships, including unauthorized-account attempts.
+- Complete cross-seller isolation acceptance with a second approved seller account. Local customer, operations-to-customer, and Lotus Home seller checks already have participant-reported results recorded below.
+- Verify Google callbacks/redirect settings in each intended deployed environment; local regular-browser login/sign-out has participant-reported results.
 - Generate a real Gemini apology, edit it, and verify that only an explicit publication creates a customer reply.
-- Run a real authenticated browser journey covering customer report, operations investigation/reply, seller handoff, refresh persistence, and unread clearing.
+- Verify unread indicators/clearing through real sessions and complete final deployment acceptance. Local report, operations note/status/reply, Lotus Home handoff, and refresh checks are recorded below; do not repeat them merely because older Phase 3 records lacked live evidence.
 - Exercise evidence upload/download through real authenticated browser sessions, in addition to the existing decoder and database policy tests.
 - Review final policies and deployment configuration, and perform final responsive/accessibility acceptance checks across all portals.
 - Rerun relevant checks against the final configured deployment and document any unresolved failures.
@@ -174,6 +173,34 @@ The following results were recorded during Phase 3. They were not rerun merely t
 | External services   | Google provider enabled was checked. Real Google consent/session journeys and live Gemini generation were not verified.                                                                                  |
 
 Evidence: [workflow SQL tests](supabase/tests/portal_workflows.sql), [evidence SQL tests](supabase/tests/evidence_access.sql), and [browser verification script](scripts/verify-portals.mjs). Database test identities and business records were rolled back; two labeled demo sellers were seeded persistently.
+
+### Bounded verification checkpoint: 21 October 2026
+
+Verification is stopped at the owner's request. Only documentation updates are authorized at this checkpoint. Do not continue testing, assign another account, or change the database without a new task authorization. Phase 4 is incomplete.
+
+The owner confirmed shared demo project `gvutlnfsiytnayvdxqyb` (`ai_ocean_buildathon`). The Supabase connector verified that target before database writes. Browser checks used the local app at `http://localhost:3000`; they do not verify deployed redirects or production readiness.
+
+| Area | Result and evidence boundary |
+| --- | --- |
+| Google entry point | Earlier preflight recorded Google enabled, `/login` HTTP 200, two OAuth initiation tests, and typecheck. The later automated Chrome run confirmed real unauthenticated API denial but Google blocked sign-in. `scripts/verify-google-live.mjs` did not complete its authenticated checks. |
+| Customer browser journey | Participant confirms regular-browser Google login, authorized order selection, eligible report submission, saved report/details after refresh, sign-out protection, and restoration after signing in again. Two customer accounts could not see each other's data in the UI. These are participant-reported results, not independently captured browser assertions. |
+| Report eligibility | The receipt-required error was resolved by choosing a delivered demo order for a damage report. This is consistent with the existing category policy; no application fix was made. |
+| Customer backend isolation | `supabase/tests/customer_isolation.sql` passed against the agreed project using synthetic identities under the real `authenticated` database role. Own reads/submissions succeeded; cross-customer reads, report submissions/read-state changes, ownership claims, and direct report updates were denied. Editable profile metadata did not grant access. RLS was enabled on the six inspected tables, and the tested role had neither superuser nor RLS-bypass privileges. |
+| Operations browser journey | Participant confirms operations inbox access; private-note persistence; report `IN_REVIEW` persistence; explicit manual reply publication/persistence; customer visibility of status/reply; absence of private notes/audit reasons; and customer denial of `/dashboard`. This bounded journey is complete based on participant reports. |
+| Operations backend boundaries | `supabase/tests/operations_customer_reply.sql` passed with synthetic authenticated identities. It checks private notes, status changes, explicit replies, audit records, no reply publication from note/status alone, customer-visible history/replies, private note/reason denial, customer denial of staff commands, and unchanged source delivery status. |
+| Lotus Home seller journey | Participant confirms seller portal access, a customer damage/refund-review report against a delivered Lotus Home demo order, operations publication/persistence of seller-visible findings, correct order/handoff visibility after refresh, no-refund-approval wording, absence of customer conversations/attachments/private notes, and seller denial of `/dashboard`. |
+| Cross-seller isolation | Not performed during this continuation. No River Books participant account has been nominated or assigned. Earlier Phase 3 synthetic cross-seller assertions remain historical evidence, not a newly completed two-seller acceptance run. |
+| Local code checks | Eleven focused auth/configuration/portal/routing tests, typecheck, production build, and live-script lint passed earlier in this continuation. Four portal API tests passed during customer backend verification; seven operations-component/API tests passed during operations verification. These runs overlap and are not additive counts. No full suite was rerun for this documentation checkpoint. |
+
+Database assertions rolled back their synthetic users and business rows; PostgreSQL reference sequences may advance despite rollback. They verify real database policies and guarded functions, not Google-issued JWT validation or captured two-session HTTP attacks. Report/order identifiers for the participant browser journeys were not captured in this handoff record.
+
+### Persistent configuration and demo records
+
+With explicit owner approval, trusted administration created and verified one active `OPERATIONS` membership and one active Lotus Home (`demo-lotus`) `SELLER_STAFF` membership after confirming the Google identities and Auth UUIDs. These memberships remain in the shared demo project. No River Books membership was assigned in this continuation. Keep personal account identifiers outside this repository; confirm the mappings through trusted administration when resuming.
+
+Participant-created demo reports, private notes, statuses, published customer replies, and seller findings also remain. They are separate from rollback-only SQL fixtures. No schema migration or active application behavior was changed by this continuation.
+
+New local verification artifacts are `scripts/verify-google-live.mjs`, `supabase/tests/customer_isolation.sql`, and `supabase/tests/operations_customer_reply.sql`. The live script's sanitized local result is under ignored `artifacts/phase4/`; its automated run remains incomplete. Check Git status before sharing because these artifacts and documentation changes are not committed at this checkpoint.
 
 ## 6. Current policy limits and unresolved decisions
 
@@ -203,6 +230,6 @@ Do not count the following as missing features to build under the current plan:
 
 ## 8. Recommended next step
 
-Finish account memberships and external configuration, then authorize Phase 4 for real-user acceptance and final security/integration verification. Live source-system integration remains a future task dependent on a confirmed source contract.
+Verification is stopped at the owner's request. Preserve the working tree and existing approved memberships/demo records. Wait for new task authorization before further implementation or verification. The proposed next bounded task is cross-seller isolation with a second participant-controlled Google account and approved River Books membership; neither was supplied during this continuation. Live source-system integration remains a future task dependent on a confirmed source contract.
 
 For setup, use [README.md](README.md). For technical migration details, use [MIGRATION.md](MIGRATION.md). For the short phase checklist, use [roadmap.md](roadmap.md).
