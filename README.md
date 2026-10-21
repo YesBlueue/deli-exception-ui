@@ -25,4 +25,4 @@ npm run dev
 
 This branch runs on **Next.js** (App Router). Useful scripts: `npm run build`, `npm start`, `npm test`, `npm run typecheck`, `npm run lint`.
 
-Environment: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, plus `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` for the browser. AI reply drafts need `LOVABLE_API_KEY` on the server. See `AGENTS.md` for the folder structure.
+Environment: copy `.env.example` to `.env` and fill in your own values (`.env` is git-ignored). You need `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, plus `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` for the browser. AI reply drafts need `LOVABLE_API_KEY` on the server. See `AGENTS.md` for the folder structure.
