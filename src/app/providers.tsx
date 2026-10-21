@@ -3,7 +3,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState, type ReactNode } from "react";
 
-import { CustomerAuthProvider } from "@/features/customer-auth/components/CustomerAuthProvider";
 import { reloadForModuleError } from "@/infrastructure/monitoring/module-recovery";
 import { Toaster } from "@/shared/ui/sonner";
 
@@ -19,10 +18,8 @@ export function Providers({ children }: { children: ReactNode }) {
   }, []);
   return (
     <QueryClientProvider client={queryClient}>
-      <CustomerAuthProvider>
-        {children}
-        <Toaster position="top-right" />
-      </CustomerAuthProvider>
+      {children}
+      <Toaster position="top-right" />
     </QueryClientProvider>
   );
 }

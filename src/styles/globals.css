@@ -63,6 +63,12 @@
   --shadow-card: var(--shadow-card-v);
 }
 
+/* Self-hosted @fontsource families (imported in src/app/layout.tsx). */
+:root {
+  --font-plex-sans: "IBM Plex Sans";
+  --font-plex-mono: "IBM Plex Mono";
+}
+
 /* App tokens derive from the nearest Radix <Theme>, so accent, gray, radius and appearance
    changes (including the dev ThemePanel and the nested customer theme) flow through every page.
    Declared on .radix-themes because Radix scales only exist inside a Theme element. */

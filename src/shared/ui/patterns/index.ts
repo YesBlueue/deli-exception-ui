@@ -11,5 +11,6 @@ export { FilterBar, SearchField } from "./filter-bar";
 export { EmptyState } from "./empty-state";
 export { ButtonRow, LinkList, LinkRow, StatList, Timeline } from "./lists";
 export { Field, Notice } from "./form";
+export { OptionSelect, type Option } from "./option-select";
 export { BackLink, KeyValueList, PhotoThumb } from "./details";
 export { BrandMark, SiteShell } from "./site-shell";

@@ -11,8 +11,18 @@ export function SearchField({ label, value, onChange, placeholder }: { label: st
   );
 }
 
-/** Search plus filter controls: stacked on small screens, a single row from `xl`. */
-export function FilterBar({ search, children }: { search: ReactNode; children: ReactNode }) {
+/**
+ * Search plus filter controls. "inline" (default, up to four filters): stacked on small screens,
+ * one row from `xl`. "stacked" (many filters): search on its own row, filters in a grid below.
+ */
+export function FilterBar({ search, layout = "inline", children }: { search: ReactNode; layout?: "inline" | "stacked"; children: ReactNode }) {
+  if (layout === "stacked")
+    return (
+      <div className="flex flex-col gap-2">
+        {search}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">{children}</div>
+      </div>
+    );
   return (
     <div className="flex flex-col gap-2 xl:flex-row xl:items-center">
       {search}

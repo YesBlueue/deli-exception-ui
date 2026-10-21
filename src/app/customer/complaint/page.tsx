@@ -2,8 +2,9 @@ import { ComplaintAppView } from "@/features/complaint-app/components/ComplaintA
 import { pageMetadata } from "@/shared/metadata";
 
 export const metadata = pageMetadata({
-  title: "Report an Order Problem — Shwe Market Support",
-  description: "Log in or create a customer account to report an order problem to Shwe Market Support.",
+  title: "Report an Order Problem — Customer Support",
+  description:
+    "Log in or create a customer account to report an order problem to Customer Support.",
   ogDescription: "Submit a complaint about your order in a few steps.",
   noIndex: true,
 });

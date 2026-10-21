@@ -1,6 +1,28 @@
-import { redirect } from "next/navigation";
-
-/** The prototype has no staff sign-in; the old login URL goes straight to the workspace. */
-export default function Login() {
-  redirect("/overview");
+import { CustomerAccountForm } from "@/features/customer-auth/components/CustomerAccountForm";
+import Link from "next/link";
+import { PackageSearch } from "lucide-react";
+import { BrandMark, Notice, SiteShell } from "@/shared/ui/patterns";
+export default async function Login({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const params = await searchParams;
+  return (
+    <SiteShell width="sm" brand={<BrandMark icon={PackageSearch} name="Delivery company" />}>
+      <div className="space-y-6 py-4">
+        {params.error && (
+          <Notice tone="error" role="alert">
+            Google sign-in was cancelled or could not be completed. Try again.
+          </Notice>
+        )}
+        <CustomerAccountForm />
+        <nav aria-label="Portals" className="flex flex-wrap gap-4 border-t pt-4 text-sm">
+          <Link href="/customer/complaint" className="text-primary hover:underline">Customer portal</Link>
+          <Link href="/overview" className="text-primary hover:underline">Operations</Link>
+          <Link href="/seller" className="text-primary hover:underline">Seller portal</Link>
+        </nav>
+      </div>
+    </SiteShell>
+  );
 }

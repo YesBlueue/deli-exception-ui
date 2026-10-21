@@ -1,0 +1,81 @@
+"use client";
+import { Heading, Text } from "@radix-ui/themes";
+import { Inbox, Store } from "lucide-react";
+import { usePortal } from "@/infrastructure/portal/use-portal";
+import { BrandMark, EmptyState, PageHeader, SiteShell } from "@/shared/ui/patterns";
+import { DEMO_BANNER_TEXT, Panel, PortalNav, PortalState, Tag, friendly, time } from "./shared";
+export function SellerWorkspace() {
+  const q = usePortal();
+  const s = q.data;
+  return (
+    <SiteShell
+      width="lg"
+      brand={<BrandMark icon={Store} name="Delivery company · Seller updates" />}
+      headerAside={<PortalNav />}
+      banner={DEMO_BANNER_TEXT}
+    >
+      <div className="space-y-6">
+        {!s ? (
+          <PortalState loading={q.isPending} error={q.error} retry={() => void q.refetch()} />
+        ) : !s.sellerId ? (
+          <Panel title="Seller access required">
+            <Text as="p" size="2" color="gray">
+              An administrator must associate this account with a seller on the backend.
+            </Text>
+          </Panel>
+        ) : (
+          <>
+            <PageHeader
+              title={<>{s.sellers.find((v) => v.id === s.sellerId)?.name} · Exception updates</>}
+              description="Relevant exceptions and refund information for your shop. Delivery creation remains in the existing delivery system."
+            />
+            <Panel title="Your relevant exceptions">
+              {!s.sellerExceptions.length ? (
+                <EmptyState icon={Inbox} title="No relevant exceptions." />
+              ) : (
+                <div className="divide-y">
+                  {s.sellerExceptions.map((e) => (
+                    <article key={e.id} className="space-y-2 py-3 first:pt-0 last:pb-0">
+                      <Text as="p" size="2" weight="bold" className="font-mono">
+                        {e.order_reference}
+                      </Text>
+                      <Text as="p" size="2">{friendly(e.exception_type)}</Text>
+                      <div className="flex gap-2">
+                        <Tag>{friendly(e.status)}</Tag>
+                        <Tag>{e.provenance}</Tag>
+                      </div>
+                      <Text as="p" size="1" color="gray">Opened {time(e.detected_at)}</Text>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </Panel>
+            <Panel title="Seller updates and refund handoffs">
+              <div className="divide-y">
+                {s.updates
+                  .filter((u) => u.seller_id === s.sellerId)
+                  .sort((a, b) => b.created_at.localeCompare(a.created_at))
+                  .map((u) => (
+                    <article key={u.id} className="space-y-1 py-3 first:pt-0">
+                      <Heading as="h3" size="2">{u.title}</Heading>
+                      <Text as="p" size="1" color="gray">
+                        {s.orders.find((o) => o.id === u.delivery_job_id)?.seller_order_reference} ·{" "}
+                        {time(u.created_at)}
+                      </Text>
+                      <Text as="p" size="2" className="whitespace-pre-wrap break-words">
+                        {u.body}
+                      </Text>
+                    </article>
+                  ))}
+              </div>
+              <Text as="p" size="1" color="gray">
+                Refund discussions with customers and payment execution take place outside this
+                system. A handoff is not a refund approval.
+              </Text>
+            </Panel>
+          </>
+        )}
+      </div>
+    </SiteShell>
+  );
+}

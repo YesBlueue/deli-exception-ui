@@ -14,9 +14,10 @@ describe("App routing", () => {
     expect(navigation.redirect).toHaveBeenCalledWith("/overview");
   });
 
-  it("sends the retired /login page to the operations overview", async () => {
+  it("renders Google login instead of bypassing staff access", async () => {
     const { default: Login } = await import("./login/page");
-    expect(() => Login()).toThrow("NEXT_REDIRECT");
-    expect(navigation.redirect).toHaveBeenLastCalledWith("/overview");
+    navigation.redirect.mockClear();
+    expect(await Login({ searchParams: Promise.resolve({}) })).toBeTruthy();
+    expect(navigation.redirect).not.toHaveBeenCalled();
   });
 });

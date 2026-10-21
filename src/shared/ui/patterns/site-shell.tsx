@@ -23,10 +23,11 @@ export function SiteShell({ brand, headerAside, banner, footer, width = "md", ch
   headerAside?: ReactNode;
   banner?: ReactNode;
   footer?: ReactNode;
-  width?: "sm" | "md";
+  /** sm 32rem (single form), md 48rem (reading column), lg 64rem (lists). */
+  width?: "sm" | "md" | "lg";
   children: ReactNode;
 }) {
-  const column = cn("mx-auto w-full px-4", width === "sm" ? "max-w-lg" : "max-w-2xl");
+  const column = cn("mx-auto w-full px-4", { sm: "max-w-lg", md: "max-w-3xl", lg: "max-w-5xl" }[width]);
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="border-b bg-card">

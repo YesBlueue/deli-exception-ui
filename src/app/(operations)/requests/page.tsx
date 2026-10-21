@@ -3,7 +3,7 @@ import { pageMetadata } from "@/shared/metadata";
 
 export const metadata = pageMetadata({
   title: "Customer complaints — Exception Ops",
-  description: "Review post-delivery complaints with recorded staff activity.",
+  description: "Review customer reports with recorded staff activity.",
   ogDescription: "Investigate customer complaints and publish customer-visible responses.",
 });
 
