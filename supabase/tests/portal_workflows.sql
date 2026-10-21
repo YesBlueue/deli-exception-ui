@@ -94,12 +94,13 @@ select public.portal_command('seen',jsonb_build_object('reportId',(select value 
 select set_config('request.jwt.claim.sub',(select value::text from portal_test_ids where key='seller_a'),true);
 do $$ begin
  if (select count(*) from public.complaints)<>0 or (select count(*) from public.exception_notes)<>0 or (select count(*) from public.complaint_replies)<>0 or (select count(*) from public.complaint_attachments)<>0 then raise exception 'Seller received private customer/staff content'; end if;
- if (select count(*) from public.seller_portal_updates)<>2 then raise exception 'Seller updates missing'; end if;
- if jsonb_array_length(public.seller_exception_context())<1 then raise exception 'Seller exception projection missing'; end if;
+ -- Shared demo projects may already contain legitimate findings for this seller.
+ if (select count(*) from public.seller_portal_updates where delivery_job_id=(select value from portal_test_ids where key='order_a'))<>2 then raise exception 'Seller updates missing'; end if;
+ if not exists(select 1 from jsonb_array_elements(public.seller_exception_context()) e where e->>'delivery_job_id'=(select value::text from portal_test_ids where key='order_a')) then raise exception 'Seller exception projection missing'; end if;
 end $$;
 select set_config('request.jwt.claim.sub',(select value::text from portal_test_ids where key='seller_b'),true);
 do $$ begin
- if (select count(*) from public.seller_portal_updates)<>0 or jsonb_array_length(public.seller_exception_context())<>0 then raise exception 'Cross-seller exception/update leak'; end if;
+ if exists(select 1 from public.seller_portal_updates where delivery_job_id=(select value from portal_test_ids where key='order_a')) or exists(select 1 from jsonb_array_elements(public.seller_exception_context()) e where e->>'delivery_job_id'=(select value::text from portal_test_ids where key='order_a')) then raise exception 'Cross-seller exception/update leak'; end if;
 end $$;
 reset role;
 select 'PASS: account provisioning, RLS, reports, notes, replies, handoffs, assignment, transitions, ingestion ordering, and read state' as result;

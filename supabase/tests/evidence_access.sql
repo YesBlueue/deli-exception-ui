@@ -50,7 +50,8 @@ do $$ begin
 end $$;
 select set_config('request.jwt.claim.sub',(select value::text from portal_test_ids where key='operations'),true);
 do $$ begin
- if (select count(*) from public.complaint_attachments)<>1 or (select count(*) from storage.objects where bucket_id='report-evidence')<>1 then raise exception 'Authorized operations cannot read evidence'; end if;
+ -- Operations legitimately sees existing shared demo attachments too.
+ if (select count(*) from public.complaint_attachments where complaint_id=(select value from portal_test_ids where key='report'))<>1 or (select count(*) from storage.objects where bucket_id='report-evidence' and (storage.foldername(name))[2]=(select value::text from portal_test_ids where key='report'))<>1 then raise exception 'Authorized operations cannot read evidence'; end if;
 end $$;
 reset role;
 select 'PASS: evidence metadata and private Storage owner/staff visibility; cross-customer/seller denial' as result;

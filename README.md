@@ -4,6 +4,10 @@ An exception-handling layer for **one delivery company** serving many sellers an
 
 See [Plan Changes and Implementation Status](PLAN_IMPLEMENTATION_STATUS.md) for the revised plan, implemented features, remaining work, and verification limits.
 
+The driver/proactive extension adds `/driver` for assigned-delivery exception/condition reporting and `/conditions` for operations review. Historical assignments determine affected packages; staff explicitly publishes reviewed updates to authorized customer portals with unread state. It uses five new tables and the existing design system. See [Driver workflow](DRIVER_WORKFLOW.md) for setup, demo reassignment scenarios, safeguards, provisional policy, and acceptance limits. Driver roles must be assigned by trusted administration; none are granted automatically.
+
+For local driver testing, the owner-approved synthetic accounts can sign in at `/driver-test-login` while running `npm run dev`. Credentials live only in ignored `artifacts/driver-test-accounts.json`. That page returns 404 in production; normal customer sign-in remains Google.
+
 For another laptop or a new coding-agent session, start with [Teammate and Agent Handoff](TEAM_HANDOFF.md).
 
 The customer portal is part of this same responsive Next.js website. There is no separate native mobile application.
@@ -34,7 +38,7 @@ The first Google sign-in creates an account. Next.js exchanges the OAuth code us
 
 ### Optional Groq apology drafts
 
-Set server-only `GROQ_API_KEY` to your Groq key and `GROQ_MODEL=openai/gpt-oss-120b`. Groq replaces Gemini and only drafts apology text. Staff reviews/edits it and separately publishes a portal reply. It cannot classify, route, assign, suggest next actions, or change statuses. Missing configuration or provider failure leaves manual composition available. Requests use Groq Chat Completions without tools, disable returned reasoning for GPT-OSS, and accept only a complete text response.
+Set server-only `GROQ_API_KEY` to your Groq key and `GROQ_MODEL=openai/gpt-oss-120b`. Groq replaces Gemini and only drafts apology or cautious proactive delay wording. Staff reviews/edits it and explicitly publishes the reviewed portal message. It cannot classify, select affected packages/recipients, route, assign, suggest next actions, or change statuses. Missing configuration or provider failure leaves template/manual composition available. Requests use Groq Chat Completions without tools, disable returned reasoning for GPT-OSS, and accept only a complete text response.
 
 The real Groq adapter passed a generation check using fictional context. This does not establish the staff browser draft/edit/publish gate; verify that generating a draft creates no customer reply before explicitly publishing the edited text. `supabase/tests/apology_drafts.sql` separately verifies private draft persistence, model/audit metadata, and unchanged operational state with rolled-back fixtures. Earlier Gemini setup/checkpoints below are historical and no longer configure active drafting.
 

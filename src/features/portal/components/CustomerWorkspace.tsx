@@ -8,6 +8,7 @@ import { Button } from "@/shared/ui/button";
 import { BrandMark, EmptyState, Field, Notice, SiteShell } from "@/shared/ui/patterns";
 import { Textarea } from "@/shared/ui/textarea";
 import { cn } from "@/shared/utils";
+import { DeliveryUpdates } from "./DeliveryUpdates";
 import { DEMO_BANNER_TEXT, Panel, PortalNav, PortalState, Tag, friendly, time } from "./shared";
 export function CustomerWorkspace() {
   const q = usePortal();
@@ -100,7 +101,9 @@ export function CustomerWorkspace() {
         ) : (
           <>
             <header>
-              <Heading as="h1" size="7">Your orders and reports</Heading>
+              <Heading as="h1" size="7">
+                Your orders and reports
+              </Heading>
               <Text as="p" size="2" color="gray" mt="2">
                 Hello, {s.user.name}. Choose an authorized order to report a delivery issue.
               </Text>
@@ -115,6 +118,7 @@ export function CustomerWorkspace() {
                 {notice}
               </Notice>
             )}
+            <DeliveryUpdates orders={orders} />
             {!orders.length ? (
               <Panel title="Prepare your demo orders">
                 <Text as="p" size="2" color="gray">
@@ -167,16 +171,16 @@ export function CustomerWorkspace() {
                   }}
                 >
                   <Field label="Describe the issue" htmlFor="report-description">
-                  <Textarea
-                    id="report-description"
-                    rows={5}
-                    minLength={10}
-                    maxLength={4000}
-                    required
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="For example: My order is delayed and I have not had an update."
-                  />
+                    <Textarea
+                      id="report-description"
+                      rows={5}
+                      minLength={10}
+                      maxLength={4000}
+                      required
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="For example: My order is delayed and I have not had an update."
+                    />
                   </Field>
                   {description.length >= 10 && (
                     <p className="text-xs text-muted-foreground">
@@ -208,7 +212,11 @@ export function CustomerWorkspace() {
             )}
             <Panel title="Your report history">
               {!reports.length && (
-                <EmptyState icon={PackageSearch} title="No reports yet." description="Updates and replies appear here." />
+                <EmptyState
+                  icon={PackageSearch}
+                  title="No reports yet."
+                  description="Updates and replies appear here."
+                />
               )}
               <div className="divide-y">
                 {reports.map((r) => {

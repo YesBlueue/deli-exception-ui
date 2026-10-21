@@ -1,4 +1,5 @@
 /** One-company exception guidance. Pure functions never execute an action. */
+import { ATTEMPT_CATEGORIES } from "./driver-rules";
 export const CATEGORY_LABELS = {
   DELAY: "Delivery delay",
   DAMAGE: "Damaged delivery",
@@ -114,7 +115,7 @@ export function exceptionSummary(
   category: string,
   status: string,
 ) {
-  return `${CATEGORY_LABELS[category as ReportCategory] ?? "Manual review"} · ${order ?? "Order reference unavailable"} · ${seller}. Source status: ${status.replaceAll("_", " ").toLowerCase()}.`;
+  return `${CATEGORY_LABELS[category as ReportCategory] ?? ATTEMPT_CATEGORIES[category as keyof typeof ATTEMPT_CATEGORIES] ?? "Manual review"} · ${order ?? "Order reference unavailable"} · ${seller}. Source status: ${status.replaceAll("_", " ").toLowerCase()}.`;
 }
 export const EXCEPTION_TRANSITIONS: Record<string, string[]> = {
   NEW: ["IN_PROGRESS", "AWAITING_CUSTOMER", "AWAITING_SELLER", "RESOLVED"],

@@ -26,6 +26,7 @@ import {
 } from "@/shared/ui/patterns";
 import { Panel, PortalState, Tag, friendly, time } from "./shared";
 import type { Tables } from "@/infrastructure/supabase/types";
+import { DriverReportContext } from "./DriverReportContext";
 type Run = (command: string, input: Record<string, unknown>) => Promise<void>;
 export function ExceptionWorkspace({ id }: { id: string }) {
   const q = usePortal();
@@ -177,10 +178,11 @@ export function ExceptionWorkspace({ id }: { id: string }) {
             ))}
             {!reports.length && (
               <Text as="p" size="2" color="gray">
-                This exception came from a source update. No customer report is linked.
+                No customer report is linked. Review the available driver and source context.
               </Text>
             )}
           </section>
+          <DriverReportContext exceptionId={id} />
           <Panel title="Private staff notes">
             <Field label="Investigation note" htmlFor="staff-note">
               <Textarea

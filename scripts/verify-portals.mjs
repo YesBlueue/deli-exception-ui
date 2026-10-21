@@ -14,6 +14,7 @@ const orderId = "11111111-1111-4111-8111-111111111111";
 const sellerId = "22222222-2222-4222-8222-222222222222";
 const userId = "33333333-3333-4333-8333-333333333333";
 const reportId = "44444444-4444-4444-8444-444444444444";
+const deliveryUpdates = [];
 const snapshot = {
   user: { id: userId, name: "Demo Customer", email: "customer@example.invalid" },
   isStaff: false,
@@ -45,12 +46,22 @@ const snapshot = {
 try {
   const unauthenticated = await context.request.get(`${base}/api/portal`);
   assert.equal(unauthenticated.status(), 401, "Real backend must deny unauthenticated data access");
+  for (const path of ["/api/driver", "/api/delivery-updates"]) {
+    assert.equal((await context.request.get(`${base}${path}`)).status(), 401);
+  }
   await page.goto(`${base}/login`);
   await page.getByRole("button", { name: "Continue with Google" }).waitFor();
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
   await mkdir("artifacts/phase3", { recursive: true });
   await page.screenshot({ path: "artifacts/phase3/google-login-mobile.png", fullPage: true });
 
+  await page.route("**/api/delivery-updates", (route) => route.fulfill({ json: deliveryUpdates }));
+  await page.route("**/api/driver", (route) => {
+    const { action, input } = route.request().postDataJSON();
+    assert.equal(action, "seen_update");
+    deliveryUpdates.find((u) => u.id === input.id).read_at = now;
+    return route.fulfill({ json: { ok: true } });
+  });
   await page.route("**/api/portal", async (route) => {
     if (route.request().method() === "POST") {
       const { action, input } = route.request().postDataJSON();
@@ -112,6 +123,28 @@ try {
   await page.getByText("New update", { exact: true }).waitFor({ state: "hidden" });
   await page.screenshot({ path: "artifacts/phase3/customer-reply-mobile.png", fullPage: true });
 
+  // A proactive portal update is visible without a customer complaint.
+  snapshot.reports = [];
+  snapshot.replies = [];
+  deliveryUpdates.push({
+    id: "notice",
+    delivery_id: orderId,
+    body: "Your delivery may be delayed. Please check this portal for updates.",
+    published_at: now,
+    read_at: null,
+  });
+  await page.reload();
+  await page.getByText(deliveryUpdates[0].body, { exact: true }).waitFor();
+  await page.getByText("New update", { exact: true }).waitFor();
+  await page.getByRole("button", { name: "Mark as read" }).click();
+  await page.getByText("New update", { exact: true }).waitFor({ state: "hidden" });
+  await page.reload();
+  await page.getByText(deliveryUpdates[0].body, { exact: true }).waitFor();
+  assert.equal(await page.getByRole("button", { name: "Mark as read" }).count(), 0);
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  await page.screenshot({ path: "artifacts/phase3/customer-proactive-mobile.png", fullPage: true });
+  deliveryUpdates.length = 0;
+
   snapshot.sellerId = sellerId;
   snapshot.customerOrderIds = [];
   snapshot.reports = [];
@@ -142,7 +175,7 @@ try {
   await page.screenshot({ path: "artifacts/phase3/seller-desktop.png", fullPage: true });
   assert.deepEqual(errors, [], "No client runtime errors");
   console.log(
-    "PASS: real unauthenticated API denial; Google login UI; customer selection, report and reply UI; seller handoff UI; 390px overflow checks. Authenticated UI used explicit fixtures, not live sessions.",
+    "PASS: real unauthenticated portal/driver/updates API denial; Google login UI; customer reports/replies and complaint-independent proactive updates/unread persistence; seller handoff UI; 390px overflow checks. Authenticated UI used explicit fixtures, not live sessions.",
   );
 } finally {
   await browser.close();

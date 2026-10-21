@@ -4,6 +4,7 @@ import { Text } from "@radix-ui/themes";
 import { Inbox, MessageSquare } from "lucide-react";
 import { useEffect, useState } from "react";
 import { usePortal } from "@/infrastructure/portal/use-portal";
+import { ATTEMPT_CATEGORIES } from "@/core/domain/driver-rules";
 import {
   CATEGORY_LABELS,
   exceptionSla,
@@ -129,11 +130,13 @@ export function OperationsWorkspace({ view }: { view: "overview" | "inbox" | "re
                         {r.complaint_reference}
                       </Text>
                       <Text as="p" size="2">
-                        {CATEGORY_LABELS[r.category as keyof typeof CATEGORY_LABELS] ?? r.category} ·{" "}
-                        {friendly(r.status)}
+                        {CATEGORY_LABELS[r.category as keyof typeof CATEGORY_LABELS] ?? r.category}{" "}
+                        · {friendly(r.status)}
                       </Text>
                       <Text as="p" size="1" color="gray">
-                        {r.needs_review ? "Manual classification review required" : r.category_reason}
+                        {r.needs_review
+                          ? "Manual classification review required"
+                          : r.category_reason}
                         {r.refund_requested ? " · seller refund handoff" : ""}
                       </Text>
                     </div>
@@ -168,7 +171,10 @@ export function OperationsWorkspace({ view }: { view: "overview" | "inbox" | "re
                   value={priority}
                   onValueChange={setPriority}
                   emptyLabel="All priorities"
-                  options={["CRITICAL", "HIGH", "MEDIUM", "LOW"].map((v) => ({ value: v, label: v }))}
+                  options={["CRITICAL", "HIGH", "MEDIUM", "LOW"].map((v) => ({
+                    value: v,
+                    label: v,
+                  }))}
                 />
                 <OptionSelect
                   label="Seller"
@@ -191,7 +197,9 @@ export function OperationsWorkspace({ view }: { view: "overview" | "inbox" | "re
                   value={category}
                   onValueChange={setCategory}
                   emptyLabel="All categories"
-                  options={Object.entries(CATEGORY_LABELS).map(([id, label]) => ({ value: id, label }))}
+                  options={Object.entries({ ...CATEGORY_LABELS, ...ATTEMPT_CATEGORIES }).map(
+                    ([id, label]) => ({ value: id, label }),
+                  )}
                 />
                 <OptionSelect
                   label="Assignment"
@@ -200,7 +208,10 @@ export function OperationsWorkspace({ view }: { view: "overview" | "inbox" | "re
                   emptyLabel="All assignments"
                   options={[
                     { value: "unassigned", label: "Unassigned" },
-                    ...activeStaff.map((person) => ({ value: person.user_id, label: person.full_name })),
+                    ...activeStaff.map((person) => ({
+                      value: person.user_id,
+                      label: person.full_name,
+                    })),
                   ]}
                 />
                 <OptionSelect
@@ -297,11 +308,13 @@ export function OperationsWorkspace({ view }: { view: "overview" | "inbox" | "re
             <div className="grid gap-6 lg:grid-cols-2">
               <PatternPanel title="Open exceptions by category" flush>
                 <StatList
-                  items={Object.entries(CATEGORY_LABELS).map(([id, label]) => ({
-                    key: id,
-                    label,
-                    value: open.filter((e) => e.exception_type === id).length,
-                  }))}
+                  items={Object.entries({ ...CATEGORY_LABELS, ...ATTEMPT_CATEGORIES }).map(
+                    ([id, label]) => ({
+                      key: id,
+                      label,
+                      value: open.filter((e) => e.exception_type === id).length,
+                    }),
+                  )}
                 />
               </PatternPanel>
               <PatternPanel title="Recent activity" flush>

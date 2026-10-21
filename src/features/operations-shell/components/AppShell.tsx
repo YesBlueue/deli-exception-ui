@@ -20,11 +20,14 @@ const NAV = [
   { to: "/overview", label: "Overview", Icon: LayoutDashboard },
   { to: "/dashboard", label: "Exception inbox", Icon: Inbox },
   { to: "/requests", label: "Customer complaints", Icon: MessageSquare },
+  { to: "/conditions", label: "Route conditions", Icon: Inbox },
   { to: "/demo/events", label: "Event simulator", Icon: FlaskConical },
   { to: "/customer/complaint", label: "Customer portal", Icon: Smartphone },
   { to: "/seller", label: "Seller portal", Icon: MessageSquare },
   // Development-only reference page (404 in production builds).
-  ...(process.env.NODE_ENV === "production" ? [] : [{ to: "/design-system", label: "Design system", Icon: Palette }]),
+  ...(process.env.NODE_ENV === "production"
+    ? []
+    : [{ to: "/design-system", label: "Design system", Icon: Palette }]),
 ];
 
 /** Matches a nav item on its own path and on nested paths, like the previous router's fuzzy active match. */

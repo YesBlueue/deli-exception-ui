@@ -1,6 +1,29 @@
 # Plan Changes and Implementation Status
 
-Last updated: 21 October 2026
+Last updated: 22 October 2026
+
+## Driver/proactive Phase 4 local acceptance complete
+
+The owner explicitly authorized Phase 4 local verification and participant Google-account checks. [Phase 4 verification](PHASE4_VERIFICATION.md) records completed local evidence and verification limits. Real driver reporting/evidence/reassignment/duplicate/privacy checks, five rollback-only SQL suites, 139 tests, typecheck/build, and production portal fixtures passed. Touch-target fixes passed automated accessibility checks and computed text contrast follow-up. All 33 changed/new code files pass lint; repository-wide lint still fails pre-existing formatting in unchanged files.
+
+Dedicated demo assignment history and real reports persist. Operations confirmed pending-customer publication is disabled, then generated private Groq wording, edited/reviewed and explicitly published one proactive message for verified customer-owned `DEMO-000077`. Customer exact-text/unread/refresh checks passed. Backend confirms one publication/audit, exact saved content, approved operations actor, persisted read marker and unchanged source/complaint status. No customer association, membership or production-login change was made. Participant driver evidence checks passed operations opening and customer/Lotus Home seller denial. Conditions desktop/390px layout and keyboard checks passed. Existing complaint Groq private generation passed (one draft, zero replies). Other-customer/seller notice visibility and edited complaint-apology publication/customer persistence subsequently passed. Final backend read-back confirms exactly one edited reply and `REPLY` audit, one saved draft, and the single proactive update still marked read; source/report statuses are unchanged. **Phase 4 is complete for the agreed local hackathon acceptance scope.** Deployment/live delivery integration and company-policy confirmation remain deferred; repository-wide historical formatting lint remains failing. Earlier incomplete/setup statements below are historical checkpoints superseded by this completion record.
+
+## Driver/proactive extension: Phase 3, 22 October 2026
+
+Subsequent bounded account setup: the owner explicitly requested two test drivers. Two synthetic email/password identities were created through trusted administration and assigned active `DELIVERY_PERSON` memberships, with no operations/admin or seller role. Both real password sign-ins and driver-only RPC checks passed. A development-only `/driver-test-login` page was added; production returns 404. Credentials are in ignored `artifacts/driver-test-accounts.json` only. This supersedes the earlier pending-driver-account setup note; explicit demo package/history provisioning remains pending. No package assignments or workflow publications were created by account setup.
+
+The owner authorized incremental driver reporting and proactive portal notifications with the smallest schema preserving assignment history, recipient accuracy, reviewed publication, and audit. Implementation uses five tables, existing exception/audit infrastructure, and the existing Radix design system. See [Driver workflow](DRIVER_WORKFLOW.md) for policies, routes, setup, and safeguards. This new extension's Phase 3 is distinct from the historical phases below.
+
+- Added protected `/driver`, operations `/conditions`, driver attempt integration in the existing exception detail page, private driver evidence/corrections, and customer delivery updates/unread state independent of complaints.
+- Historical effective assignment intervals determine candidates at condition occurrence. Current assignments cannot substitute for missing history. Automatic rules prepare private reviews; exact recipient/message/fact snapshots are rechecked inside atomic staff-approved publication. Repeated publications are idempotent. No operational notice is emailed.
+- Groq remains server-only and wording-only, with minimal structured context and template/manual fallback. A stale provider request cannot overwrite a changed review. No live Groq request was made for this extension.
+- Three additive migrations are applied to confirmed shared project `gvutlnfsiytnayvdxqyb`; local versions match history. Generated types are synchronized. No memberships, customer associations, or persistent driver assignments/reports/reviews/publications were created. Read-back confirmed zero rows in the new workflow tables before handoff.
+- Implementation checks: all 137 tests across 25 files passed with two workers, including driver occurrence-time package selection and review/publish safeguards. Production build and typecheck passed. New rollback-only driver SQL passed for reassignment, stale/conflicting/missing data, corrections, review/source/recipient invalidation, duplicate prevention, inactive roles, private evidence (including own-seller denial), publication/read state, and revoked customer access. Existing portal, evidence, and seller-isolation SQL checks passed. Two historical scripts needed fixture-scoped counts to coexist with saved shared-demo records; no application authorization change was needed.
+- Browser fixtures passed real unauthenticated portal/driver/updates API denial, existing customer/seller journeys, complaint-independent proactive updates and unread persistence, and 390px overflow checks. The new customer screenshot was visually inspected. These authenticated browser views used explicit fixtures, not real participant sessions.
+- Scoped lint passed for the new domain/API/components, updated operations view, component tests, and browser script. This does not claim repository-wide historical formatting cleanup. The final 137-test run and production build passed after the last application changes.
+- Security advisor found no new findings; its pre-existing password-protection warning remains. New foreign-key/RLS initialization findings were fixed; existing unrelated missing-index/unused-index information remains.
+
+Pending configuration is two trusted-administrator-approved driver memberships and explicit demo history provisioning. Pending implementation/integration is the future authoritative source adapter/coverage/correction contract, not a hidden live assignment feed. Pending acceptance includes actual driver/operations/customer publication and evidence journeys, protected-page responsive/accessibility checks, and live notification drafting/review. Phase 4 remains incomplete; do not infer its authorization from implementation checks.
 
 Current integration branch: `backend/groq-phase4-integration` (target: `nextjs-migration`)
 
@@ -12,11 +35,12 @@ The application is an exception-handling layer for **one delivery company**, ser
 
 The company's existing delivery management system owns delivery creation, routing, dispatch, execution, and authoritative delivery status. This application uses the relevant order/delivery context to investigate exceptions and customer reports.
 
-All three portals are part of the existing responsive Next.js website:
+All portals are part of the existing responsive Next.js website:
 
 - Customers sign in with Google, choose an authorized order, submit a report, and view status/history/replies.
 - Operations staff triage, assign, investigate, and resolve exceptions; publish customer replies and seller updates.
 - Sellers view their own relevant exceptions and refund-information handoffs.
+- Drivers report assigned-delivery attempt exceptions and route conditions; operations reviews historically affected packages and explicitly publishes proactive customer portal updates.
 
 For the hackathon, delivery context is explicitly labeled demo data. Shared records are stored in Supabase. Simulation represents data that would eventually come from the existing delivery system; it is not a live integration.
 

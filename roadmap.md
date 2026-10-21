@@ -1,5 +1,14 @@
 # Delivery exception platform
 
+- [x] Driver/proactive extension Phase 3: compact five-table schema, historical assignments, driver attempt/condition reporting and evidence/corrections, existing inbox/detail integration, deterministic impact reviews, exact staff approval and portal publication, customer unread state, and wording-only Groq with fallback. See [Driver workflow](DRIVER_WORKFLOW.md).
+- [x] Extension implementation verification: rollback-only database assertions, existing portal/evidence/seller SQL regressions, unit/component/API tests, typecheck/build, and customer/seller browser fixtures including proactive updates without complaints. These are not live driver acceptance.
+- [x] Owner-approved test driver accounts: two synthetic email/password identities with active `DELIVERY_PERSON` access; verified password sign-in and driver-only RPC access. Development-only `/driver-test-login`; credentials remain in ignored local artifacts.
+- [x] Provision labeled historical demo assignment intervals, including transfer between drivers; verify occurrence-time selection with real authenticated reports.
+- [x] Extension Phase 4 authorized: real driver reporting/evidence/reassignment/duplicate/privacy and populated driver layout checks passed; backend assertions and existing UI fixtures passed. See [Phase 4 verification](PHASE4_VERIFICATION.md).
+- [x] Proactive Google operations/customer acceptance: private Groq draft, edited review/explicit publication, exact message and unread refresh persistence; verified existing ownership and one approved publication/audit.
+- [x] Participant driver evidence access: operations opens image; customer and Lotus Home seller denied the same application endpoint. Conditions desktop/390px layout and keyboard focus/control checks passed.
+- [x] Extension Phase 4 local completion: other-customer/seller notice isolation and separate complaint Groq edited publication/customer refresh persistence passed. Backend confirms one exact reply/audit and one proactive publication/read marker. See the current verification record for limits.
+
 - [x] Combine backend/Groq continuation with teammate Radix Themes UI on `backend/groq-phase4-integration` (`9b0369e` plus shared `nextjs-migration` at `c37c6a8`). All 125 tests, typecheck, build, resolved/backend-file lint, and production browser fixtures passed. Review this branch before merging into the shared branch; live Phase 4 gates remain separate.
 
 - [x] Phase 1: repository assessment.
@@ -9,9 +18,9 @@
 - [x] Bounded local customer verification: participant reports Google login, eligible report submission, persistence/details, sign-out protection, restoration after signing in again, and two-customer UI isolation. Backend customer-isolation assertions passed separately with synthetic authenticated identities and rolled-back fixtures.
 - [x] Groq replacement and real adapter smoke check: `openai/gpt-oss-120b` generated an apology from fictional context; no database draft/reply created. Private persistence/audit/no-publication SQL assertions passed; all 125 tests passed.
 - [x] Staff browser Groq draft/private-state check: participant confirms generation and draft-only notice; backend verifies one Groq draft/audit, unchanged one customer reply and unchanged report/source state.
-- [ ] Staff review/edit/explicit-publication and customer refresh persistence for the Groq apology; final local acceptance remains pending.
+- [x] Staff review/edit/explicit-publication and customer refresh persistence for the Groq apology passed on `RPT-2026-000031`; exact reply and one audit verified independently.
 - [x] Bounded operations-to-customer verification: approved staff membership established; participant confirms inbox access, private-note persistence, report `IN_REVIEW` persistence, explicit manual reply publication/persistence, customer status/reply visibility, private note/reason exclusion, and customer operations-page denial. Backend assertions passed separately. Overall Phase 4 remains incomplete.
-- [ ] Phase 4: final security, integration, and end-to-end acceptance verification.
+- [x] Phase 4: agreed local hackathon security/integration/end-to-end acceptance completed, subject to the documented legacy lint and verification limits. Deployment and live delivery-system integration remain deferred.
 - [x] Bounded Lotus Home seller journey: approved `SELLER_STAFF` membership established; participant confirms report/handoff publication, correct seller/order visibility, no-refund-approval wording, absence of private customer/staff content, and seller denial of operations access.
 - [x] Real River Books participant: replacement Google identity verified, approved active `SELLER_STAFF` membership created/read back, no staff role or customer order associations at assignment.
 - [x] River Books browser access/negative checks: participant confirms correct seller heading, no Lotus Home records, and operations dashboard denial.
@@ -19,11 +28,11 @@
 - [x] River Books operations publication: participant confirms access/publication/refresh; backend read-back confirms saved findings, one refund handoff, one handoff audit, unchanged delivered source status, and no customer reply.
 - [x] Bounded local cross-seller browser isolation: participant confirms both seller refresh checks, each sees its own findings and excludes the other's records, including River Books order `DEMO-000080`. Separate backend SQL assertions passed; no independent real-session HTTP attack capture is claimed.
 - [x] Resumed Phase 4 backend seller isolation: both sellers' positive controls and cross-seller/audience/command/membership boundaries passed with rolled-back synthetic identities. Full 110-test suite, typecheck, and build passed locally. Real browser acceptance remains separate.
-- [ ] Final responsive/accessibility/security acceptance: owner selected local-only target. Deployed OAuth is deferred and not verified.
+- [x] Final bounded responsive/accessibility/security acceptance for the owner-selected local target. Deployed OAuth is deferred and not verified; no full screen-reader certification is claimed.
 - [x] Customer evidence upload/reopen: participant confirms initial image opening and reopening after refresh; backend verifies attachment metadata and object in the private bucket for `RPT-2026-000018` / `DEMO-000078`.
 - [x] Real-session operations evidence opening and River Books seller denial via the application endpoint, participant-reported.
 - [x] Own-seller Lotus Home direct evidence denial: participant explicitly confirms **Evidence unavailable**.
 - [x] Unread reply indicator/clearing/refresh for `RPT-2026-000018`: all participant steps passed; backend verifies one reply, one reply audit, and customer read marker after the reply. Report/source statuses remain unchanged.
 - [ ] Future source-system integration after its interface and ownership mapping are confirmed.
 
-The earlier checkpoint stopped at the owner's request on 21 October 2026. The owner subsequently authorized resuming at cross-seller isolation, as recorded above. Automated Chrome Google sign-in was blocked; completed browser checks above are participant-reported regular-browser results. Database assertions are separate synthetic-identity evidence. Phase 4 remains incomplete. See [implementation status](PLAN_IMPLEMENTATION_STATUS.md) for both checkpoints.
+The earlier checkpoint stopped at the owner's request on 21 October 2026. The owner subsequently authorized resuming at cross-seller isolation, as recorded above. Automated Chrome Google sign-in was blocked; completed browser checks above are participant-reported regular-browser results. Database assertions are separate synthetic-identity evidence. The subsequent driver/proactive continuation completed the agreed local Phase 4 acceptance; deployment and live integration remain deferred. See [implementation status](PLAN_IMPLEMENTATION_STATUS.md) for both checkpoints.

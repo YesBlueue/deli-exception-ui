@@ -1,0 +1,10 @@
+create index driver_reports_delivery on public.driver_reports(delivery_id);
+create index notification_review_creator on public.notification_reviews(created_by,created_at);
+create index notification_review_approver on public.notification_reviews(approved_by);
+alter policy driver_assignment_read on public.driver_assignments using((select exception_private.is_staff()) or ((select exception_private.is_driver()) and driver_id=(select auth.uid())));
+alter policy driver_report_read on public.driver_reports using((select exception_private.is_staff()) or ((select exception_private.is_driver()) and driver_id=(select auth.uid())));
+alter policy notice_recipient on public.customer_delivery_updates using((select exception_private.is_staff()) or (customer_id=(select auth.uid()) and exception_private.owns_delivery(delivery_id)));
+alter policy driver_evidence_read on public.driver_evidence using((select exception_private.is_staff()) or ((select exception_private.is_driver()) and exists(select 1 from public.driver_reports r where r.id=report_id and r.driver_id=(select auth.uid()))));
+alter policy notice_staff on public.notification_reviews using((select exception_private.is_staff()));
+alter policy driver_image_upload on storage.objects with check(bucket_id='driver-evidence' and (select exception_private.is_driver()) and (storage.foldername(name))[1]=(select auth.uid())::text and exists(select 1 from public.driver_reports r where r.id::text=(storage.foldername(name))[2] and r.driver_id=(select auth.uid())));
+alter policy driver_image_download on storage.objects using(bucket_id='driver-evidence' and exists(select 1 from public.driver_evidence e join public.driver_reports r on r.id=e.report_id where e.storage_path=name and ((select exception_private.is_staff()) or ((select exception_private.is_driver()) and r.driver_id=(select auth.uid())))));

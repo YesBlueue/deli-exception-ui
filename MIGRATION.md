@@ -1,5 +1,7 @@
 # Phase 3 implementation inventory
 
+The 22 October 2026 driver/proactive extension is additive: five tables, private role-checked RPCs/RLS, protected driver and operations condition views, existing exception detail integration, and complaint-independent customer publications/read state. Three tracked migrations are applied to the confirmed shared demo project and generated types are synchronized. See [Driver workflow](DRIVER_WORKFLOW.md) for exact migration versions, historical assignment semantics, publication integrity, and unverified live journeys. No authoritative source-system adapter or account-role provisioning is implied.
+
 Current integration combines the backend Groq/Phase 4 continuation (`9b0369e`) with the teammate's Radix Themes UI already merged into shared `nextjs-migration` (`c37c6a8`). The integration branch is `backend/groq-phase4-integration`. Radix theme tokens/shared patterns replace the older UI presentation while preserving Supabase data paths, role gates, rule-based guidance, evidence boundaries, and staff-reviewed Groq drafting. Combined-check results are recorded in implementation status; prior UI acceptance is not automatically proof of the merged UI.
 
 ## Product boundary

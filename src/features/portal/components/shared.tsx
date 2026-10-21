@@ -68,7 +68,9 @@ export function PortalState({
     );
   return (
     <section className="mx-auto max-w-lg space-y-4 py-10">
-      <Heading as="h1" size="5">Workspace unavailable</Heading>
+      <Heading as="h1" size="5">
+        Workspace unavailable
+      </Heading>
       <Notice tone="error" role="alert">
         {error?.message ?? "No data was returned."}
       </Notice>
@@ -92,10 +94,31 @@ export function PortalNav() {
   }
   return (
     <nav aria-label="Portals" className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-      <Link href="/customer/complaint" className="text-primary hover:underline">Customer</Link>
-      <Link href="/overview" className="text-primary hover:underline">Operations</Link>
-      <Link href="/seller" className="text-primary hover:underline">Seller</Link>
-      <Button size="sm" variant="ghost" onClick={() => void signOut()}>
+      <Link
+        href="/customer/complaint"
+        className="inline-flex min-h-6 items-center text-primary hover:underline"
+      >
+        Customer
+      </Link>
+      <Link
+        href="/overview"
+        className="inline-flex min-h-6 items-center text-primary hover:underline"
+      >
+        Operations
+      </Link>
+      <Link
+        href="/seller"
+        className="inline-flex min-h-6 items-center text-primary hover:underline"
+      >
+        Seller
+      </Link>
+      <Link
+        href="/driver"
+        className="inline-flex min-h-6 items-center text-primary hover:underline"
+      >
+        Driver
+      </Link>
+      <Button size="sm" variant="ghost" className="min-h-6" onClick={() => void signOut()}>
         Sign out
       </Button>
     </nav>
@@ -105,7 +128,9 @@ export function PortalHeader({ title }: { title: string }) {
   return (
     <header className="border-b bg-card">
       <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 md:px-8">
-        <Text as="p" size="2" weight="bold">{title}</Text>
+        <Text as="p" size="2" weight="bold">
+          {title}
+        </Text>
         <PortalNav />
       </div>
     </header>

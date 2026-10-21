@@ -10,6 +10,9 @@ vi.mock("@/infrastructure/portal/use-portal", () => ({
   usePortal: () => ({ data: state.data, command, isPending: false, error: null, refetch: vi.fn() }),
   portalRequest,
 }));
+vi.mock("@/infrastructure/portal/use-driver", () => ({
+  useDriver: () => ({ data: { reports: [], evidence: [] }, error: null }),
+}));
 import { Theme } from "@radix-ui/themes";
 import { ExceptionWorkspace } from "./ExceptionWorkspace";
 // Radix Themes components (e.g. Select) need the <Theme> the root layout provides in the app.
