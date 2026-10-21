@@ -1,25 +1,38 @@
-# ResolveIQ migration inventory
+# Phase 3 implementation inventory
 
-## Current scope
-Cloud email/password accounts are real; complaint records, orders, staff actions, and carrier calls remain explicitly simulated and browser-local. Local demo sign-in is separate, user-editable simulated state, not authorization. Never reuse a real password in demo mode.
+## Product boundary
 
-## Portable business rules
-`src/core/domain/` contains framework-independent TypeScript models, carrier normalization, priority evaluation, workflow transitions, SLA evaluation, customer projections, complaint validation, and reference allocation. Functions accept records and explicit times where relevant. Move them into server-side domain modules without changing the UI contracts. Salted SHA-256 demo credentials must be discarded, never migrated as production credentials.
+One delivery company, many sellers and customers. The same Next.js app hosts all portals. This application consumes minimal source context for exception handling; it does not create deliveries, dispatch couriers, execute refunds, or expose full tracking history.
 
-## Adapters to replace
-`src/infrastructure/demo-platform/platform.ts` is the complaint/operations data boundary; `demo-store.ts` handles browser subscriptions and versioned persistence. Replace these with owner-scoped hosted queries/mutations. Replace `demo-auth.ts` with production sessions; preserve Cloud Auth or migrate identities through a supported identity migration process. Presentational UI must not access storage directly.
+## What changed
 
-## Production requirements
-- Enforce authentication and order ownership on the server with owner-only database access. Current per-identity fictional order provisioning is a demo convenience, not proof of ownership.
-- Use one database transaction to validate delivery, insert a complaint, and allocate its reference. Current same-origin Web Locks serialize browser complaint saves; older unsupported browsers refuse saves. Never rely on localStorage or Web Locks for production authorization or durability.
-- Store photos in private object storage, validate decoded content and limits server-side, and authorize downloads. Data URLs currently consume browser quota; quota failures are reported without partial counter writes.
-- Preserve public-response/private-note separation and customer projections. Store seen versions per customer; do not send audit records or internal notes to customers.
-- Replace simulated carrier messages/inquiries with authorized integrations and durable idempotency keys. Mingala datetimes use Myanmar UTC+06:30.
-- SLA defaults are configurable (2/8/24/48 hours by priority). Deadline uses original opening plus current priority; closed/ignored exceptions are excluded. Confirm this operational policy before production.
-- Apply profile migrations and verify signup triggers. Email confirmation remains required; no automatic confirmation was enabled.
+Active routes now use Supabase persistence with RLS and guarded transaction functions. Customer access uses Google OAuth with cookie-based sessions. Customers explicitly provision fictional account-owned orders for the hackathon, select an order, submit a report, and read history/status/replies. Operations has backend membership checks, a connected inbox/detail page, assignment, audited statuses, private notes, customer replies, and seller updates. Sellers see their own minimal exception projection and refund handoffs.
 
-## Framework adaptation
-The app now runs on Next.js (App Router) on the `nextjs-migration` branch. Route definitions became `src/app/**/page.tsx` with `metadata` exports; the root error component became `error.tsx`/`global-error.tsx`; server-side error logging moved to `src/instrumentation.ts`; the AI `createServerFn` became a Server Action; Supabase browser env vars are `NEXT_PUBLIC_SUPABASE_URL`/`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. The business rules were moved unchanged. Browser storage stays behind client-only adapters; server secrets stay in `server-only` modules. The AI gateway needs `LOVABLE_API_KEY` in the server environment.
+Order ownership is stored in customer_delivery_access. Source IDs, provenance, receipt/source timestamps, and ingestion results live with delivery context/events. The simulator rejects non-demo contexts, deduplicates event IDs, and records out-of-order or missing-time updates without overwriting current state.
 
-## Checks
-Run `npm test`. Exercise cloud and local sign-in separately, submit a complaint, read it in staff review, publish a public reply/private note, verify customer unread state, refresh, and check 390px screens. Reset Demo Data clears records and legacy complaint storage while retaining separately managed demo accounts.
+## Deterministic rules
+
+`reports-v1` matches documented English keywords: delay/delayed/late/overdue; damage/damaged/broken/crushed/leaking; missing item/item missing/incomplete; wrong/incorrect/different item; not received/never arrived/package missing/parcel missing/not delivered. No single matching issue, or multiple issues, enters OTHER/manual review. Refund/reimburse/reimbursement is a separate intent. Refund intent creates one seller handoff without copying customer conversations or approving a payment.
+
+Damage/missing-item/wrong-item reports require DELIVERED source context. Delays can be reported before delivery. Cancelled orders require staff assistance. Missing or >48-hour-old source timestamps and delay/delivered conflicts are marked for review. These are hackathon policy defaults, not externally confirmed operational policies.
+
+`guidance-v1` checks missing/stale/future/ambiguous/unsupported context first, then refund handoff, then delivered-but-not-received confirmation when details exist, then delay/evidence review. Suggestions and summaries are pure functions. Staff must explicitly execute a permitted action. SLA defaults remain critical/high/medium/low = 2/8/24/48 hours from opening; resolved cases are excluded.
+
+Gemini only drafts apologies using minimal report text/category/status. Credentials stay server-side, drafts are saved separately from published replies, and staff must review/edit and explicitly publish. Gemini never influences rules, suggestions, routing, priority, or transitions.
+
+## Migration artifacts
+
+- `supabase/bootstrap.sql`: pre-existing schema snapshot for empty projects only.
+- `supabase/migrations/`: applied schema, access-policy, and transaction changes, including verification-driven corrections.
+- `src/infrastructure/supabase/types.ts`: generated from the configured project.
+- `supabase/tests/portal_workflows.sql`: rollback-only role/ownership/workflow/ingestion assertions.
+- `supabase/tests/evidence_access.sql`: rollback-only evidence policy assertions.
+- `scripts/verify-portals.mjs`: explicit authenticated UI fixtures plus real unauthenticated API check.
+
+Historical Drizzle migrations and legacy browser-demo modules are not the active data path. No existing business records were migrated; the connected project's business tables were empty before implementation. Only labeled demo seller fixtures are persistently seeded by this work; verification users/reports are rolled back.
+
+## Remaining external setup and verification
+
+Google is enabled in the connected project's Auth settings. Real consent/callback/login remains a manual account interaction; verify the deployed redirect allowlist and Google consent configuration. Staff/seller memberships require confirmed user UUIDs. Supply GEMINI_API_KEY and GEMINI_MODEL for live drafting. Actual source-system transport, identity mapping, retention policies, SLA policy, and seller acknowledgment requirements remain unconfirmed.
+
+The browser fixture checks do not verify real Google sessions or live Gemini. Source-system simulation is not a production integration. Phase 4 remains separate; do not represent it as completed.

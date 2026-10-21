@@ -1,16 +1,19 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import type { ReactNode } from "react";
 
 import "@/styles/globals.css";
 import { Providers } from "./providers";
 
-const plexSans = IBM_Plex_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-plex-sans", display: "swap" });
-const plexMono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-plex-mono", display: "swap" });
+import "@fontsource/ibm-plex-sans/latin-400.css";
+import "@fontsource/ibm-plex-sans/latin-500.css";
+import "@fontsource/ibm-plex-sans/latin-600.css";
+import "@fontsource/ibm-plex-sans/latin-700.css";
+import "@fontsource/ibm-plex-mono/latin-400.css";
+import "@fontsource/ibm-plex-mono/latin-500.css";
 
 export const metadata: Metadata = {
   title: "Delivery Exception Ops",
-  description: "Multi-carrier delivery exception operations workspace (prototype).",
+  description: "One delivery company. Exception handling, customer reports, and seller updates.",
   openGraph: { type: "website" },
   twitter: { card: "summary_large_image" },
   icons: { icon: { url: "/favicon.ico", type: "image/x-icon" } },
@@ -18,7 +21,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={`${plexSans.variable} ${plexMono.variable}`}>
+    <html lang="en">
       <body>
         <Providers>{children}</Providers>
       </body>

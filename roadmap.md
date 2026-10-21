@@ -1,23 +1,10 @@
 # Delivery exception platform
 
-- [x] Add typed customer access, complaint services, mock data and rule tests.
-- [x] Build dedicated customer support portal and post-delivery complaints.
-- [x] Add operations complaint review, activity history and customer portal entry points.
-- [x] Remove fake sign-in and polish navigation across desktop/mobile.
-- [x] Verify customer-to-staff flows, existing tests and page metadata.
-- [x] Add standalone no-login customer complaint app at /customer/complaint.
-- [x] Remove customer address change requests and package tracking; customer experience is complaints-only.
-- [x] Replace manual incident date/time with an automatic submission timestamp and verify the confirmation.
-- [x] Show the report timestamp as 12-hour AM/PM with no timezone suffix.
-- [x] Add customer account forms and managed phone/password integration before standalone order reporting, with owner-only saved profiles.
-- [x] Retire disabled phone login in favor of requested email/password cloud accounts.
-- [x] Remove the failing account-settings preflight and verify account request handling (real registration now returns the disabled-phone-provider response).
-- [x] Show Log In first with Sign Up below; test session-bearing signup/login and sessionless phone-verification outcomes leading to reporting. Live signed-in verification remains blocked below.
-- [x] Add isolated salted-hash demo accounts, persistent sessions and explicit cloud-error fallback.
-- [x] Unify persistent complaint records, ownership gates, photos, references, history and unread support updates.
-- [x] Complete staff complaint filters, evidence and separate public/private composers.
-- [x] Harden SSR-safe persistence, confirmed reset, operations rules and migration documentation.
-- [x] Run 74 tests and verify simulated customer/staff flows, saved image evidence, reload persistence, unread clearing, reset and 390px layout.
-- [x] Add admin reply composer: templates, AI drafts (staff-reviewed), send to customer with unread alerts.
-- [ ] Verify live Cloud signup/login end to end — blocked: no existing account/session; reserved test email rejected. A real customer must confirm their email before live verification.
-- [x] Migrate from TanStack Start to Next.js App Router with feature/domain/infrastructure layers; business rules unchanged.
+- [x] Phase 1: repository assessment.
+- [x] Phase 2: confirmed one-company exception scope and architecture.
+- [x] Phase 3: connected Next.js customer, operations, and seller portals; Google OAuth path; shared Supabase demo data; rule-based categorization/routing/guidance; staff-reviewed Gemini apology integration.
+- [x] Local domain, component, API, database transaction/RLS, production build, and fixture-based browser checks.
+- [ ] Real user Google consent/callback verification with confirmed staff and seller memberships.
+- [ ] Live Gemini verification after server credentials/model are supplied.
+- [ ] Phase 4: final security, integration, and end-to-end acceptance verification.
+- [ ] Future source-system integration after its interface and ownership mapping are confirmed.
