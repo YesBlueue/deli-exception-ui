@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { Text } from "@radix-ui/themes";
 import { ArrowRight, ChevronRight, Inbox, MessageSquare } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { usePortal } from "@/infrastructure/portal/use-portal";
 import { ATTEMPT_CATEGORIES } from "@/core/domain/driver-rules";
@@ -35,16 +36,22 @@ import {
   friendly,
   time,
 } from "./shared";
+/** Priority filter value covering both HIGH and CRITICAL. */
+const URGENT = "HIGH_OR_CRITICAL";
+/** The summary tiles, each a preset of the inbox filters (also accepted as `?focus=`). */
+type Focus = "open" | "urgent" | "breached" | "unassigned";
 export function OperationsWorkspace({ view }: { view: "overview" | "inbox" | "reports" }) {
   const q = usePortal();
   const s = q.data;
+  const initialFocus = useSearchParams().get("focus");
   const [query, setQuery] = useState("");
-  const [priority, setPriority] = useState("");
+  const [priority, setPriority] = useState(initialFocus === "urgent" ? URGENT : "");
   const [seller, setSeller] = useState("");
   const [status, setStatus] = useState("open");
   const [category, setCategory] = useState("");
-  const [assignee, setAssignee] = useState("");
+  const [assignee, setAssignee] = useState(initialFocus === "unassigned" ? "unassigned" : "");
   const [age, setAge] = useState("");
+  const [sla, setSla] = useState(initialFocus === "breached" ? "breached" : "");
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 30000);
@@ -69,7 +76,10 @@ export function OperationsWorkspace({ view }: { view: "overview" | "inbox" | "re
       return (
         o &&
         (status !== "open" || e.status !== "RESOLVED") &&
-        (!priority || e.priority === priority) &&
+        (priority === URGENT
+          ? ["HIGH", "CRITICAL"].includes(e.priority)
+          : !priority || e.priority === priority) &&
+        (!sla || exceptionSla(e, now).breached === (sla === "breached")) &&
         (!seller || o.seller_id === seller) &&
         (!category || e.exception_type === category) &&
         (!assignee ||
@@ -85,6 +95,21 @@ export function OperationsWorkspace({ view }: { view: "overview" | "inbox" | "re
         (rank[a.priority] ?? 4) - (rank[b.priority] ?? 4) ||
         a.detected_at.localeCompare(b.detected_at),
     );
+  // Each tile applies its preset (keeping the search text); "Open exceptions" clears the rest.
+  function showFocus(target: Focus) {
+    setStatus("open");
+    setSeller("");
+    setCategory("");
+    setAge("");
+    setPriority(target === "urgent" ? URGENT : "");
+    setSla(target === "breached" ? "breached" : "");
+    setAssignee(target === "unassigned" ? "unassigned" : "");
+  }
+  // The reports page has no exception list, so its tiles open the inbox with the preset.
+  const tile = (f: Focus) =>
+    view === "reports"
+      ? { href: f === "open" ? "/dashboard" : `/dashboard?focus=${f}` }
+      : { onClick: () => showFocus(f) };
   const activeStaff = s.staff.filter(
     (person) => person.is_active && ["ADMIN", "OPERATIONS"].includes(person.role),
   );
@@ -109,18 +134,24 @@ export function OperationsWorkspace({ view }: { view: "overview" | "inbox" | "re
         }
       />
       <StatGrid label="Summary">
-        <StatTile label="Open exceptions" value={open.length} tone="accent" />
+        <StatTile label="Open exceptions" value={open.length} tone="accent" {...tile("open")} />
         <StatTile
           label="High / critical"
           value={open.filter((e) => ["HIGH", "CRITICAL"].includes(e.priority)).length}
           tone="critical"
+          {...tile("urgent")}
         />
         <StatTile
           label="SLA breaches"
           value={open.filter((e) => exceptionSla(e, now).breached).length}
           tone="critical"
+          {...tile("breached")}
         />
-        <StatTile label="Unassigned" value={open.filter((e) => !e.assignee_user_id).length} />
+        <StatTile
+          label="Unassigned"
+          value={open.filter((e) => !e.assignee_user_id).length}
+          {...tile("unassigned")}
+        />
       </StatGrid>
       {view === "reports" ? (
         <PatternPanel title="Reports awaiting review" flush>
@@ -187,10 +218,13 @@ export function OperationsWorkspace({ view }: { view: "overview" | "inbox" | "re
                   value={priority}
                   onValueChange={setPriority}
                   emptyLabel="All priorities"
-                  options={["CRITICAL", "HIGH", "MEDIUM", "LOW"].map((v) => ({
-                    value: v,
-                    label: friendly(v),
-                  }))}
+                  options={[
+                    { value: URGENT, label: "High and critical" },
+                    ...["CRITICAL", "HIGH", "MEDIUM", "LOW"].map((v) => ({
+                      value: v,
+                      label: friendly(v),
+                    })),
+                  ]}
                 />
                 <OptionSelect
                   label="Seller"
@@ -228,6 +262,16 @@ export function OperationsWorkspace({ view }: { view: "overview" | "inbox" | "re
                       value: person.user_id,
                       label: person.full_name,
                     })),
+                  ]}
+                />
+                <OptionSelect
+                  label="SLA"
+                  value={sla}
+                  onValueChange={setSla}
+                  emptyLabel="Any SLA state"
+                  options={[
+                    { value: "breached", label: "Breached" },
+                    { value: "within", label: "Within SLA" },
                   ]}
                 />
                 <OptionSelect

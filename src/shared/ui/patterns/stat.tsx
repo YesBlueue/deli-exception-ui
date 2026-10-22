@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Card, Text } from "@radix-ui/themes";
 import type { ReactNode } from "react";
 
@@ -19,19 +20,64 @@ const TONE_CLASS: Record<StatTone, string> = {
 
 /** Row of headline numbers: two columns on phones, four from `lg`. */
 export function StatGrid({ label, children }: { label: string; children: ReactNode }) {
-  return <section aria-label={label} className="grid grid-cols-2 gap-3 lg:grid-cols-4">{children}</section>;
+  return (
+    <section aria-label={label} className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      {children}
+    </section>
+  );
 }
 
-/** One headline number. `value={null}` renders a loading placeholder. */
-export function StatTile({ label, value, tone = "neutral" }: { label: ReactNode; value: ReactNode | null; tone?: StatTone }) {
-  return (
-    <Card size="2">
-      <Text as="p" size="2" color="gray">{label}</Text>
+/**
+ * One headline number. `value={null}` renders a loading placeholder.
+ * Pass `onClick` to make it a button (e.g. apply a filter), or `href` to make it a link.
+ */
+export function StatTile({
+  label,
+  value,
+  tone = "neutral",
+  onClick,
+  href,
+}: {
+  label: ReactNode;
+  value: ReactNode | null;
+  tone?: StatTone;
+  onClick?: () => void;
+  href?: string;
+}) {
+  const body = (
+    <>
+      <Text as="span" size="2" color="gray" className="block">
+        {label}
+      </Text>
       {value === null ? (
         <Skeleton className="mt-2 h-8 w-14" />
       ) : (
-        <Text as="p" size="7" weight="bold" mt="1" className={cn("tabular-nums", TONE_CLASS[tone])}>{value}</Text>
+        <Text
+          as="span"
+          size="7"
+          weight="bold"
+          mt="1"
+          className={cn("block tabular-nums", TONE_CLASS[tone])}
+        >
+          {value}
+        </Text>
       )}
-    </Card>
+    </>
   );
+  const interactive = "w-full text-left";
+  if (href)
+    return (
+      <Card size="2" asChild className={interactive}>
+        <Link href={href}>{body}</Link>
+      </Card>
+    );
+  if (onClick)
+    return (
+      <Card size="2" asChild className={interactive}>
+        <button type="button" onClick={onClick}>
+          {body}
+        </button>
+      </Card>
+    );
+  return <Card size="2">{body}</Card>;
 }
