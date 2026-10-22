@@ -37,6 +37,8 @@ export function DeliveryUpdates({
       setBusy(false);
     }
   }
+  // Until an update is published there is nothing to act on, so keep the order task first.
+  if (!q.error && !error && !q.data?.length) return null;
   return (
     <Panel title="Delivery updates">
       {(q.error || error) && (
@@ -56,11 +58,13 @@ export function DeliveryUpdates({
             time: time(u.published_at),
             body: (
               <div className="space-y-3">
-                <Text as="p" size="2" weight="medium">
-                  {orders.find((o) => o.id === u.delivery_id)?.seller_order_reference ??
-                    "Authorized order"}{" "}
-                  {!u.read_at && <Tag>New update</Tag>}
-                </Text>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Text as="p" size="3" weight="bold" className="font-mono">
+                    {orders.find((o) => o.id === u.delivery_id)?.seller_order_reference ??
+                      "Authorized order"}
+                  </Text>
+                  {!u.read_at && <Tag tone="info">New update</Tag>}
+                </div>
                 <Text as="p" size="2" className="whitespace-pre-wrap break-words">
                   {u.body}
                 </Text>

@@ -1,32 +1,40 @@
 "use client";
 import Link from "next/link";
 import { Text } from "@radix-ui/themes";
-import { Inbox, MessageSquare } from "lucide-react";
+import { ArrowRight, ChevronRight, Inbox, MessageSquare } from "lucide-react";
 import { useEffect, useState } from "react";
 import { usePortal } from "@/infrastructure/portal/use-portal";
 import { ATTEMPT_CATEGORIES } from "@/core/domain/driver-rules";
-import {
-  CATEGORY_LABELS,
-  exceptionSla,
-  exceptionSummary,
-  nextAction,
-} from "@/core/domain/exception-rules";
+import { CATEGORY_LABELS, exceptionSla, nextAction } from "@/core/domain/exception-rules";
 import { Button } from "@/shared/ui/button";
 import {
   EmptyState,
   FilterBar,
   LinkList,
   LinkRow,
+  MetaLine,
   OptionSelect,
   PageHeader,
   Panel as PatternPanel,
+  RecordSummary,
   SearchField,
   StatGrid,
   StatList,
   StatTile,
   Timeline,
 } from "@/shared/ui/patterns";
-import { Panel, PortalState, Tag, friendly, time } from "./shared";
+import {
+  DueLabel,
+  Panel,
+  PortalState,
+  PriorityBadge,
+  ProvenanceBadge,
+  StatusBadge,
+  Tag,
+  categoryLabel,
+  friendly,
+  time,
+} from "./shared";
 export function OperationsWorkspace({ view }: { view: "overview" | "inbox" | "reports" }) {
   const q = usePortal();
   const s = q.data;
@@ -93,9 +101,11 @@ export function OperationsWorkspace({ view }: { view: "overview" | "inbox" | "re
         }
         description="Investigate exceptions using received delivery context and customer reports."
         actions={
-          <Button asChild variant="outline">
-            <Link href="/dashboard">Open exception inbox</Link>
-          </Button>
+          view !== "inbox" && (
+            <Button asChild variant="outline">
+              <Link href="/dashboard">Open exception inbox</Link>
+            </Button>
+          )
         }
       />
       <StatGrid label="Summary">
@@ -121,30 +131,36 @@ export function OperationsWorkspace({ view }: { view: "overview" | "inbox" | "re
               {s.reports
                 .sort((a, b) => b.submitted_at.localeCompare(a.submitted_at))
                 .map((r) => (
-                  <li
-                    key={r.id}
-                    className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
-                  >
-                    <div className="min-w-0 space-y-1">
-                      <Text as="p" size="2" weight="bold" className="font-mono">
-                        {r.complaint_reference}
-                      </Text>
-                      <Text as="p" size="2">
-                        {CATEGORY_LABELS[r.category as keyof typeof CATEGORY_LABELS] ?? r.category}{" "}
-                        · {friendly(r.status)}
-                      </Text>
-                      <Text as="p" size="1" color="gray">
-                        {r.needs_review
-                          ? "Manual classification review required"
-                          : r.category_reason}
-                        {r.refund_requested ? " · seller refund handoff" : ""}
-                      </Text>
-                    </div>
-                    {r.exception_id && (
-                      <Button asChild size="sm" variant="outline">
-                        <Link href={`/exceptions/${r.exception_id}`}>Review exception</Link>
-                      </Button>
-                    )}
+                  <li key={r.id} className="px-4 py-3">
+                    <RecordSummary
+                      title={categoryLabel(r.category)}
+                      badges={
+                        <>
+                          <StatusBadge status={r.status} />
+                          {r.needs_review && <Tag tone="medium">Needs review</Tag>}
+                          {r.refund_requested && <Tag tone="info">Seller refund handoff</Tag>}
+                        </>
+                      }
+                      meta={[
+                        <span key="ref" className="font-mono text-foreground">
+                          {r.complaint_reference}
+                        </span>,
+                        `Submitted ${time(r.submitted_at)}`,
+                      ]}
+                      trailing={
+                        r.exception_id && (
+                          <Button asChild size="sm" variant="outline">
+                            <Link href={`/exceptions/${r.exception_id}`}>Review exception</Link>
+                          </Button>
+                        )
+                      }
+                    >
+                      {!r.needs_review && (
+                        <Text as="p" size="1" color="gray">
+                          {r.category_reason}
+                        </Text>
+                      )}
+                    </RecordSummary>
                   </li>
                 ))}
             </ul>
@@ -173,7 +189,7 @@ export function OperationsWorkspace({ view }: { view: "overview" | "inbox" | "re
                   emptyLabel="All priorities"
                   options={["CRITICAL", "HIGH", "MEDIUM", "LOW"].map((v) => ({
                     value: v,
-                    label: v,
+                    label: friendly(v),
                   }))}
                 />
                 <OptionSelect
@@ -262,42 +278,50 @@ export function OperationsWorkspace({ view }: { view: "overview" | "inbox" | "re
                   );
                   return (
                     <LinkRow key={e.id} href={`/exceptions/${e.id}`}>
-                      <div className="min-w-0 flex-1 space-y-1.5">
-                        <div className="flex flex-wrap gap-2">
-                          <Tag tone={e.priority.toLowerCase() as "high"}>{e.priority}</Tag>
-                          <Tag>{friendly(e.status)}</Tag>
-                          <Tag>{o.provenance}</Tag>
-                        </div>
-                        <Text as="p" size="2" weight="medium">
-                          {exceptionSummary(
-                            o.seller_order_reference,
-                            sellerName,
-                            e.exception_type,
-                            o.status,
-                          )}
-                        </Text>
+                      <RecordSummary
+                        lead={<PriorityBadge priority={e.priority} />}
+                        title={categoryLabel(e.exception_type)}
+                        badges={
+                          <>
+                            <StatusBadge status={e.status} />
+                            {o.provenance === "DEMO" && (
+                              <ProvenanceBadge provenance={o.provenance} />
+                            )}
+                          </>
+                        }
+                        meta={[
+                          <span key="order" className="font-mono text-foreground">
+                            {o.seller_order_reference ?? "No order reference"}
+                          </span>,
+                          sellerName,
+                          `Source: ${friendly(o.status)}`,
+                        ]}
+                        trailing={
+                          <span className="flex items-center gap-2">
+                            <DueLabel sla={sla} />
+                            <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
+                          </span>
+                        }
+                      >
                         {e.status !== "RESOLVED" && (
                           <Text
                             as="p"
-                            size="1"
-                            className="text-primary"
+                            size="2"
+                            className="flex items-start gap-1.5 text-primary"
                             title={`${guidance.rule}: ${guidance.reason}`}
                           >
+                            <ArrowRight className="mt-1 size-3.5 shrink-0" aria-hidden />
                             {guidance.action}
                           </Text>
                         )}
-                        <Text as="p" size="1" color="gray">
-                          Opened {time(e.detected_at)} ·{" "}
-                          {s.staff.find((v) => v.user_id === e.assignee_user_id)?.full_name ??
-                            "Unassigned"}
-                        </Text>
-                      </div>
-                      <Text
-                        size="2"
-                        className={`tabular-nums ${sla.breached ? "text-critical" : "text-muted-foreground"}`}
-                      >
-                        {sla.label} →
-                      </Text>
+                        <MetaLine
+                          items={[
+                            `Opened ${time(e.detected_at)}`,
+                            s.staff.find((v) => v.user_id === e.assignee_user_id)?.full_name ??
+                              "Unassigned",
+                          ]}
+                        />
+                      </RecordSummary>
                     </LinkRow>
                   );
                 })}

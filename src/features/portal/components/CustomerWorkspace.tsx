@@ -5,11 +5,30 @@ import { CATEGORY_LABELS, classifyReport } from "@/core/domain/exception-rules";
 import { Heading, Text } from "@radix-ui/themes";
 import { PackageSearch } from "lucide-react";
 import { Button } from "@/shared/ui/button";
-import { BrandMark, EmptyState, Field, Notice, SiteShell } from "@/shared/ui/patterns";
+import {
+  BrandMark,
+  EmptyState,
+  Field,
+  MetaLine,
+  Notice,
+  RecordSummary,
+  SiteShell,
+} from "@/shared/ui/patterns";
 import { Textarea } from "@/shared/ui/textarea";
 import { cn } from "@/shared/utils";
 import { DeliveryUpdates } from "./DeliveryUpdates";
-import { DEMO_BANNER_TEXT, Panel, PortalNav, PortalState, Tag, friendly, time } from "./shared";
+import {
+  DEMO_BANNER_TEXT,
+  Panel,
+  PortalNav,
+  PortalState,
+  ProvenanceBadge,
+  Quote,
+  StatusBadge,
+  Tag,
+  categoryLabel,
+  time,
+} from "./shared";
 export function CustomerWorkspace() {
   const q = usePortal();
   const [selected, setSelected] = useState("");
@@ -146,15 +165,15 @@ export function CustomerWorkspace() {
                         selected === o.id ? "border-primary bg-accent" : "bg-card hover:bg-muted",
                       )}
                     >
-                      <span className="block font-mono text-sm font-semibold">
+                      <Text as="span" size="3" weight="bold" className="block font-mono">
                         {o.seller_order_reference}
-                      </span>
-                      <span className="block text-sm">
+                      </Text>
+                      <Text as="span" size="2" color="gray" className="block">
                         {s.sellers.find((seller) => seller.id === o.seller_id)?.name}
-                      </span>
+                      </Text>
                       <span className="flex flex-wrap gap-2">
-                        <Tag>{friendly(o.status)}</Tag>
-                        <Tag>{o.provenance}</Tag>
+                        <StatusBadge status={o.status} />
+                        {o.provenance === "DEMO" && <ProvenanceBadge provenance={o.provenance} />}
                       </span>
                     </button>
                   ))}
@@ -183,12 +202,12 @@ export function CustomerWorkspace() {
                     />
                   </Field>
                   {description.length >= 10 && (
-                    <p className="text-xs text-muted-foreground">
+                    <Text as="p" size="1" color="gray">
                       Rule preview: {CATEGORY_LABELS[preview.category]}
                       {preview.needsReview ? " · staff review required" : ""}
                       {preview.refund ? " · refund information will also go to the seller" : ""}.
                       Eligibility and categorization are validated when you submit.
-                    </p>
+                    </Text>
                   )}
                   <Field
                     label="Supporting photos (optional)"
@@ -232,29 +251,38 @@ export function CustomerWorkspace() {
                     ...history.filter((entry) => entry.status !== "NEW"),
                   ].some((x) => x.created_at > seen);
                   return (
-                    <article key={r.id} className="space-y-3 py-4">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Text size="2" weight="bold" className="font-mono">
-                          {r.complaint_reference}
-                        </Text>
-                        <Tag>{friendly(r.status)}</Tag>
-                        {unread && <Tag tone="default">New update</Tag>}
-                      </div>
-                      <p className="text-sm">
-                        {orders.find((o) => o.id === r.delivery_job_id)?.seller_order_reference} ·{" "}
-                        {CATEGORY_LABELS[r.category as keyof typeof CATEGORY_LABELS] ?? r.category}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Submitted {time(r.submitted_at)}
-                      </p>
-                      <Button size="sm" variant="outline" onClick={() => void view(r.id)}>
-                        {open === r.id ? "Hide report" : "View report and replies"}
-                      </Button>
+                    <article key={r.id} className="space-y-4 py-4 first:pt-0 last:pb-0">
+                      <RecordSummary
+                        title={categoryLabel(r.category)}
+                        badges={
+                          <>
+                            <StatusBadge status={r.status} />
+                            {unread && <Tag tone="info">New update</Tag>}
+                          </>
+                        }
+                        meta={[
+                          <span key="order" className="font-mono text-foreground">
+                            {orders.find((o) => o.id === r.delivery_job_id)?.seller_order_reference}
+                          </span>,
+                          <span key="ref" className="font-mono">
+                            {r.complaint_reference}
+                          </span>,
+                          `Submitted ${time(r.submitted_at)}`,
+                        ]}
+                        trailing={
+                          <Button size="sm" variant="outline" onClick={() => void view(r.id)}>
+                            {open === r.id ? "Hide report" : "View report and replies"}
+                          </Button>
+                        }
+                      />
                       {open === r.id && (
-                        <div className="space-y-4 border-l-2 border-primary pl-4">
-                          <p className="whitespace-pre-wrap break-words text-sm">
-                            {r.customer_description}
-                          </p>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Text as="p" size="1" color="gray">
+                              You wrote
+                            </Text>
+                            <Quote>{r.customer_description}</Quote>
+                          </div>
                           <div className="flex flex-wrap gap-3">
                             {s.attachments
                               .filter((a) => a.complaint_id === r.id)
@@ -272,24 +300,38 @@ export function CustomerWorkspace() {
                           </div>
                           {replies.map((reply) => (
                             <div key={reply.id} className="space-y-2 rounded-md bg-accent p-3">
-                              <p className="text-xs text-muted-foreground">
-                                Operations reply · {time(reply.created_at)}
-                              </p>
-                              <p className="whitespace-pre-wrap break-words text-sm">
+                              <MetaLine
+                                items={[
+                                  <Text key="from" weight="bold" className="text-primary">
+                                    Reply from operations
+                                  </Text>,
+                                  time(reply.created_at),
+                                ]}
+                              />
+                              <Text as="p" size="2" className="whitespace-pre-wrap break-words">
                                 {reply.body}
-                              </p>
+                              </Text>
                             </div>
                           ))}
                           {!replies.length && (
-                            <p className="text-sm text-muted-foreground">Awaiting a staff reply.</p>
+                            <Text as="p" size="2" color="gray">
+                              Awaiting a staff reply.
+                            </Text>
                           )}
-                          <ol className="space-y-2">
-                            {history.map((h) => (
-                              <li key={h.id} className="text-xs text-muted-foreground">
-                                {time(h.created_at)} · {h.description}
-                              </li>
-                            ))}
-                          </ol>
+                          {history.length > 0 && (
+                            <div className="space-y-1">
+                              <Text as="p" size="1" weight="medium" color="gray">
+                                Status history
+                              </Text>
+                              <ol className="space-y-1">
+                                {history.map((h) => (
+                                  <li key={h.id}>
+                                    <MetaLine items={[time(h.created_at), h.description]} />
+                                  </li>
+                                ))}
+                              </ol>
+                            </div>
+                          )}
                         </div>
                       )}
                     </article>

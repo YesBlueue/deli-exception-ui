@@ -4,8 +4,8 @@ import { Text } from "@radix-ui/themes";
 import { useDriver } from "@/infrastructure/portal/use-driver";
 import { Button } from "@/shared/ui/button";
 import { Textarea } from "@/shared/ui/textarea";
-import { Field, Notice } from "@/shared/ui/patterns";
-import { Panel, Tag, time } from "./shared";
+import { Field, MetaLine, Notice } from "@/shared/ui/patterns";
+import { Panel, Quote, StatusBadge, categoryLabel, time } from "./shared";
 export function DriverReportContext({ exceptionId }: { exceptionId: string }) {
   const q = useDriver();
   const [reason, setReason] = useState("");
@@ -21,14 +21,23 @@ export function DriverReportContext({ exceptionId }: { exceptionId: string }) {
   return (
     <>
       {reports.map((r) => (
-        <Panel key={r.id} title="Driver-reported attempt exception">
-          <Tag>{r.state}</Tag>
-          <Text as="p" size="1" color="gray">
-            Driver {r.driver_id} · Occurred {time(r.occurred_at)} · Received {time(r.received_at)}
-          </Text>
-          <Text as="p" size="2" className="whitespace-pre-wrap break-words">
-            {r.details}
-          </Text>
+        <Panel key={r.id} title={`Driver report · ${categoryLabel(r.category)}`}>
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <StatusBadge status={r.state} />
+              <MetaLine
+                items={[`Occurred ${time(r.occurred_at)}`, `Received ${time(r.received_at)}`]}
+              />
+            </div>
+            <Quote>{r.details}</Quote>
+            <MetaLine
+              items={[
+                <span key="driver" className="font-mono">
+                  Driver {r.driver_id}
+                </span>,
+              ]}
+            />
+          </div>
           {q.data?.evidence
             .filter((e) => e.report_id === r.id)
             .map((e) => (

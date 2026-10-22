@@ -13,6 +13,7 @@ import {
   BrandMark,
   Field,
   Notice,
+  MetaLine,
   OptionSelect,
   PageHeader,
   SiteShell,
@@ -20,7 +21,17 @@ import {
   StatTile,
   Timeline,
 } from "@/shared/ui/patterns";
-import { DEMO_BANNER_TEXT, Panel, PortalNav, PortalState, Tag, friendly, time } from "./shared";
+import {
+  DEMO_BANNER_TEXT,
+  Panel,
+  PortalNav,
+  PortalState,
+  ProvenanceBadge,
+  Quote,
+  StatusBadge,
+  categoryLabel,
+  time,
+} from "./shared";
 const localTime = (date: Date) =>
   new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 export function DriverWorkspace() {
@@ -241,9 +252,12 @@ export function DriverWorkspace() {
               items={s.assignments.map((a) => ({
                 key: a.id,
                 body: (
-                  <>
-                    {a.order_reference} <Tag>{a.provenance}</Tag>
-                  </>
+                  <span className="flex flex-wrap items-center gap-2">
+                    <Text weight="bold" className="font-mono">
+                      {a.order_reference}
+                    </Text>
+                    {a.provenance === "DEMO" && <ProvenanceBadge provenance={a.provenance} />}
+                  </span>
                 ),
                 time: (
                   <>
@@ -254,14 +268,23 @@ export function DriverWorkspace() {
             />
           </Panel>
           {s.reports.map((r) => (
-            <Panel key={r.id} title={`${friendly(r.category)} · ${r.id}`}>
-              <Tag>{friendly(r.state)}</Tag>
-              <Text as="p" size="1" color="gray">
-                Occurred {time(r.occurred_at)} · Received {time(r.received_at)} · Driver reported
-              </Text>
-              <Text as="p" size="2" className="whitespace-pre-wrap break-words">
-                {r.details}
-              </Text>
+            <Panel key={r.id} title={categoryLabel(r.category)}>
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <StatusBadge status={r.state} />
+                  <MetaLine
+                    items={[`Occurred ${time(r.occurred_at)}`, `Received ${time(r.received_at)}`]}
+                  />
+                </div>
+                <Quote>{r.details}</Quote>
+                <MetaLine
+                  items={[
+                    <span key="id" className="font-mono">
+                      {r.id}
+                    </span>,
+                  ]}
+                />
+              </div>
               {r.correction_reason && (
                 <Notice tone="warning" role="status">
                   Correction requested: {r.correction_reason}

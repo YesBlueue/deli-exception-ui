@@ -2,8 +2,24 @@
 import { Heading, Text } from "@radix-ui/themes";
 import { Inbox, Store } from "lucide-react";
 import { usePortal } from "@/infrastructure/portal/use-portal";
-import { BrandMark, EmptyState, PageHeader, SiteShell } from "@/shared/ui/patterns";
-import { DEMO_BANNER_TEXT, Panel, PortalNav, PortalState, Tag, friendly, time } from "./shared";
+import {
+  BrandMark,
+  EmptyState,
+  MetaLine,
+  PageHeader,
+  RecordSummary,
+  SiteShell,
+} from "@/shared/ui/patterns";
+import {
+  DEMO_BANNER_TEXT,
+  Panel,
+  PortalNav,
+  PortalState,
+  ProvenanceBadge,
+  StatusBadge,
+  categoryLabel,
+  time,
+} from "./shared";
 export function SellerWorkspace() {
   const q = usePortal();
   const s = q.data;
@@ -35,16 +51,24 @@ export function SellerWorkspace() {
               ) : (
                 <div className="divide-y">
                   {s.sellerExceptions.map((e) => (
-                    <article key={e.id} className="space-y-2 py-3 first:pt-0 last:pb-0">
-                      <Text as="p" size="2" weight="bold" className="font-mono">
-                        {e.order_reference}
-                      </Text>
-                      <Text as="p" size="2">{friendly(e.exception_type)}</Text>
-                      <div className="flex gap-2">
-                        <Tag>{friendly(e.status)}</Tag>
-                        <Tag>{e.provenance}</Tag>
-                      </div>
-                      <Text as="p" size="1" color="gray">Opened {time(e.detected_at)}</Text>
+                    <article key={e.id} className="py-3 first:pt-0 last:pb-0">
+                      <RecordSummary
+                        title={categoryLabel(e.exception_type)}
+                        badges={
+                          <>
+                            <StatusBadge status={e.status} />
+                            {e.provenance === "DEMO" && (
+                              <ProvenanceBadge provenance={e.provenance} />
+                            )}
+                          </>
+                        }
+                        meta={[
+                          <span key="order" className="font-mono text-foreground">
+                            {e.order_reference}
+                          </span>,
+                          `Opened ${time(e.detected_at)}`,
+                        ]}
+                      />
                     </article>
                   ))}
                 </div>
@@ -57,11 +81,20 @@ export function SellerWorkspace() {
                   .sort((a, b) => b.created_at.localeCompare(a.created_at))
                   .map((u) => (
                     <article key={u.id} className="space-y-1 py-3 first:pt-0">
-                      <Heading as="h3" size="2">{u.title}</Heading>
-                      <Text as="p" size="1" color="gray">
-                        {s.orders.find((o) => o.id === u.delivery_job_id)?.seller_order_reference} ·{" "}
-                        {time(u.created_at)}
-                      </Text>
+                      <Heading as="h3" size="3">
+                        {u.title}
+                      </Heading>
+                      <MetaLine
+                        items={[
+                          <span key="order" className="font-mono">
+                            {
+                              s.orders.find((o) => o.id === u.delivery_job_id)
+                                ?.seller_order_reference
+                            }
+                          </span>,
+                          time(u.created_at),
+                        ]}
+                      />
                       <Text as="p" size="2" className="whitespace-pre-wrap break-words">
                         {u.body}
                       </Text>

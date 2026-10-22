@@ -17,7 +17,16 @@ import {
   StatGrid,
   StatTile,
 } from "@/shared/ui/patterns";
-import { Panel, PortalState, Tag, friendly, time } from "./shared";
+import {
+  Panel,
+  PortalState,
+  ProvenanceBadge,
+  Quote,
+  StatusBadge,
+  categoryLabel,
+  friendly,
+  time,
+} from "./shared";
 export function ConditionsWorkspace() {
   const q = useDriver();
   const s = q.data;
@@ -99,7 +108,7 @@ export function ConditionsWorkspace() {
                 }}
                 options={conditions.map((r) => ({
                   value: r.id,
-                  label: `${s.drivers.find((d) => d.id === r.driver_id)?.name ?? r.driver_id.slice(0, 8)} · ${friendly(r.category)} · ${time(r.occurred_at)} · ${r.id.slice(0, 8)}`,
+                  label: `${categoryLabel(r.category)} · ${s.drivers.find((d) => d.id === r.driver_id)?.name ?? r.driver_id.slice(0, 8)} · ${time(r.occurred_at)}`,
                 }))}
               />
             </Field>
@@ -112,13 +121,11 @@ export function ConditionsWorkspace() {
                 { label: "Source", value: "Driver reported" },
                 { label: "Occurred", value: time(report.occurred_at) },
                 { label: "Received", value: time(report.received_at) },
-                { label: "State", value: <Tag>{friendly(report.state)}</Tag> },
+                { label: "State", value: <StatusBadge status={report.state} /> },
                 { label: "Revision", value: report.revision },
               ]}
             />
-            <Text as="p" size="2" className="whitespace-pre-wrap break-words">
-              {report.details}
-            </Text>
+            <Quote>{report.details}</Quote>
             <Text as="p" size="1" color="gray">
               Scope:{" "}
               {report.scope_ids.length
@@ -332,10 +339,10 @@ export function ReviewPanel({
             header: "Package",
             cell: (d: ImpactDecision) => (
               <>
-                {d.orderReference}
-                <Text as="p" size="1" color="gray">
-                  {d.provenance}
+                <Text as="p" className="font-mono">
+                  {d.orderReference}
                 </Text>
+                {d.provenance === "DEMO" && <ProvenanceBadge provenance={d.provenance} />}
               </>
             ),
           },
