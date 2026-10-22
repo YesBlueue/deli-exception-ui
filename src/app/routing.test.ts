@@ -14,7 +14,8 @@ describe("App routing", () => {
     expect(navigation.redirect).toHaveBeenCalledWith("/overview");
   });
 
-  it("renders Google login instead of bypassing staff access", async () => {
+  // The first import of the login page transforms its whole UI module graph, which can exceed 5s.
+  it("renders Google login instead of bypassing staff access", { timeout: 30000 }, async () => {
     const { default: Login } = await import("./login/page");
     navigation.redirect.mockClear();
     expect(await Login({ searchParams: Promise.resolve({}) })).toBeTruthy();

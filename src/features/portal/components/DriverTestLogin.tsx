@@ -2,9 +2,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { Truck } from "lucide-react";
 import { supabase } from "@/infrastructure/supabase/client";
-import { BrandMark, Field, Notice, PageHeader, Panel, SiteShell } from "@/shared/ui/patterns";
+import { Field, Notice, PageHeader, Panel, ProductMark, SiteShell } from "@/shared/ui/patterns";
 import { Input } from "@/shared/ui/input";
 import { Button } from "@/shared/ui/button";
 export function DriverTestLogin() {
@@ -30,7 +29,7 @@ export function DriverTestLogin() {
     }
   }
   return (
-    <SiteShell width="sm" brand={<BrandMark icon={Truck} name="Delivery staff demo" />}>
+    <SiteShell width="sm" brand={<ProductMark section="Driver test sign-in" />}>
       <div className="space-y-6">
         <PageHeader
           title="Driver test sign-in"

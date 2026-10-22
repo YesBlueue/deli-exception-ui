@@ -2,7 +2,7 @@ import { EventSimulatorView } from "@/features/event-simulator/components/EventS
 import { pageMetadata } from "@/shared/metadata";
 
 export const metadata = pageMetadata({
-  title: "Source update simulator — Delivery Exception Ops",
+  title: "Source update simulator",
   description:
     "Send fictional source-system updates to test normalisation, dedupe and prioritisation.",
 });

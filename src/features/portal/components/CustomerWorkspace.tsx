@@ -6,11 +6,11 @@ import { Heading, Text } from "@radix-ui/themes";
 import { PackageSearch } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import {
-  BrandMark,
   EmptyState,
   Field,
   MetaLine,
   Notice,
+  ProductMark,
   RecordSummary,
   SiteShell,
 } from "@/shared/ui/patterns";
@@ -110,7 +110,7 @@ export function CustomerWorkspace() {
   return (
     <SiteShell
       width="md"
-      brand={<BrandMark icon={PackageSearch} name="Delivery company · Customer support" />}
+      brand={<ProductMark section="Customer support" />}
       headerAside={<PortalNav />}
       banner={DEMO_BANNER_TEXT}
     >

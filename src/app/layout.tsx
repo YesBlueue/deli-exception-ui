@@ -14,11 +14,12 @@ import "@fontsource/ibm-plex-mono/latin-400.css";
 import "@fontsource/ibm-plex-mono/latin-500.css";
 
 export const metadata: Metadata = {
-  title: "Delivery Exception Ops",
-  description: "One delivery company. Exception handling, customer reports, and seller updates.",
+  title: { default: "ResolveMate", template: "%s · ResolveMate" },
+  applicationName: "ResolveMate",
+  description:
+    "ResolveMate: delivery exception handling, customer reports, and seller updates for one delivery company.",
   openGraph: { type: "website" },
   twitter: { card: "summary_large_image" },
-  icons: { icon: { url: "/favicon.ico", type: "image/x-icon" } },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

@@ -2,7 +2,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Text } from "@radix-ui/themes";
-import { Truck } from "lucide-react";
 import { ATTEMPT_CATEGORIES, CONDITION_CATEGORIES, assignedAt } from "@/core/domain/driver-rules";
 import { useDriver } from "@/infrastructure/portal/use-driver";
 import { portalRequest } from "@/infrastructure/portal/use-portal";
@@ -10,12 +9,12 @@ import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Textarea } from "@/shared/ui/textarea";
 import {
-  BrandMark,
   Field,
   Notice,
   MetaLine,
   OptionSelect,
   PageHeader,
+  ProductMark,
   SiteShell,
   StatGrid,
   StatTile,
@@ -101,7 +100,7 @@ export function DriverWorkspace() {
   return (
     <SiteShell
       width="md"
-      brand={<BrandMark icon={Truck} name="Delivery staff" />}
+      brand={<ProductMark section="Driver reporting" />}
       headerAside={<PortalNav />}
       banner={DEMO_BANNER_TEXT}
     >

@@ -30,7 +30,9 @@ export function CustomerAccountForm({
   return (
     <section className="space-y-5">
       <div>
-        <Heading as="h1" size="7">Welcome to delivery support</Heading>
+        <Heading as="h1" size="7">
+          Welcome to ResolveMate
+        </Heading>
         <Text as="p" size="2" color="gray" mt="2">
           Sign in to choose one of your orders, report an issue, and read replies here.
         </Text>

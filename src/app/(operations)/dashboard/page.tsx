@@ -2,7 +2,7 @@ import { ExceptionInboxView } from "@/features/exceptions/components/ExceptionIn
 import { pageMetadata } from "@/shared/metadata";
 
 export const metadata = pageMetadata({
-  title: "Exception inbox — Delivery Exception Ops",
+  title: "Exception inbox",
   description: "Actionable delivery exceptions across carriers, sorted by urgency.",
 });
 

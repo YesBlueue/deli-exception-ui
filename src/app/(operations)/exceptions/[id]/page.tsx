@@ -2,7 +2,7 @@ import { ExceptionDetailView } from "@/features/exceptions/components/ExceptionD
 import { pageMetadata } from "@/shared/metadata";
 
 export const metadata = pageMetadata({
-  title: "Exception detail — Delivery Exception Ops",
+  title: "Exception detail",
   description: "Investigate and resolve a delivery exception.",
 });
 

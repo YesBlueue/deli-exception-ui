@@ -1,12 +1,12 @@
 "use client";
 import { Heading, Text } from "@radix-ui/themes";
-import { Inbox, Store } from "lucide-react";
+import { Inbox } from "lucide-react";
 import { usePortal } from "@/infrastructure/portal/use-portal";
 import {
-  BrandMark,
   EmptyState,
   MetaLine,
   PageHeader,
+  ProductMark,
   RecordSummary,
   SiteShell,
 } from "@/shared/ui/patterns";
@@ -26,7 +26,7 @@ export function SellerWorkspace() {
   return (
     <SiteShell
       width="lg"
-      brand={<BrandMark icon={Store} name="Delivery company · Seller updates" />}
+      brand={<ProductMark section="Seller updates" />}
       headerAside={<PortalNav />}
       banner={DEMO_BANNER_TEXT}
     >

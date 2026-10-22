@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { Badge, Heading, Text } from "@radix-ui/themes";
 import { Button } from "@/shared/ui/button";
-import { Notice, Panel as PatternPanel } from "@/shared/ui/patterns";
+import { Notice, Panel as PatternPanel, ProductMark } from "@/shared/ui/patterns";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { CustomerAccountForm } from "@/features/customer-auth/components/CustomerAccountForm";
 import { useQueryClient } from "@tanstack/react-query";
@@ -199,13 +199,14 @@ export function PortalNav() {
     </nav>
   );
 }
-export function PortalHeader({ title }: { title: string }) {
+/** Staff top bar; the logo shows only on phones, where the sidebar that carries it is hidden. */
+export function PortalHeader({ section }: { section?: string }) {
   return (
     <header className="border-b bg-card">
       <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 md:px-8">
-        <Text as="p" size="2" weight="bold">
-          {title}
-        </Text>
+        <span className="md:invisible">
+          <ProductMark compact {...(section ? { section } : {})} />
+        </span>
         <PortalNav />
       </div>
     </header>

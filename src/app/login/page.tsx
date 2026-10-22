@@ -1,7 +1,7 @@
 import { CustomerAccountForm } from "@/features/customer-auth/components/CustomerAccountForm";
 import Link from "next/link";
-import { PackageSearch } from "lucide-react";
-import { BrandMark, Notice, SiteShell } from "@/shared/ui/patterns";
+import { Notice, ProductMark, SiteShell } from "@/shared/ui/patterns";
+export const metadata = { title: "Sign in" };
 export default async function Login({
   searchParams,
 }: {
@@ -9,7 +9,7 @@ export default async function Login({
 }) {
   const params = await searchParams;
   return (
-    <SiteShell width="sm" brand={<BrandMark icon={PackageSearch} name="Delivery company" />}>
+    <SiteShell width="sm" brand={<ProductMark />}>
       <div className="space-y-6 py-4">
         {params.error && (
           <Notice tone="error" role="alert">

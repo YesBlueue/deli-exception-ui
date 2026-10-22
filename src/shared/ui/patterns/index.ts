@@ -13,4 +13,4 @@ export { ButtonRow, LinkList, LinkRow, MetaLine, RecordSummary, StatList, Timeli
 export { Field, Notice } from "./form";
 export { OptionSelect, type Option } from "./option-select";
 export { BackLink, FactGrid, KeyValueList, PhotoThumb } from "./details";
-export { BrandMark, SiteShell } from "./site-shell";
+export { BrandMark, PRODUCT_NAME, ProductMark, SiteShell } from "./site-shell";

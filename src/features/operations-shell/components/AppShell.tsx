@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -7,13 +8,12 @@ import {
   Inbox,
   LayoutDashboard,
   MessageSquare,
-  PackageSearch,
-  Palette,
   Smartphone,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { usePortal } from "@/infrastructure/portal/use-portal";
 import { PortalHeader } from "@/features/portal/components/shared";
+import { PRODUCT_NAME } from "@/shared/ui/patterns";
 import { cn } from "@/shared/utils";
 
 const NAV = [
@@ -24,10 +24,6 @@ const NAV = [
   { to: "/demo/events", label: "Event simulator", Icon: FlaskConical },
   { to: "/customer/complaint", label: "Customer portal", Icon: Smartphone },
   { to: "/seller", label: "Seller portal", Icon: MessageSquare },
-  // Development-only reference page (404 in production builds).
-  ...(process.env.NODE_ENV === "production"
-    ? []
-    : [{ to: "/design-system", label: "Design system", Icon: Palette }]),
 ];
 
 /** Matches a nav item on its own path and on nested paths, like the previous router's fuzzy active match. */
@@ -42,12 +38,19 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen">
       <aside className="hidden w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:flex">
         <div className="flex items-center gap-2 border-b border-sidebar-border px-5 py-5">
-          <PackageSearch className="h-5 w-5 text-sidebar-primary" aria-hidden />
+          <Image
+            src="/brand/resolvemate-logo.png"
+            alt=""
+            width={408}
+            height={160}
+            priority
+            className="h-7 w-auto shrink-0"
+          />
           <div className="leading-tight">
             <div className="text-sm font-semibold text-sidebar-accent-foreground">
-              Exception Ops
+              {PRODUCT_NAME}
             </div>
-            <div className="text-xs text-sidebar-muted">One delivery company</div>
+            <div className="text-xs text-sidebar-muted">Operations</div>
           </div>
         </div>
         <nav className="flex-1 space-y-1 p-3" aria-label="Main">
@@ -77,11 +80,11 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
+        <PortalHeader section="Operations" />
         <header
           className="flex items-center gap-1 overflow-x-auto border-b border-sidebar-border bg-sidebar px-3 py-2 md:hidden"
           aria-label="Mobile navigation"
         >
-          <PackageSearch className="mr-2 h-5 w-5 shrink-0 text-sidebar-primary" aria-hidden />
           {NAV.map(({ to, label, Icon }) => {
             const active = isActive(pathname, to);
             return (
@@ -102,7 +105,6 @@ export function AppShell({ children }: { children: ReactNode }) {
             );
           })}
         </header>
-        <PortalHeader title="Exception Ops" />
         <div className="border-b border-demo/20 bg-demo-soft px-4 py-1.5 text-center text-xs text-demo md:px-8">
           Hackathon demo | Fictional source-system data | Updates appear in portals.
         </div>
