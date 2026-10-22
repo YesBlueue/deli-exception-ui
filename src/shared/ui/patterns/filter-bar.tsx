@@ -20,13 +20,15 @@ export function FilterBar({ search, layout = "inline", children }: { search: Rea
     return (
       <div className="flex flex-col gap-2">
         {search}
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">{children}</div>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">{children}</div>
       </div>
     );
   return (
     <div className="flex flex-col gap-2 xl:flex-row xl:items-center">
-      {search}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:flex xl:shrink-0">{children}</div>
+      {/* basis-0 lets the search give way so the filters keep their width inside the panel. */}
+      <div className="flex min-w-0 xl:flex-1 xl:basis-0">{search}</div>
+      {/* Fixed widths on one row: full-width selects would otherwise reserve room for only one. */}
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:flex xl:shrink-0 xl:[&>*]:w-48">{children}</div>
     </div>
   );
 }

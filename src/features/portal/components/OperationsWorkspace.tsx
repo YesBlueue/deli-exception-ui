@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { Text } from "@radix-ui/themes";
+import { Heading, Text } from "@radix-ui/themes";
 import { ArrowRight, ChevronRight, Inbox, MessageSquare } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -9,6 +9,8 @@ import { ATTEMPT_CATEGORIES } from "@/core/domain/driver-rules";
 import { CATEGORY_LABELS, exceptionSla, nextAction } from "@/core/domain/exception-rules";
 import { Button } from "@/shared/ui/button";
 import {
+  BreakdownGrid,
+  BreakdownTile,
   EmptyState,
   FilterBar,
   LinkList,
@@ -20,7 +22,6 @@ import {
   RecordSummary,
   SearchField,
   StatGrid,
-  StatList,
   StatTile,
   Timeline,
 } from "@/shared/ui/patterns";
@@ -40,15 +41,20 @@ import {
 const URGENT = "HIGH_OR_CRITICAL";
 /** The summary tiles, each a preset of the inbox filters (also accepted as `?focus=`). */
 type Focus = "open" | "urgent" | "breached" | "unassigned";
+const ALL_CATEGORIES: Record<string, string> = { ...CATEGORY_LABELS, ...ATTEMPT_CATEGORIES };
 export function OperationsWorkspace({ view }: { view: "overview" | "inbox" | "reports" }) {
   const q = usePortal();
   const s = q.data;
-  const initialFocus = useSearchParams().get("focus");
+  const params = useSearchParams();
+  const initialFocus = params.get("focus");
+  const initialCategory = params.get("category") ?? "";
   const [query, setQuery] = useState("");
   const [priority, setPriority] = useState(initialFocus === "urgent" ? URGENT : "");
   const [seller, setSeller] = useState("");
   const [status, setStatus] = useState("open");
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState(
+    initialCategory in ALL_CATEGORIES ? initialCategory : "",
+  );
   const [assignee, setAssignee] = useState(initialFocus === "unassigned" ? "unassigned" : "");
   const [age, setAge] = useState("");
   const [sla, setSla] = useState(initialFocus === "breached" ? "breached" : "");
@@ -105,11 +111,19 @@ export function OperationsWorkspace({ view }: { view: "overview" | "inbox" | "re
     setSla(target === "breached" ? "breached" : "");
     setAssignee(target === "unassigned" ? "unassigned" : "");
   }
-  // The reports page has no exception list, so its tiles open the inbox with the preset.
+  // Only the inbox lists exceptions; elsewhere the tiles open the inbox with their preset.
   const tile = (f: Focus) =>
-    view === "reports"
-      ? { href: f === "open" ? "/dashboard" : `/dashboard?focus=${f}` }
-      : { onClick: () => showFocus(f) };
+    view === "inbox"
+      ? { onClick: () => showFocus(f) }
+      : { href: f === "open" ? "/dashboard" : `/dashboard?focus=${f}` };
+  // Categories with open exceptions get a tile (largest first); empty ones are listed in one line.
+  const byCategory = Object.entries(ALL_CATEGORIES)
+    .map(([id, label]) => ({
+      id,
+      label,
+      count: open.filter((e) => e.exception_type === id).length,
+    }))
+    .sort((a, b) => b.count - a.count);
   const activeStaff = s.staff.filter(
     (person) => person.is_active && ["ADMIN", "OPERATIONS"].includes(person.role),
   );
@@ -138,7 +152,7 @@ export function OperationsWorkspace({ view }: { view: "overview" | "inbox" | "re
         <StatTile
           label="High / critical"
           value={open.filter((e) => ["HIGH", "CRITICAL"].includes(e.priority)).length}
-          tone="critical"
+          tone="high"
           {...tile("urgent")}
         />
         <StatTile
@@ -199,193 +213,230 @@ export function OperationsWorkspace({ view }: { view: "overview" | "inbox" | "re
         </PatternPanel>
       ) : (
         <>
-          <PatternPanel
-            flush
-            toolbar={
-              <FilterBar
-                layout="stacked"
-                search={
-                  <SearchField
-                    label="Search exceptions"
-                    placeholder="Search order, customer or issue"
-                    value={query}
-                    onChange={setQuery}
+          {view === "inbox" && (
+            <PatternPanel
+              flush
+              toolbar={
+                <FilterBar
+                  layout="stacked"
+                  search={
+                    <SearchField
+                      label="Search exceptions"
+                      placeholder="Search order, customer or issue"
+                      value={query}
+                      onChange={setQuery}
+                    />
+                  }
+                >
+                  <OptionSelect
+                    label="Priority"
+                    value={priority}
+                    onValueChange={setPriority}
+                    emptyLabel="All priorities"
+                    options={[
+                      { value: URGENT, label: "High and critical" },
+                      ...["CRITICAL", "HIGH", "MEDIUM", "LOW"].map((v) => ({
+                        value: v,
+                        label: friendly(v),
+                      })),
+                    ]}
                   />
-                }
-              >
-                <OptionSelect
-                  label="Priority"
-                  value={priority}
-                  onValueChange={setPriority}
-                  emptyLabel="All priorities"
-                  options={[
-                    { value: URGENT, label: "High and critical" },
-                    ...["CRITICAL", "HIGH", "MEDIUM", "LOW"].map((v) => ({
-                      value: v,
-                      label: friendly(v),
-                    })),
-                  ]}
-                />
-                <OptionSelect
-                  label="Seller"
-                  value={seller}
-                  onValueChange={setSeller}
-                  emptyLabel="All sellers"
-                  options={s.sellers.map((v) => ({ value: v.id, label: v.name }))}
-                />
-                <OptionSelect
-                  label="Exception status"
-                  value={status}
-                  onValueChange={setStatus}
-                  options={[
-                    { value: "open", label: "Open" },
-                    { value: "all", label: "All incl. resolved" },
-                  ]}
-                />
-                <OptionSelect
-                  label="Issue category"
-                  value={category}
-                  onValueChange={setCategory}
-                  emptyLabel="All categories"
-                  options={Object.entries({ ...CATEGORY_LABELS, ...ATTEMPT_CATEGORIES }).map(
-                    ([id, label]) => ({ value: id, label }),
-                  )}
-                />
-                <OptionSelect
-                  label="Assignment"
-                  value={assignee}
-                  onValueChange={setAssignee}
-                  emptyLabel="All assignments"
-                  options={[
-                    { value: "unassigned", label: "Unassigned" },
-                    ...activeStaff.map((person) => ({
-                      value: person.user_id,
-                      label: person.full_name,
-                    })),
-                  ]}
-                />
-                <OptionSelect
-                  label="SLA"
-                  value={sla}
-                  onValueChange={setSla}
-                  emptyLabel="Any SLA state"
-                  options={[
-                    { value: "breached", label: "Breached" },
-                    { value: "within", label: "Within SLA" },
-                  ]}
-                />
-                <OptionSelect
-                  label="Exception age"
-                  value={age}
-                  onValueChange={setAge}
-                  emptyLabel="All ages"
-                  options={[
-                    { value: "24", label: "At least 24 hours" },
-                    { value: "48", label: "At least 48 hours" },
-                  ]}
-                />
-              </FilterBar>
-            }
-          >
-            {!rows.length ? (
-              <EmptyState
-                icon={Inbox}
-                title="No exceptions match this view."
-                description="Reports and relevant source updates create exceptions."
-              />
-            ) : (
-              <LinkList label="Exceptions">
-                {rows.map((e) => {
-                  const o = s.orders.find((o) => o.id === e.delivery_job_id)!;
-                  const sellerName =
-                    s.sellers.find((v) => v.id === o.seller_id)?.name ?? "Unknown seller";
-                  const sla = exceptionSla(e, now);
-                  const linked = s.reports
-                    .filter((report) => report.exception_id === e.id)
-                    .sort((a, b) => b.submitted_at.localeCompare(a.submitted_at));
-                  const guidance = nextAction(
-                    {
-                      category: linked[0]?.category ?? e.exception_type,
-                      sourceStatus: o.status,
-                      sourceUpdatedAt: o.source_updated_at,
-                      refund: linked.some((report) => report.refund_requested),
-                      needsReview: linked.some((report) => report.needs_review),
-                      confirmation: o.confirmation_details,
-                      hasRelevantEvent: s.events.some(
-                        (event) =>
-                          event.delivery_job_id === o.id &&
-                          event.processing_result === "APPLIED" &&
-                          !!event.event_at,
-                      ),
-                    },
-                    now,
-                  );
-                  return (
-                    <LinkRow key={e.id} href={`/exceptions/${e.id}`}>
-                      <RecordSummary
-                        lead={<PriorityBadge priority={e.priority} />}
-                        title={categoryLabel(e.exception_type)}
-                        badges={
-                          <>
-                            <StatusBadge status={e.status} />
-                            {o.provenance === "DEMO" && (
-                              <ProvenanceBadge provenance={o.provenance} />
-                            )}
-                          </>
-                        }
-                        meta={[
-                          <span key="order" className="font-mono text-foreground">
-                            {o.seller_order_reference ?? "No order reference"}
-                          </span>,
-                          sellerName,
-                          `Source: ${friendly(o.status)}`,
-                        ]}
-                        trailing={
-                          <span className="flex items-center gap-2">
-                            <DueLabel sla={sla} />
-                            <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
-                          </span>
-                        }
-                      >
-                        {e.status !== "RESOLVED" && (
-                          <Text
-                            as="p"
-                            size="2"
-                            className="flex items-start gap-1.5 text-primary"
-                            title={`${guidance.rule}: ${guidance.reason}`}
-                          >
-                            <ArrowRight className="mt-1 size-3.5 shrink-0" aria-hidden />
-                            {guidance.action}
-                          </Text>
-                        )}
-                        <MetaLine
-                          items={[
-                            `Opened ${time(e.detected_at)}`,
-                            s.staff.find((v) => v.user_id === e.assignee_user_id)?.full_name ??
-                              "Unassigned",
-                          ]}
-                        />
-                      </RecordSummary>
-                    </LinkRow>
-                  );
-                })}
-              </LinkList>
-            )}
-          </PatternPanel>
-          {view === "overview" && (
-            <div className="grid gap-6 lg:grid-cols-2">
-              <PatternPanel title="Open exceptions by category" flush>
-                <StatList
-                  items={Object.entries({ ...CATEGORY_LABELS, ...ATTEMPT_CATEGORIES }).map(
-                    ([id, label]) => ({
-                      key: id,
+                  <OptionSelect
+                    label="Seller"
+                    value={seller}
+                    onValueChange={setSeller}
+                    emptyLabel="All sellers"
+                    options={s.sellers.map((v) => ({ value: v.id, label: v.name }))}
+                  />
+                  <OptionSelect
+                    label="Exception status"
+                    value={status}
+                    onValueChange={setStatus}
+                    options={[
+                      { value: "open", label: "Open" },
+                      { value: "all", label: "All incl. resolved" },
+                    ]}
+                  />
+                  <OptionSelect
+                    label="Issue category"
+                    value={category}
+                    onValueChange={setCategory}
+                    emptyLabel="All categories"
+                    options={Object.entries(ALL_CATEGORIES).map(([id, label]) => ({
+                      value: id,
                       label,
-                      value: open.filter((e) => e.exception_type === id).length,
-                    }),
-                  )}
+                    }))}
+                  />
+                  <OptionSelect
+                    label="Assignment"
+                    value={assignee}
+                    onValueChange={setAssignee}
+                    emptyLabel="All assignments"
+                    options={[
+                      { value: "unassigned", label: "Unassigned" },
+                      ...activeStaff.map((person) => ({
+                        value: person.user_id,
+                        label: person.full_name,
+                      })),
+                    ]}
+                  />
+                  <OptionSelect
+                    label="SLA"
+                    value={sla}
+                    onValueChange={setSla}
+                    emptyLabel="Any SLA state"
+                    options={[
+                      { value: "breached", label: "Breached" },
+                      { value: "within", label: "Within SLA" },
+                    ]}
+                  />
+                  <OptionSelect
+                    label="Exception age"
+                    value={age}
+                    onValueChange={setAge}
+                    emptyLabel="All ages"
+                    options={[
+                      { value: "24", label: "At least 24 hours" },
+                      { value: "48", label: "At least 48 hours" },
+                    ]}
+                  />
+                </FilterBar>
+              }
+            >
+              {!rows.length ? (
+                <EmptyState
+                  icon={Inbox}
+                  title="No exceptions match this view."
+                  description="Reports and relevant source updates create exceptions."
                 />
-              </PatternPanel>
-              <PatternPanel title="Recent activity" flush>
+              ) : (
+                <LinkList label="Exceptions">
+                  {rows.map((e) => {
+                    const o = s.orders.find((o) => o.id === e.delivery_job_id)!;
+                    const sellerName =
+                      s.sellers.find((v) => v.id === o.seller_id)?.name ?? "Unknown seller";
+                    const sla = exceptionSla(e, now);
+                    const linked = s.reports
+                      .filter((report) => report.exception_id === e.id)
+                      .sort((a, b) => b.submitted_at.localeCompare(a.submitted_at));
+                    const guidance = nextAction(
+                      {
+                        category: linked[0]?.category ?? e.exception_type,
+                        sourceStatus: o.status,
+                        sourceUpdatedAt: o.source_updated_at,
+                        refund: linked.some((report) => report.refund_requested),
+                        needsReview: linked.some((report) => report.needs_review),
+                        confirmation: o.confirmation_details,
+                        hasRelevantEvent: s.events.some(
+                          (event) =>
+                            event.delivery_job_id === o.id &&
+                            event.processing_result === "APPLIED" &&
+                            !!event.event_at,
+                        ),
+                      },
+                      now,
+                    );
+                    return (
+                      <LinkRow key={e.id} href={`/exceptions/${e.id}`}>
+                        <RecordSummary
+                          lead={<PriorityBadge priority={e.priority} />}
+                          title={categoryLabel(e.exception_type)}
+                          badges={
+                            <>
+                              <StatusBadge status={e.status} />
+                              {o.provenance === "DEMO" && (
+                                <ProvenanceBadge provenance={o.provenance} />
+                              )}
+                            </>
+                          }
+                          meta={[
+                            <span key="order" className="font-mono text-foreground">
+                              {o.seller_order_reference ?? "No order reference"}
+                            </span>,
+                            sellerName,
+                            `Source: ${friendly(o.status)}`,
+                          ]}
+                          trailing={
+                            <span className="flex items-center gap-2">
+                              <DueLabel sla={sla} />
+                              <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
+                            </span>
+                          }
+                        >
+                          {e.status !== "RESOLVED" && (
+                            <Text
+                              as="p"
+                              size="2"
+                              className="flex items-start gap-1.5 text-primary"
+                              title={`${guidance.rule}: ${guidance.reason}`}
+                            >
+                              <ArrowRight className="mt-1 size-3.5 shrink-0" aria-hidden />
+                              {guidance.action}
+                            </Text>
+                          )}
+                          <MetaLine
+                            items={[
+                              `Opened ${time(e.detected_at)}`,
+                              s.staff.find((v) => v.user_id === e.assignee_user_id)?.full_name ??
+                                "Unassigned",
+                            ]}
+                          />
+                        </RecordSummary>
+                      </LinkRow>
+                    );
+                  })}
+                </LinkList>
+              )}
+            </PatternPanel>
+          )}
+          {view === "overview" && (
+            <>
+              <section aria-labelledby="by-category" className="space-y-3">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <Heading as="h2" size="4" id="by-category">
+                    Open exceptions by category
+                  </Heading>
+                  <Text size="2" color="gray">
+                    {open.length} open
+                  </Text>
+                </div>
+                {byCategory.some((c) => c.count) && (
+                  <BreakdownGrid label="Open exceptions by category">
+                    {byCategory
+                      .filter((c) => c.count)
+                      .map(({ id, label, count }) => (
+                        <BreakdownTile
+                          key={id}
+                          label={label}
+                          value={count}
+                          total={open.length}
+                          href={`/dashboard?category=${id}`}
+                        />
+                      ))}
+                  </BreakdownGrid>
+                )}
+                {byCategory.some((c) => !c.count) && (
+                  <Text as="p" size="2" color="gray">
+                    No open exceptions:{" "}
+                    {byCategory
+                      .filter((c) => !c.count)
+                      .map((c) => c.label)
+                      .join(", ")}
+                  </Text>
+                )}
+                <Text as="p" size="1" color="gray">
+                  Counts cover the received demo dataset, not company-wide delivery volume.
+                </Text>
+              </section>
+              <PatternPanel
+                title="Recent activity"
+                aside={
+                  <Button asChild size="sm" variant="outline">
+                    <Link href="/activity">See all</Link>
+                  </Button>
+                }
+                flush
+              >
                 <Timeline
                   items={s.audit
                     .sort((a, b) => b.created_at.localeCompare(a.created_at))
@@ -395,12 +446,10 @@ export function OperationsWorkspace({ view }: { view: "overview" | "inbox" | "re
                       body: a.description,
                       time: <time dateTime={a.created_at}>{time(a.created_at)}</time>,
                     }))}
+                  empty="No activity recorded yet."
                 />
-                <Text as="p" size="1" color="gray" className="border-t px-4 py-2.5">
-                  Counts cover the received demo dataset, not company-wide delivery volume.
-                </Text>
               </PatternPanel>
-            </div>
+            </>
           )}
         </>
       )}

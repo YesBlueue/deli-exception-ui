@@ -1,14 +1,15 @@
 "use client";
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Badge, Heading, Text } from "@radix-ui/themes";
+import { Badge, DropdownMenu, Heading, Text } from "@radix-ui/themes";
+import { Check, ChevronDown } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Notice, Panel as PatternPanel, ProductMark } from "@/shared/ui/patterns";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { CustomerAccountForm } from "@/features/customer-auth/components/CustomerAccountForm";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/infrastructure/supabase/client";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { CATEGORY_LABELS } from "@/core/domain/exception-rules";
 import { ATTEMPT_CATEGORIES, CONDITION_CATEGORIES } from "@/core/domain/driver-rules";
 /** `IN_PROGRESS` → "In progress". */
@@ -153,10 +154,26 @@ export function PortalState({
     </section>
   );
 }
-/** Links between the three portals plus sign-out. */
+/** The portals one account may use; operations owns every route outside the other three. */
+const PORTALS = [
+  {
+    href: "/overview",
+    label: "Operations",
+    matches: (path: string) => !/^\/(customer|seller|driver)/.test(path),
+  },
+  {
+    href: "/customer/complaint",
+    label: "Customer",
+    matches: (path: string) => path.startsWith("/customer"),
+  },
+  { href: "/seller", label: "Seller", matches: (path: string) => path.startsWith("/seller") },
+  { href: "/driver", label: "Driver", matches: (path: string) => path.startsWith("/driver") },
+];
+/** The single place to switch portal (a menu showing the current one), plus sign-out. */
 export function PortalNav() {
   const cache = useQueryClient();
   const router = useRouter();
+  const pathname = usePathname();
   async function signOut() {
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -167,33 +184,31 @@ export function PortalNav() {
     router.replace("/login");
     router.refresh();
   }
+  const current = PORTALS.find((p) => p.matches(pathname)) ?? PORTALS[0]!;
   return (
-    <nav aria-label="Portals" className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-      <Link
-        href="/customer/complaint"
-        className="inline-flex min-h-6 items-center text-primary hover:underline"
-      >
-        Customer
-      </Link>
-      <Link
-        href="/overview"
-        className="inline-flex min-h-6 items-center text-primary hover:underline"
-      >
-        Operations
-      </Link>
-      <Link
-        href="/seller"
-        className="inline-flex min-h-6 items-center text-primary hover:underline"
-      >
-        Seller
-      </Link>
-      <Link
-        href="/driver"
-        className="inline-flex min-h-6 items-center text-primary hover:underline"
-      >
-        Driver
-      </Link>
-      <Button size="sm" variant="ghost" className="min-h-6" onClick={() => void signOut()}>
+    <nav aria-label="Portals" className="flex items-center gap-2">
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger>
+          <Button size="sm" variant="outline" aria-label={`${current.label} portal. Switch portal`}>
+            {current.label} portal
+            <ChevronDown aria-hidden />
+          </Button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content align="end">
+          <DropdownMenu.Label>Switch portal</DropdownMenu.Label>
+          {PORTALS.map((p) => (
+            <DropdownMenu.Item key={p.href} asChild>
+              <Link href={p.href} aria-current={p === current ? "page" : undefined}>
+                <span className="flex w-full items-center justify-between gap-6">
+                  {p.label}
+                  {p === current && <Check className="size-4" aria-hidden />}
+                </span>
+              </Link>
+            </DropdownMenu.Item>
+          ))}
+        </DropdownMenu.Content>
+      </DropdownMenu.Root>
+      <Button size="sm" variant="ghost" onClick={() => void signOut()}>
         Sign out
       </Button>
     </nav>

@@ -81,3 +81,43 @@ export function StatTile({
     );
   return <Card size="2">{body}</Card>;
 }
+
+/** Grid of BreakdownTiles: two columns on phones, up to four from `lg`. */
+export function BreakdownGrid({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div role="list" aria-label={label} className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+      {children}
+    </div>
+  );
+}
+
+/**
+ * One slice of a breakdown (e.g. open exceptions per category). Deliberately unlike StatTile:
+ * a filled gray surface, neutral number and a navy share bar instead of a bordered card with a
+ * status-colored number. Empty slices are dimmed. `href` makes the tile a link.
+ */
+export function BreakdownTile({ label, value, total, href }: { label: ReactNode; value: number; total: number; href?: string }) {
+  const share = total ? Math.round((value / total) * 100) : 0;
+  const body = (
+    <>
+      <Text as="span" size="2" weight="medium" className="block">{label}</Text>
+      <span className="mt-2 flex items-baseline justify-between gap-2">
+        <Text as="span" size="6" weight="bold" className="tabular-nums">{value}</Text>
+        <Text as="span" size="1" color="gray" className="tabular-nums">{share}%</Text>
+      </span>
+      <span className="mt-2 block h-1.5 overflow-hidden rounded-full bg-border" aria-hidden>
+        <span className="block h-full rounded-full bg-primary" style={{ width: `${share}%` }} />
+      </span>
+    </>
+  );
+  const box = cn("block h-full rounded-md bg-muted p-4", !value && "opacity-60");
+  return (
+    <div role="listitem">
+      {href ? (
+        <Link href={href} className={cn(box, "transition-colors hover:bg-accent")}>{body}</Link>
+      ) : (
+        <div className={box}>{body}</div>
+      )}
+    </div>
+  );
+}

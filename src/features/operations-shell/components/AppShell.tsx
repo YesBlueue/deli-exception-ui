@@ -4,12 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  FlaskConical,
   ChartNoAxesCombined,
+  FlaskConical,
   Inbox,
   LayoutDashboard,
   MessageSquare,
-  Smartphone,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { usePortal } from "@/infrastructure/portal/use-portal";
@@ -24,8 +23,6 @@ const NAV = [
   { to: "/analytics", label: "Complaint analytics", Icon: ChartNoAxesCombined },
   { to: "/conditions", label: "Route conditions", Icon: Inbox },
   { to: "/demo/events", label: "Event simulator", Icon: FlaskConical },
-  { to: "/customer/complaint", label: "Customer portal", Icon: Smartphone },
-  { to: "/seller", label: "Seller portal", Icon: MessageSquare },
 ];
 
 /** Matches a nav item on its own path and on nested paths, like the previous router's fuzzy active match. */
@@ -38,7 +35,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { data } = usePortal();
   return (
     <div className="flex min-h-screen">
-      <aside className="hidden w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:flex">
+      {/* Pinned to the viewport: the page scrolls, the sidebar stays put (its links scroll on short screens). */}
+      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col self-start border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:flex">
         <div className="flex items-center gap-2 border-b border-sidebar-border px-5 py-5">
           <Image
             src="/brand/resolvemate-logo.png"
@@ -55,7 +53,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div className="text-xs text-sidebar-muted">Operations</div>
           </div>
         </div>
-        <nav className="flex-1 space-y-1 p-3" aria-label="Main">
+        <nav className="flex-1 space-y-1 overflow-y-auto p-3" aria-label="Main">
           {NAV.map(({ to, label, Icon }) => {
             const active = isActive(pathname, to);
             return (

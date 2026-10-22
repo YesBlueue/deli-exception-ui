@@ -204,6 +204,11 @@
   grid-template-columns: minmax(0, 1fr) 320px;
 }
 
+/* Fades the right edge of a sideways-scrolling row so cut-off items read as "more this way". */
+@utility scroll-fade-x {
+  mask-image: linear-gradient(to right, black calc(100% - 2.5rem), transparent);
+}
+
 @layer base {
   * {
     border-color: var(--border);

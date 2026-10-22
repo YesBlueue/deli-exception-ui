@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { Heading, Text } from "@radix-ui/themes";
+import { MessageSquare } from "lucide-react";
 import { useEffect, useState } from "react";
 import { usePortal, portalRequest } from "@/infrastructure/portal/use-portal";
 import type { PortalSnapshot } from "@/infrastructure/portal/types";
@@ -15,6 +16,7 @@ import { Textarea } from "@/shared/ui/textarea";
 import { Input } from "@/shared/ui/input";
 import {
   BackLink,
+  EmptyState,
   FactGrid,
   Field,
   KeyValueList,
@@ -23,6 +25,7 @@ import {
   OptionSelect,
   PageHeader,
   Panel as PatternPanel,
+  SectionTabs,
   Timeline,
 } from "@/shared/ui/patterns";
 import {
@@ -116,6 +119,10 @@ export function ExceptionWorkspace({ id }: { id: string }) {
   };
   const staffName = (userId: string | null) => s.staff.find((v) => v.user_id === userId)?.full_name;
   const ageHours = Math.max(0, Math.floor((now - Date.parse(ex.detected_at)) / 36e5));
+  const sellerUpdates = s.updates.filter((u) => u.delivery_job_id === order.id);
+  const notes = s.notes
+    .filter((n) => n.exception_id === id)
+    .sort((a, b) => a.created_at.localeCompare(b.created_at));
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <BackLink href="/dashboard">Exception inbox</BackLink>
@@ -175,93 +182,160 @@ export function ExceptionWorkspace({ id }: { id: string }) {
               </Text>
             </div>
           </PatternPanel>
-          <section className="space-y-4">
-            <Heading as="h2" size="4">
-              Customer reports
-            </Heading>
-            {reports.map((r) => (
-              <ReportReview key={r.id} report={r} snapshot={s} run={run} disabled={busy} />
-            ))}
-            {!reports.length && (
-              <Text as="p" size="2" color="gray">
-                No customer report is linked. Review the available driver and source context.
-              </Text>
-            )}
-          </section>
-          <DriverReportContext exceptionId={id} />
-          <Panel title="Seller-visible updates">
-            <SellerUpdate exceptionId={id} run={run} disabled={busy} />
-            <div className="divide-y">
-              {s.updates
-                .filter((u) => u.delivery_job_id === order.id)
-                .map((u) => (
-                  <article key={u.id} className="space-y-1 py-3">
-                    <Text as="p" size="2" weight="bold">
-                      {u.title}
-                    </Text>
-                    <MetaLine items={[time(u.created_at)]} />
-                    <Text as="p" size="2" className="whitespace-pre-wrap break-words">
-                      {u.body}
-                    </Text>
-                  </article>
-                ))}
-            </div>
-          </Panel>
-          <Panel title="Private staff notes">
-            <ol className="space-y-3">
-              {s.notes
-                .filter((n) => n.exception_id === id)
-                .sort((a, b) => a.created_at.localeCompare(b.created_at))
-                .map((n) => (
-                  <li key={n.id} className="rounded-md bg-muted p-3">
-                    <MetaLine
-                      items={[
-                        <Text key="author" weight="medium" className="text-foreground">
-                          {staffName(n.author_user_id) ?? "Staff"}
-                        </Text>,
-                        time(n.created_at),
-                      ]}
-                    />
-                    <Text as="p" size="2" mt="2" className="whitespace-pre-wrap break-words">
-                      {n.body}
-                    </Text>
-                  </li>
-                ))}
-            </ol>
-            <Field label="Investigation note" htmlFor="staff-note">
-              <Textarea
-                id="staff-note"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                maxLength={4000}
-                placeholder="Only authorized operations staff can read this."
-              />
-            </Field>
-            <Button
-              disabled={busy || !note.trim()}
-              variant="secondary"
-              onClick={() =>
-                void run("note", { exceptionId: id, text: note })
-                  .then(() => setNote(""))
-                  .catch(() => {})
-              }
-            >
-              Save private note
-            </Button>
-          </Panel>
-          <PatternPanel title="Audit history" flush>
-            <Timeline
-              items={s.audit
-                .filter((a) => a.delivery_exception_id === id)
-                .sort((a, b) => b.created_at.localeCompare(a.created_at))
-                .map((a) => ({
-                  key: a.id,
-                  body: <span className="whitespace-pre-wrap break-words">{a.description}</span>,
-                  time: <time dateTime={a.created_at}>{time(a.created_at)}</time>,
-                  meta: <>· {friendly(a.action_type)}</>,
-                }))}
-            />
-          </PatternPanel>
+          <SectionTabs
+            label="Exception sections"
+            sections={[
+              {
+                value: "reports",
+                label: "Customer reports",
+                count: reports.length,
+                content: (
+                  <div className="space-y-4">
+                    {reports.map((r) => (
+                      <ReportReview key={r.id} report={r} snapshot={s} run={run} disabled={busy} />
+                    ))}
+                    {!reports.length && (
+                      <EmptyState
+                        icon={MessageSquare}
+                        title="No customer report is linked."
+                        description="Review the driver reports and source history instead."
+                      />
+                    )}
+                  </div>
+                ),
+              },
+              {
+                value: "driver",
+                label: "Driver reports",
+                content: (
+                  <div className="space-y-4">
+                    <DriverReportContext exceptionId={id} />
+                  </div>
+                ),
+              },
+              {
+                value: "seller",
+                label: "Seller updates",
+                count: sellerUpdates.length,
+                content: (
+                  <Panel title="Updates visible to the seller">
+                    <div className="divide-y">
+                      {sellerUpdates.map((u) => (
+                        <article key={u.id} className="space-y-1 py-3 first:pt-0">
+                          <Text as="p" size="2" weight="bold">
+                            {u.title}
+                          </Text>
+                          <MetaLine items={[time(u.created_at)]} />
+                          <Text as="p" size="2" className="whitespace-pre-wrap break-words">
+                            {u.body}
+                          </Text>
+                        </article>
+                      ))}
+                    </div>
+                    <SellerUpdate exceptionId={id} run={run} disabled={busy} />
+                  </Panel>
+                ),
+              },
+              {
+                value: "notes",
+                label: "Private notes",
+                count: notes.length,
+                content: (
+                  <Panel title="Notes for operations staff only">
+                    <ol className="space-y-3">
+                      {notes.map((n) => (
+                        <li key={n.id} className="rounded-md bg-muted p-3">
+                          <MetaLine
+                            items={[
+                              <Text key="author" weight="medium" className="text-foreground">
+                                {staffName(n.author_user_id) ?? "Staff"}
+                              </Text>,
+                              time(n.created_at),
+                            ]}
+                          />
+                          <Text as="p" size="2" mt="2" className="whitespace-pre-wrap break-words">
+                            {n.body}
+                          </Text>
+                        </li>
+                      ))}
+                    </ol>
+                    <Field label="Investigation note" htmlFor="staff-note">
+                      <Textarea
+                        id="staff-note"
+                        value={note}
+                        onChange={(e) => setNote(e.target.value)}
+                        maxLength={4000}
+                        placeholder="Only authorized operations staff can read this."
+                      />
+                    </Field>
+                    <Button
+                      disabled={busy || !note.trim()}
+                      variant="secondary"
+                      onClick={() =>
+                        void run("note", { exceptionId: id, text: note })
+                          .then(() => setNote(""))
+                          .catch(() => {})
+                      }
+                    >
+                      Save private note
+                    </Button>
+                  </Panel>
+                ),
+              },
+              {
+                value: "history",
+                label: "History",
+                content: (
+                  <div className="space-y-6">
+                    <PatternPanel title="Audit history" flush>
+                      <Timeline
+                        empty="No actions recorded yet."
+                        items={s.audit
+                          .filter((a) => a.delivery_exception_id === id)
+                          .sort((a, b) => b.created_at.localeCompare(a.created_at))
+                          .map((a) => ({
+                            key: a.id,
+                            body: (
+                              <span className="whitespace-pre-wrap break-words">
+                                {a.description}
+                              </span>
+                            ),
+                            time: <time dateTime={a.created_at}>{time(a.created_at)}</time>,
+                            meta: <>· {friendly(a.action_type)}</>,
+                          }))}
+                      />
+                    </PatternPanel>
+                    <PatternPanel title="Received source updates" flush>
+                      <Timeline
+                        empty="No source updates received for this order."
+                        items={s.events
+                          .filter((e) => e.delivery_job_id === order.id)
+                          .sort((a, b) => b.received_at.localeCompare(a.received_at))
+                          .slice(0, 10)
+                          .map((e) => ({
+                            key: e.id,
+                            body: (
+                              <span className="font-medium">
+                                {friendly(e.event_code)} · {friendly(e.processing_result)}
+                              </span>
+                            ),
+                            time: (
+                              <span className="space-y-0.5">
+                                <span className="block">Occurred {time(e.event_at)}</span>
+                                <span className="block">Received {time(e.received_at)}</span>
+                                <span className="block font-mono">
+                                  {e.source} · {e.source_event_id}
+                                </span>
+                              </span>
+                            ),
+                          }))}
+                      />
+                    </PatternPanel>
+                  </div>
+                ),
+              },
+            ]}
+          />
         </div>
         <aside className="min-w-0 space-y-6">
           <Panel title="Workflow">
@@ -317,6 +391,39 @@ export function ExceptionWorkspace({ id }: { id: string }) {
               </Button>
             </div>
           </Panel>
+          <Panel title="Order">
+            <KeyValueList
+              items={[
+                [
+                  "Order",
+                  <span key="o" className="font-mono">
+                    {order.seller_order_reference}
+                  </span>,
+                ],
+                ["Seller", seller],
+                ["Customer", order.recipient_name],
+                ["Source status", friendly(order.status)],
+                ["Confirmation", order.confirmation_details ?? "Not available"],
+              ].map(([label, value]) => ({ label, value }))}
+            />
+            <details className="border-t pt-3">
+              <summary className="cursor-pointer text-sm text-primary">All source details</summary>
+              <div className="mt-3 space-y-3">
+                <KeyValueList
+                  items={[
+                    ["Provenance", friendly(order.provenance)],
+                    ["Source system", order.source_system],
+                    ["External delivery ID", order.external_delivery_id ?? "Missing"],
+                    ["Source updated", time(order.source_updated_at)],
+                    ["Received", time(order.received_at)],
+                  ].map(([label, value]) => ({ label, value }))}
+                />
+                <Text as="p" size="1" color="gray">
+                  Delivery creation and execution remain in the existing delivery system.
+                </Text>
+              </div>
+            </details>
+          </Panel>
           <Panel title="Why this priority">
             <Text as="p" size="2">
               {ex.priority_reason}
@@ -326,50 +433,6 @@ export function ExceptionWorkspace({ id }: { id: string }) {
               status is independent.
             </Text>
           </Panel>
-          <Panel title="Received order context">
-            <KeyValueList
-              items={[
-                ["Order", order.seller_order_reference],
-                ["Seller", seller],
-                ["Customer", order.recipient_name],
-                ["Source status", friendly(order.status)],
-                ["Provenance", friendly(order.provenance)],
-                ["Source system", order.source_system],
-                ["External delivery ID", order.external_delivery_id ?? "Missing"],
-                ["Source updated", time(order.source_updated_at)],
-                ["Received", time(order.received_at)],
-                ["Confirmation", order.confirmation_details ?? "Not available"],
-              ].map(([label, value]) => ({ label, value }))}
-            />
-            <Text as="p" size="1" color="gray">
-              Delivery creation and execution remain in the existing delivery system.
-            </Text>
-          </Panel>
-          <PatternPanel title="Relevant received updates" flush>
-            <Timeline
-              items={s.events
-                .filter((e) => e.delivery_job_id === order.id)
-                .sort((a, b) => b.received_at.localeCompare(a.received_at))
-                .slice(0, 10)
-                .map((e) => ({
-                  key: e.id,
-                  body: (
-                    <span className="font-medium">
-                      {friendly(e.event_code)} · {friendly(e.processing_result)}
-                    </span>
-                  ),
-                  time: (
-                    <span className="space-y-0.5">
-                      <span className="block">Occurred {time(e.event_at)}</span>
-                      <span className="block">Received {time(e.received_at)}</span>
-                      <span className="block font-mono">
-                        {e.source} · {e.source_event_id}
-                      </span>
-                    </span>
-                  ),
-                }))}
-            />
-          </PatternPanel>
         </aside>
       </div>
     </div>
@@ -487,16 +550,23 @@ function ReportReview({
               </a>
             ))}
         </div>
-        <details className="text-xs text-muted-foreground">
-          <summary className="cursor-pointer">Original rule classification</summary>
-          <pre className="mt-2 overflow-auto whitespace-pre-wrap rounded-md bg-muted p-2 font-mono">
-            {JSON.stringify(r.original_classification, null, 2)}
-          </pre>
-        </details>
         <div className="space-y-3 border-t pt-4">
           <Heading as="h3" size="3">
             Reply to the customer
           </Heading>
+          {s.replies
+            .filter((reply) => reply.complaint_id === r.id)
+            .sort((a, b) => a.created_at.localeCompare(b.created_at))
+            .map((reply) => (
+              <article key={reply.id} className="rounded-md bg-accent p-3">
+                <Text as="p" size="1" color="gray">
+                  Published {time(reply.created_at)}
+                </Text>
+                <Text as="p" size="2" mt="2" className="whitespace-pre-wrap break-words">
+                  {reply.body}
+                </Text>
+              </article>
+            ))}
           <Text as="p" size="1" color="gray">
             Apology drafting sends only the report text, category, and report status to Groq. No
             private notes or contact details are included.
@@ -549,85 +619,82 @@ function ReportReview({
           >
             Publish reviewed reply to customer portal
           </Button>
-          <div className="space-y-3">
-            {s.replies
-              .filter((reply) => reply.complaint_id === r.id)
-              .sort((a, b) => a.created_at.localeCompare(b.created_at))
-              .map((reply) => (
-                <article key={reply.id} className="rounded-md bg-accent p-3">
-                  <Text as="p" size="1" color="gray">
-                    Published {time(reply.created_at)}
-                  </Text>
-                  <Text as="p" size="2" mt="2" className="whitespace-pre-wrap break-words">
-                    {reply.body}
-                  </Text>
-                </article>
-              ))}
-          </div>
         </div>
-        <div className="grid gap-3 border-t pt-4 sm:grid-cols-2">
-          <Heading as="h3" size="2" className="sm:col-span-2">
-            Category and report status
-          </Heading>
-          <Field label="Staff category correction" htmlFor={`category-${r.id}`}>
-            <OptionSelect
-              id={`category-${r.id}`}
-              value={category}
-              onValueChange={setCategory}
-              options={Object.entries(CATEGORY_LABELS).map(([id, label]) => ({ value: id, label }))}
-            />
-          </Field>
-          <Field label="Report status" htmlFor={`report-status-${r.id}`}>
-            <OptionSelect
-              id={`report-status-${r.id}`}
-              value={status}
-              onValueChange={setStatus}
-              options={[
-                { value: "NEW", label: "New" },
-                ...["IN_REVIEW", "WAITING_FOR_SELLER", "RESOLVED"].map((v) => ({
-                  value: v,
-                  label: friendly(v),
-                })),
-              ]}
-            />
-          </Field>
-          <div className="space-y-3 sm:col-span-2">
-            <Field label="Private audit reason" htmlFor={`reason-${r.id}`}>
-              <Input
-                id={`reason-${r.id}`}
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                maxLength={4000}
+        {/* Corrections are occasional, so they stay folded away below the reply. */}
+        <details className="border-t pt-4">
+          <summary className="cursor-pointer text-sm text-primary">
+            Correct category or report status
+          </summary>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <Field label="Staff category correction" htmlFor={`category-${r.id}`}>
+              <OptionSelect
+                id={`category-${r.id}`}
+                value={category}
+                onValueChange={setCategory}
+                options={Object.entries(CATEGORY_LABELS).map(([id, label]) => ({
+                  value: id,
+                  label,
+                }))}
               />
             </Field>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={disabled || !reason.trim()}
-                onClick={() =>
-                  void run("correct_category", { reportId: r.id, category, text: reason }).catch(
-                    () => {},
-                  )
-                }
-              >
-                Save category correction
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={disabled || !reason.trim() || status === "NEW"}
-                onClick={() =>
-                  void run("report_status", { reportId: r.id, status, text: reason }).catch(
-                    () => {},
-                  )
-                }
-              >
-                Update report status
-              </Button>
+            <Field label="Report status" htmlFor={`report-status-${r.id}`}>
+              <OptionSelect
+                id={`report-status-${r.id}`}
+                value={status}
+                onValueChange={setStatus}
+                options={[
+                  { value: "NEW", label: "New" },
+                  ...["IN_REVIEW", "WAITING_FOR_SELLER", "RESOLVED"].map((v) => ({
+                    value: v,
+                    label: friendly(v),
+                  })),
+                ]}
+              />
+            </Field>
+            <div className="space-y-3 sm:col-span-2">
+              <Field label="Private audit reason" htmlFor={`reason-${r.id}`}>
+                <Input
+                  id={`reason-${r.id}`}
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  maxLength={4000}
+                />
+              </Field>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={disabled || !reason.trim()}
+                  onClick={() =>
+                    void run("correct_category", { reportId: r.id, category, text: reason }).catch(
+                      () => {},
+                    )
+                  }
+                >
+                  Save category correction
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={disabled || !reason.trim() || status === "NEW"}
+                  onClick={() =>
+                    void run("report_status", { reportId: r.id, status, text: reason }).catch(
+                      () => {},
+                    )
+                  }
+                >
+                  Update report status
+                </Button>
+              </div>
             </div>
+            <details className="text-xs text-muted-foreground sm:col-span-2">
+              <summary className="cursor-pointer">Original rule classification</summary>
+              <pre className="mt-2 overflow-auto whitespace-pre-wrap rounded-md bg-muted p-2 font-mono">
+                {JSON.stringify(r.original_classification, null, 2)}
+              </pre>
+            </details>
           </div>
-        </div>
+        </details>
         {r.refund_requested && (
           <div className="space-y-3 border-t pt-4">
             <Heading as="h3" size="2">

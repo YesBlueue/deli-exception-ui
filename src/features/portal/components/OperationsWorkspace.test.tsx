@@ -95,3 +95,25 @@ it("applies the filter named in ?focus=", () => {
   render(<OperationsWorkspace view="inbox" />, inTheme);
   expect(listed()).toEqual(["LOW-FRESH"]);
 });
+it("keeps the overview free of the exception list and links into the inbox", () => {
+  render(<OperationsWorkspace view="overview" />, inTheme);
+  expect(screen.queryByRole("list", { name: "Exceptions" })).not.toBeInTheDocument();
+  expect(screen.getByRole("link", { name: /High \/ critical/ })).toHaveAttribute(
+    "href",
+    "/dashboard?focus=urgent",
+  );
+  const categories = screen.getByRole("list", { name: "Open exceptions by category" });
+  // All three fixture exceptions are open delays, so the delay tile leads with 100%.
+  expect(within(categories).getAllByRole("link")[0]).toHaveAttribute(
+    "href",
+    "/dashboard?category=DELAY",
+  );
+  expect(within(categories).getAllByRole("link")[0]).toHaveTextContent("100%");
+  expect(screen.getByRole("link", { name: "See all" })).toHaveAttribute("href", "/activity");
+});
+it("applies the category named in ?category=", () => {
+  params.value = new URLSearchParams("category=DAMAGE");
+  render(<OperationsWorkspace view="inbox" />, inTheme);
+  expect(screen.queryByRole("list", { name: "Exceptions" })).not.toBeInTheDocument();
+  expect(screen.getByText("No exceptions match this view.")).toBeInTheDocument();
+});
