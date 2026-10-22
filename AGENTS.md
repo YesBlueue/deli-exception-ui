@@ -1,26 +1,52 @@
-<!-- LOVABLE:BEGIN -->
-> [!IMPORTANT]
-> This project is connected to [Lovable](https://lovable.dev). Avoid rewriting
-> published git history — force pushing, or rebasing/amending/squashing commits
-> that are already pushed — as it rewrites history on Lovable's side and the
-> user will likely lose their project history.
->
-> Commits you push to the connected branch sync back to Lovable and show up in
-> the editor, so keep the branch in a working state.
-<!-- LOVABLE:END -->
+# Project guidance
 
-- Delivery exception app is a UI prototype: all business logic lives in pure functions in src/lib/demo (engine, priority, lifecycle, carriers) over a browser-stored demo DB, so it can later move server-side unchanged. Tests in src/lib/demo/engine.test.ts.
-- UI data access goes through src/lib/services/platform.ts; replace this subscription/mutation adapter with hosted queries without changing presentational components.
-- Customer access and complaint rules live in src/lib/demo/customer.ts; getCustomerOrder explicitly projects customer-visible fields and never staff notes, tracking events or raw carrier payloads.
-- Dedicated customer pages (/customer/$access support portal, /customer/complaint standalone app) are complaints-only — no package tracking or address changes — and do not inherit the operations shell; customer preview links are simulated, not authentication.
-- Keep complaint workflow and shipment status independent; validate delivery gates again inside submit services, not only by disabling UI controls.
-- Customer accounts use managed email/password Auth and owner-only profiles created by a signup trigger; the standalone public complaint page offers inline authentication before its simulated reporting action, while operations and access-link demos remain unchanged.
-- The root CustomerAuthProvider owns the single auth-state subscriber and revalidates initial identity through getUser; cloud passwords never enter application storage; explicitly simulated demo accounts store only salted hashes in a separate adapter and real complaint persistence remains outside the prototype.
-- Customer account forms call the managed Auth client directly without a raw settings preflight; session-bearing responses reset reporting to order entry, while sessionless signup requires email confirmation before access.
-- Stale dynamic-module failures recover through a guarded document reload, not router invalidation, because removed hashed assets require a fresh document; repeated failures fall back to manual retry.
+This is a Next.js and Supabase exception-handling layer for one delivery company. Its existing delivery system owns delivery creation and the full lifecycle. The customer portal is the existing responsive Next.js website, never a separate native app.
 
-- Browser persistence and React subscriptions live in service adapters, not portable domain modules, so future hosted adapters preserve domain contracts.
-- All complaint entry points share validation, owner projections and one persisted reference counter; same-origin Web Locks serialize browser submissions to avoid cross-tab duplicate references.
-- Public complaint responses and private staff notes use independent mutations so private investigation content never leaks through history projections.
-- SLA deadlines use original opening plus current priority configuration and exclude resolved/ignored cases; one pure helper keeps overview and countdowns consistent.
-- Staff AI reply drafts run server-side in src/lib/ai (*.server.ts + createServerFn); AI only fills the draft and staff must press Send, so nothing AI-written reaches customers unreviewed.
+Before continuing work in a new session or checkout, read `PLAN_IMPLEMENTATION_STATUS.md`, `README.md`, `MIGRATION.md`, `roadmap.md`, and `TEAM_HANDOFF.md`. Confirm the Git baseline and separate pending configuration, unfinished implementation, and unverified workflows. Follow only the task or phase authorized in the current conversation.
+
+## Active architecture
+
+- Routes and role gates: src/app. Connected views: src/features/portal/components.
+- Data adapter: src/infrastructure/portal. Server sessions: src/infrastructure/supabase/session.server.ts. Browser sessions use @supabase/ssr cookies and the Next.js OAuth callback.
+- Business rules: src/core/domain/exception-rules.ts and guarded database functions in supabase/migrations. Keep guidance pure and test SQL/TypeScript classification parity.
+- Database writes go through authenticated, audited transactions. Do not replace RLS with client filtering or expose service-role credentials.
+- Source delivery status, report status, exception status, and seller handoff state are independent.
+- Customer reads/writes require an account-to-delivery association. Google metadata and order references do not establish authorization.
+- Staff roles and seller memberships are backend-controlled. Only ADMIN/OPERATIONS memberships access operations workflows.
+- Customer messages, private notes, seller updates, and evidence have distinct audience boundaries.
+- Groq (`openai/gpt-oss-120b`) replaces Gemini for server-side apology and proactive delay wording drafts reviewed by staff. Operations analytics may also request an explicitly labeled, read-only explanation of server-calculated aggregate complaint statistics; send no customer text, identifiers, evidence or private notes, and infer no causes or operational recommendations. Never use any LLM for categorization, impact/recipient selection, routing, next-action suggestions, or automatic workflow actions. No Lovable services. Keep GROQ_API_KEY server-only; GROQ_MODEL selects the model.
+- Next-action suggestions are deterministic explanations only; rendering them never triggers mutations.
+- Demo source context is explicitly labeled and provisioned in the database. Never fall back to browser fixtures after a failed real request.
+- Keep the look consistent through the design system below (Radix Themes, shared patterns, theme tokens). IBM Plex font files are locally served.
+- Legacy browser-demo files remain for historical tests/reference; active routes must not import their storage adapters or invite-link flows.
+- Applied Supabase migrations are tracked in supabase/migrations. The bootstrap SQL is only for empty projects. Keep generated types synchronized.
+
+## Design system (Radix Themes)
+
+Reference page: `/design-system` (development only; open it by URL, it is not in the sidebar). Check it before adding UI.
+
+- **Foundation:** Radix Themes. Theme settings live in `src/shared/theme.ts` (`STAFF_THEME`, and `CUSTOMER_THEME` for `/customer/*`). Brand colors and app tokens live in `src/styles/globals.css`. In development, press **T** to open the ThemePanel and try settings; copy the chosen values into `theme.ts`.
+- **Color rule 60-30-10:** 60% neutral surfaces (Radix gray); 30% brand navy (`text-primary`/`bg-primary`) for structure, links, focus, selected and active states; 10% brand orange (`bg-cta`) **only** for the main action. The default `Button` variant is that orange action — use one per screen or dialog, and secondary/outline/ghost for everything else. Selection uses navy or a segmented control, never orange.
+- **Fixed status meanings:** critical red, high crimson, medium yellow, low gray, success green, info blue, simulated purple (`text-critical`, `bg-high-soft`, …). Never use these for decoration, and never use orange for a status.
+- **Brand palette:** navy `#243e8a` and orange `#f4a124` replace Radix's `indigo` and `orange` scales, so `accentColor="indigo"` is navy. Light appearance only; the brand scales have no dark variants yet.
+- **Build pages from patterns** (`@/shared/ui/patterns`): `PageHeader`, then `StatGrid`/`StatTile`, then `Panel`s. Use `DataTable`, `FilterBar`/`SearchField`, `LinkList`/`LinkRow`/`ButtonRow`, `StatList`, `Timeline`, `KeyValueList`, `EmptyState`, `Field`, `Notice`, `BackLink`, `PhotoThumb`; customer pages use `SiteShell` + `ProductMark` (the ResolveMate logo; pass `section` for the portal name). Do not hand-write cards, headers, tables or message boxes.
+- **Typography:** Radix `Heading`/`Text` sizes (Heading 7 page title, 5 dialog, 4 page section, 3 panel; Text 2 body, 1 gray metadata), IBM Plex Sans/Mono. Prefer them over Tailwind text sizes.
+- **Messages:** `Notice` for in-page and form messages (`role="alert"` for errors, `role="status"` for confirmations); `toast` (Sonner, themed in `src/shared/ui/sonner.tsx`) for brief confirmation of an action; badges for record state.
+- **Layout:** Tailwind breakpoints only (sm 640, lg 1024, xl 1280). `DataTable` switches from list to table at `xl`. Every page must have no horizontal scroll at 390px. Named layouts go in `globals.css` as `@utility` (e.g. `grid-cols-main-aside`).
+- **Guardrail (ESLint, errors):** in `src/app`, `src/features` and `src/shared/ui/patterns`, class strings may not use arbitrary values (`text-[11px]`, `max-h-[90vh]`), Tailwind palette colors (`text-red-500`, `bg-white`) or hex colors in `style`. Use a token, a standard Tailwind step, a Radix prop (`maxHeight="90vh"`) or a new named utility. Arbitrary variants like `[&_svg]:size-4` are fine. The vendored shadcn primitives in `src/shared/ui` are exempt.
+
+## Verification
+
+Run relevant domain/component/API tests, typecheck, and production build. Database assertions in supabase/tests roll back their fixtures. Browser fixture tests are not proof of live Google authentication. Do not claim Phase 4 or external integration complete without verification.
+
+Do not rewrite published Git history.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
