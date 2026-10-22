@@ -1,5 +1,7 @@
 # Teammate and Agent Handoff
 
+Analytics continuation: the owner authorized `/analytics` for daily/weekly/monthly complaint statistics, deterministic insights and optional Groq explanations of server-calculated aggregates. This is a bounded expansion of the former wording-drafts-only policy, not authorization for AI decisions or actions. Use existing server-only Groq settings; no database migration/write is required. See [analytics definitions](MIGRATION.md#complaint-analytics) and the latest implementation-status entry. Do not assume historical Phase 4 completion verifies this new page or its live AI summaries.
+
 Phase 3 checkpoint, 22 October 2026: the owner authorized Phase 3 of the driver/proactive extension after planning. Driver reporting, historical assignment-based assessment, operations review, atomic approved customer publication/unread state, private evidence, and Groq wording fallback are implemented. See [Driver workflow](DRIVER_WORKFLOW.md) and the current [implementation status](PLAN_IMPLEMENTATION_STATUS.md) before using historical continuation instructions below. Five tables and three tracked migrations were added to confirmed project `gvutlnfsiytnayvdxqyb`; no memberships or persistent driver demo records were created. Two administrator-approved driver participants and explicit history provisioning remain setup tasks. Phase 4 had not yet been authorized at that checkpoint; the continuation below supersedes it.
 
 Last updated: 22 October 2026

@@ -14,7 +14,7 @@ Before continuing work in a new session or checkout, read `PLAN_IMPLEMENTATION_S
 - Customer reads/writes require an account-to-delivery association. Google metadata and order references do not establish authorization.
 - Staff roles and seller memberships are backend-controlled. Only ADMIN/OPERATIONS memberships access operations workflows.
 - Customer messages, private notes, seller updates, and evidence have distinct audience boundaries.
-- Groq (`openai/gpt-oss-120b`) replaces Gemini for server-side apology and proactive delay wording drafts reviewed by staff. Never use any LLM for categorization, impact/recipient selection, routing, next-action suggestions, or automatic workflow actions. No Lovable services. Keep GROQ_API_KEY server-only; GROQ_MODEL selects the model.
+- Groq (`openai/gpt-oss-120b`) replaces Gemini for server-side apology and proactive delay wording drafts reviewed by staff. Operations analytics may also request an explicitly labeled, read-only explanation of server-calculated aggregate complaint statistics; send no customer text, identifiers, evidence or private notes, and infer no causes or operational recommendations. Never use any LLM for categorization, impact/recipient selection, routing, next-action suggestions, or automatic workflow actions. No Lovable services. Keep GROQ_API_KEY server-only; GROQ_MODEL selects the model.
 - Next-action suggestions are deterministic explanations only; rendering them never triggers mutations.
 - Demo source context is explicitly labeled and provisioned in the database. Never fall back to browser fixtures after a failed real request.
 - Keep the look consistent through the design system below (Radix Themes, shared patterns, theme tokens). IBM Plex font files are locally served.

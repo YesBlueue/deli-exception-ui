@@ -1,5 +1,7 @@
 # Delivery exception platform
 
+- [x] Implement operations complaint analytics: daily/weekly/monthly company-time comparisons, metrics/charts, seller/category filters, complaint pagination, deterministic insights and on-demand aggregate-only Groq explanations. Verification and scale limits are recorded in implementation status; historical Phase 4 acceptance does not establish live analytics-summary acceptance.
+
 - [x] Driver/proactive extension Phase 3: compact five-table schema, historical assignments, driver attempt/condition reporting and evidence/corrections, existing inbox/detail integration, deterministic impact reviews, exact staff approval and portal publication, customer unread state, and wording-only Groq with fallback. See [Driver workflow](DRIVER_WORKFLOW.md).
 - [x] Extension implementation verification: rollback-only database assertions, existing portal/evidence/seller SQL regressions, unit/component/API tests, typecheck/build, and customer/seller browser fixtures including proactive updates without complaints. These are not live driver acceptance.
 - [x] Owner-approved test driver accounts: two synthetic email/password identities with active `DELIVERY_PERSON` access; verified password sign-in and driver-only RPC access. Development-only `/driver-test-login`; credentials remain in ignored local artifacts.

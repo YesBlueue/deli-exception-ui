@@ -8,6 +8,16 @@ Current integration combines the backend Groq/Phase 4 continuation (`9b0369e`) w
 
 One delivery company, many sellers and customers. The same Next.js app hosts all portals. This application consumes minimal source context for exception handling; it does not create deliveries, dispatch couriers, execute refunds, or expose full tracking history.
 
+## Complaint analytics
+
+The owner authorized `/analytics` and an expansion of Groq to read-only explanations of verified aggregate complaint statistics. Daily/weekly/monthly reporting uses `Asia/Rangoon`, Monday-start weeks, and exclusive end boundaries. Ongoing periods compare equal elapsed time capped at the previous period's length; completed periods compare whole calendar periods. Category/seller filters apply to all metrics; status/interval filters narrow only the complaint table.
+
+Intake uses `submitted_at`. Resolution counts distinct complaints with the existing explicit `Report status changed to RESOLVED.` history event, including older/reopened complaints; reply-history rows carrying a resolved status do not count. This relies on the current guarded command's stable event description because history has no event-type column. Open workload is a current snapshot. Median first response includes only answered intake-cohort reports and the earliest published reply available now, including replies after the selected period; private drafts and notes never count. Status/category breakdowns use current values, so historical views can change after corrections/transitions. Seller counts have no delivery-volume denominator.
+
+No schema migration is needed. `/api/analytics` uses authenticated user-scoped clients, checks active ADMIN/OPERATIONS membership before reading, and retains existing RLS. The server scans minimal metadata with keyset pagination, returns only a 20-row complaint page plus aggregates, and fails visibly above 20,000 rows per source table rather than truncating results. These multi-request reads are not an atomic database snapshot; database aggregation is required for larger production datasets. No privileged key or browser-local business data is used.
+
+`POST /api/analytics/summary` checks same origin/staff access, reloads its own facts instead of trusting a client-supplied payload, and sends only aggregates/fixed-category findings to Groq. Summaries are not saved or published; there are no operational commands. Provider failure leaves deterministic insights available. A one-request-per-minute per-user throttle is process-local, not a distributed production quota. Model prose is labeled and requires human interpretation; no claim of factual verification of every generated sentence is made. No live provider call or database write is implied by automated tests.
+
 ## What changed
 
 Active routes now use Supabase persistence with RLS and guarded transaction functions. Customer access uses Google OAuth with cookie-based sessions. Customers explicitly provision fictional account-owned orders for the hackathon, select an order, submit a report, and read history/status/replies. Operations has backend membership checks, a connected inbox/detail page, assignment, audited statuses, private notes, customer replies, and seller updates. Sellers see their own minimal exception projection and refund handoffs.

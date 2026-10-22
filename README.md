@@ -44,6 +44,8 @@ The real Groq adapter passed a generation check using fictional context. This do
 
 ## Workflows
 
+- **Operations `/analytics`:** daily, Monday-start weekly and calendar-month complaint statistics in `Asia/Rangoon`. Includes intake/comparison counts, explicit resolution events, current open workload, median first published response for answered intake-cohort complaints, charts, calculated insights, seller/category filters and paginated complaint links. Filters are bookmarkable. Optional **Generate summary** uses existing server-only Groq settings and aggregate statistics only; it cannot recommend or execute workflow actions. Calculated insights remain available without Groq. See [analytics implementation notes](MIGRATION.md#complaint-analytics).
+
 - **Customer `/customer/complaint`:** Google sign-in, authorized order selection, report submission with optional private evidence, report/status history, replies, unread indicators.
 - **Operations `/overview`, `/dashboard`, `/exceptions/[id]`, `/requests`:** exception metrics, filters, dedicated investigation page, rule explanations, assignment, audited transitions, private notes, report correction, customer replies, and seller updates.
 - **Seller `/seller`:** seller-scoped exception context and refund handoffs. Sellers cannot create deliveries. Customer conversations, staff notes, and attachments are not shared by default.
